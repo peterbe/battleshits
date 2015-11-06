@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom';
 import { Router, IndexRoute, Route, Link } from 'react-router';
 import createBrowserHistory from 'history/lib/createBrowserHistory';
 import 'whatwg-fetch';
+// import Draggabilly from 'draggabilly';
+
+console.log('Draggabilly', Draggabilly);
 
 const SHIPS = ['2', '3-1', '3-2', '4', '5']
 
@@ -218,6 +221,14 @@ class Game extends React.Component {
 }
 
 class RenderShip extends React.Component {
+
+  componentDidMount() {
+    let element = document.querySelector('.ship.ship' + this.props.ship);
+    let draggie = new Draggabilly(element, {
+      containment: 'table'
+    });
+  }
+
   render() {
     return (
       <div className={'ship ship'+ this.props.ship} title={this.props.ship}></div>
