@@ -4,7 +4,7 @@ import { Router, IndexRoute, Route, Link } from 'react-router';
 import createBrowserHistory from 'history/lib/createBrowserHistory';
 import 'whatwg-fetch';
 
-const SHIPS = [2, 3, 4, 4, 5]
+const SHIPS = ['2', '3-1', '3-2', '4', '5']
 
 const _YOUR = [];
 const _OPP = [];
@@ -172,8 +172,8 @@ class Game extends React.Component {
           <div className="designmode">
             <h4>Place your ships</h4>
             {
-              SHIPS.map((ship) => {
-                return <RenderShip ship={ship}/>
+              SHIPS.map((ship, i) => {
+                return <RenderShip key={'ship'+i} ship={ship}/>
               })
             }
             <ShowGrid
@@ -219,7 +219,9 @@ class Game extends React.Component {
 
 class RenderShip extends React.Component {
   render() {
-
+    return (
+      <div className={'ship ship'+ this.props.ship} title={this.props.ship}></div>
+    )
   }
 }
 
