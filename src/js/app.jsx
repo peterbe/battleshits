@@ -7,7 +7,13 @@ import 'whatwg-fetch';
 
 console.log('Draggabilly', Draggabilly);
 
-const SHIPS = ['2', '3-1', '3-2', '4', '5']
+const SHIPS = [
+  {id: '2', top: 0, left: 0},
+  {id: '3-1', top: 0, left: 0},
+  {id: '3-2', top: 0, left: 0},
+  {id: '4', top: 0, left: 0},
+  {id: '5', top: 0, left: 0},
+]
 
 const _YOUR = [];
 const _OPP = [];
@@ -114,9 +120,11 @@ class Game extends React.Component {
       loading: true,
       yourturn: false,
       grid: [],  // your grid
+      ships: SHIPS.copyWithin(0, 0),
       opponent: {
         name: null,
         grid: [],
+        ships: SHIPS.copyWithin(0, 0),
       },
     }
   }
@@ -174,12 +182,8 @@ class Game extends React.Component {
         grids = (
           <div className="designmode">
             <h4>Place your ships</h4>
-            {
-              SHIPS.map((ship, i) => {
-                return <RenderShip key={'ship'+i} ship={ship}/>
-              })
-            }
             <ShowGrid
+              ships={this.state.ships}
               grid={this.state.grid}
               canEdit={true}
               hideShips={false}
@@ -193,6 +197,7 @@ class Game extends React.Component {
             <h4>Your grid</h4>
             <ShowGrid
               grid={this.state.grid}
+              ships={this.state.ships}
               canEdit={true}
               hideShips={false}
               cellClicked={this.cellClicked.bind(this, true)}
@@ -200,6 +205,7 @@ class Game extends React.Component {
             <h4>{`${this.state.opponent.name}'s`} grid</h4>
             <ShowGrid
               grid={this.state.opponent.grid}
+              ships={this.state.opponent.ships}
               canEdit={false}
               hideShips={true}
               cellClicked={this.cellClicked.bind(this, false)}
@@ -223,15 +229,19 @@ class Game extends React.Component {
 class RenderShip extends React.Component {
 
   componentDidMount() {
-    let element = document.querySelector('.ship.ship' + this.props.ship);
+    let element = document.querySelector('.ship.ship' + this.props.ship.id);
     let draggie = new Draggabilly(element, {
-      containment: 'table'
+      containment: '.grid'
     });
   }
 
   render() {
+    let ship = this.props.ship
     return (
-      <div className={'ship ship'+ this.props.ship} title={this.props.ship}></div>
+      <div
+        className={'ship ship' + ship.id}
+        title={ship.id}
+        style={{top: ship.top, left: ship.left}}></div>
     )
   }
 }
@@ -250,28 +260,35 @@ class ShowGrid extends React.Component {
       rows.push(row);
     }
     return (
-      <table className="grid">
-        <tbody>
+      <div className="grid">
+        <table>
+          <tbody>
+          {
+            rows.map((row, i) => {
+              return (
+                <tr key={`row${i}`}>
+                  {
+                    row.map((cell, j) => {
+                      return <Cell
+                        key={i * 10 + j}
+                        state={cell}
+                        hideShips={this.props.hideShips}
+                        cellClicked={this.props.cellClicked.bind(this, i * 10 + j)}
+                        />
+                    })
+                  }
+                </tr>
+              )
+            })
+          }
+          </tbody>
+        </table>
         {
-          rows.map((row, i) => {
-            return (
-              <tr key={`row${i}`}>
-                {
-                  row.map((cell, j) => {
-                    return <Cell
-                      key={i * 10 + j}
-                      state={cell}
-                      hideShips={this.props.hideShips}
-                      cellClicked={this.props.cellClicked.bind(this, i * 10 + j)}
-                      />
-                  })
-                }
-              </tr>
-            )
+          this.props.ships.map((ship) => {
+            return <RenderShip key={ship.id} ship={ship}/>
           })
         }
-        </tbody>
-      </table>
+      </div>
     )
   }
 }
