@@ -12,11 +12,17 @@
   rel="stylesheet"
   type="text/css"> -->
 
+
+  <style type="text/css">
+  body {
+    margin: 0;
+  }
+  </style>
   <style type="text/css">
   table {
     width: 100%;
     border-spacing: 0;
-    border-collapse: separate;
+    border-collapse: collapse;
     border: 1px solid #666;
     background-image: url('static/images/water-background.jpg');
   }
@@ -24,8 +30,8 @@
     padding: 0;
     border: 1px solid #ccc;
     table-spacing: 0;
-    width: 32px;
-    height: 32px;
+    /*width: 32px;
+    height: 32px;*/
     text-align: center;
     vertical-align: middle;
   }
@@ -52,12 +58,17 @@
   .ship {
     position: absolute;
     top: 0; left: 0;
-    background-image: url('static/images/s-h.png');
-    background-repeat: no-repeat;
+    /*background-image: url('static/images/s-h.png');*/
+    /*background-repeat: no-repeat;*/
     /*border:1px solid #333;*/
-    margin:10px
+    /*margin:10px*/
   }
-  .ship.ship5 {
+  .ship.overlapping {
+    border: 1px solid red;
+    margin: -1px;
+    border-radius: 4px;
+  }
+  /*.ship.ship5 {
     background-position: -4px -51px;
     width: 244px;
     height: 48px;
@@ -81,7 +92,7 @@
     background-position: -758px -51px;
     width: 81px;
     height: 48px;
-  }
+  }*/
   </style>
 </head>
 <body>

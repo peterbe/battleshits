@@ -3,17 +3,21 @@ import ReactDOM from 'react-dom';
 import { Router, IndexRoute, Route, Link } from 'react-router';
 import createBrowserHistory from 'history/lib/createBrowserHistory';
 import 'whatwg-fetch';
+import RenderShip from './components/rendership.jsx';
+import Cell from './components/cell.jsx';
+import $ from 'jquery';
 // import Draggabilly from 'draggabilly';
 
-console.log('Draggabilly', Draggabilly);
+// console.log('Draggabilly', Draggabilly);
 
 const SHIPS = [
-  {id: '2', top: 0, left: 0},
-  {id: '3-1', top: 0, left: 0},
-  {id: '3-2', top: 0, left: 0},
-  {id: '4', top: 0, left: 0},
-  {id: '5', top: 0, left: 0},
+  {id: '2',   length: 2, x: 1, y: 0, rotation: 0, overlapping: false},
+  {id: '3-1', length: 3, x: 7, y: 1, rotation: 0, overlapping: false},
+  {id: '3-2', length: 3, x: 6, y: 2, rotation: 0, overlapping: false},
+  {id: '4',   length: 4, x: 5, y: 3, rotation: 0, overlapping: false},
+  {id: '5',   length: 5, x: 4, y: 8, rotation: 0, overlapping: false},
 ]
+
 
 const _YOUR = [];
 const _OPP = [];
@@ -52,7 +56,6 @@ class Homepage extends React.Component {
   }
 
   render() {
-    console.log('Render Homepage');
     return (
       <div>
         <Link to="/games">Games</Link>
@@ -83,7 +86,6 @@ class Games extends React.Component {
   }
 
   render() {
-    console.log('Render Games')
     return (
       <div>
         <h2>Games</h2>
@@ -130,7 +132,7 @@ class Game extends React.Component {
   }
 
   componentDidMount() {
-    console.log('Component did mount', this.props.params.id);
+    // console.log('Component did mount', this.props.params.id);
     this.setState({
       loading: false,
       yourturn: true,
@@ -174,8 +176,58 @@ class Game extends React.Component {
 
   }
 
+  shipMoved(ship) {
+    // console.log('Ship moved!', ship)
+    // console.log('Your ships', this.state.ships)
+    // This'll render the ships with their new position.
+    // Now we need to figure out if any of the ships are overlapping
+    // and thus mark them as such.
+    let getAllCoordinates = (ship) => {
+      let coords = new Set()
+      let vertical = ship.vertical ? 1 : 0
+      let horizontal = ship.vertical ? 0 : 1
+      for (let i=0; i < ship.length; i++) {
+        coords.add(
+          ship.x + i * horizontal + ',' +
+          ship.y + i * vertical
+        )
+      }
+      return coords
+    }
+    let isOverlapping = (ship1, ship2) => {
+      // list ALL their coordinates and compare if any of them match
+      let coords1 = getAllCoordinates(ship1)
+      let coords2 = getAllCoordinates(ship2)
+      // let intersection = new Set([...coords1].filter(x => coords2.has(x)))
+      let intersection = [...coords1].filter(x => coords2.has(x))
+      return intersection.length > 0
+    }
+    // console.log('5th ship', this.state.ships[4], 'coords:', getAllCoordinates(this.state.ships[4]))
+    this.state.ships.forEach((ship) => {
+      ship.overlapping = false
+    })
+    this.state.ships.forEach((outer) => {
+      this.state.ships.forEach((inner) => {
+        if (inner.id !== outer.id) {
+          // now we can compare two ships
+          // console.log('COMPARE', inner.id, outer.id)
+          if (isOverlapping(inner, outer)) {
+            inner.overlapping = true
+          }
+
+          if (inner.overlapping) {
+            console.log(inner, outer, 'ARE OVERLAPPING')
+          }
+        }
+      })
+    })
+    console.log('SETTING SHIPS', this.state.ships)
+    this.setState({ships: this.state.ships}) // looks weird
+  }
+
+
   render() {
-    console.log('Render Game!', this.state.grid);
+    // console.log('Render Game!', this.state.grid);
     let grids = null;
     if (!this.state.loading) {
       if (this.state.designmode) {
@@ -188,6 +240,7 @@ class Game extends React.Component {
               canEdit={true}
               hideShips={false}
               cellClicked={this.cellClicked.bind(this, true)}
+              onMove={this.shipMoved.bind(this)}
               />
           </div>
         )
@@ -201,6 +254,7 @@ class Game extends React.Component {
               canEdit={true}
               hideShips={false}
               cellClicked={this.cellClicked.bind(this, true)}
+              onMove={this.shipMoved.bind(this)}
               />
             <h4>{`${this.state.opponent.name}'s`} grid</h4>
             <ShowGrid
@@ -209,7 +263,7 @@ class Game extends React.Component {
               canEdit={false}
               hideShips={true}
               cellClicked={this.cellClicked.bind(this, false)}
-
+              onMove={this.shipMoved.bind(this)}
               />
           </div>
         )
@@ -226,27 +280,32 @@ class Game extends React.Component {
   }
 }
 
-class RenderShip extends React.Component {
-
-  componentDidMount() {
-    let element = document.querySelector('.ship.ship' + this.props.ship.id);
-    let draggie = new Draggabilly(element, {
-      containment: '.grid'
-    });
-  }
-
-  render() {
-    let ship = this.props.ship
-    return (
-      <div
-        className={'ship ship' + ship.id}
-        title={ship.id}
-        style={{top: ship.top, left: ship.left}}></div>
-    )
-  }
-}
 
 class ShowGrid extends React.Component {
+  constructor() {
+    super()
+    this.state = {
+      width: $(window).width()
+    }
+  }
+
+  updateDimensions() {
+    this.setState({width: $(window).width()})
+    // console.log('updateDimensions', )
+  }
+
+  componentWillMount() {
+    this.updateDimensions()
+  }
+
+  componentDidMount() {
+      window.addEventListener("resize", this.updateDimensions.bind(this))
+  }
+
+  componentWillUnmount() {
+      window.removeEventListener("resize", this.updateDimensions.bind(this))
+  }
+
 
   render() {
     let grid = this.props.grid;
@@ -259,6 +318,15 @@ class ShowGrid extends React.Component {
       }
       rows.push(row);
     }
+    // let gridWidth = $(window).width()
+    let gridWidth = this.state.width
+    // gridWidth=1000
+    if (!gridWidth) {
+      throw new Error('width of grid not known')
+    }
+    // the whole gridWidth is $(window).width() - 2px for the whole table
+    let width = (gridWidth - 2) / 10;
+    console.log("EACH GRID WIDTH", width)
     return (
       <div className="grid">
         <table>
@@ -272,6 +340,7 @@ class ShowGrid extends React.Component {
                       return <Cell
                         key={i * 10 + j}
                         state={cell}
+                        width={width}
                         hideShips={this.props.hideShips}
                         cellClicked={this.props.cellClicked.bind(this, i * 10 + j)}
                         />
@@ -285,7 +354,11 @@ class ShowGrid extends React.Component {
         </table>
         {
           this.props.ships.map((ship) => {
-            return <RenderShip key={ship.id} ship={ship}/>
+            return <RenderShip
+              key={ship.id}
+              ship={ship}
+              width={width}
+              onMove={this.props.onMove.bind(this)}/>
           })
         }
       </div>
@@ -293,31 +366,6 @@ class ShowGrid extends React.Component {
   }
 }
 
-class Cell extends React.Component {
-  render() {
-    let cellstate = this.props.state;
-    if (this.props.hideShips) {
-      // this means we can't reveal that there's a ship there
-      if (cellstate === 1) {
-        cellstate = 0
-      }
-    }
-    let className = {
-      3: 'B',
-      2: 'M',
-      1: 'S',
-      0: 'E',
-    }[cellstate];
-
-    return (
-      <td
-        key={this.props.key}
-        onClick={this.props.cellClicked.bind(this)}
-        className={className}
-        ></td>
-    )
-  }
-}
 
 /*<Router history={createBrowserHistory()}>*/
 ReactDOM.render((
