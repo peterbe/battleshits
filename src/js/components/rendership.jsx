@@ -49,9 +49,6 @@ export default class RenderShip extends React.Component {
     }
     this.props.ship.x = x1
     this.props.ship.y = y1
-    // setTimeout(() => {
-    //     this.props.onMove(this.props.ship)
-    // }, 500);
     this.props.onMove(this.props.ship)
   }
 
@@ -66,9 +63,6 @@ export default class RenderShip extends React.Component {
       top: ship.y * height + ship.y * borderWidth,
       left: ship.x * width + ship.x * borderWidth,
     }
-    // let x = ship.x * width + ship.x * borderWidth
-    // let y = ship.y * height + ship.y * borderWidth
-    // style.transform = 'translate3d(' + x + 'px, ' + y + 'px, 0)';
 
     if (ship.rotation === 90 || ship.rotation === 270) {
       style.width = width
@@ -86,13 +80,14 @@ export default class RenderShip extends React.Component {
     if (ship.overlapping) {
       className += ' overlapping'
     }
-    if (ship.id=='5') {
-      // pixelate(style)
-      console.log(ship.id, height, style)
+
+    // The draggabilly plugin will forcibly set the top and left
+    // on the element and these might be different from what they
+    // should be, so we make sure that gets set.
+    if (this.state.draggie) {
+      this.state.draggie.element.style.left = style.left + 'px'
+      this.state.draggie.element.style.top = style.top + 'px'
     }
-    // let position = ship.id + style.top + style.left
-    // console.log('POSITION', position)
-    // className += ' ' + position
     return (
       <img src={src}
         key={ship.id}
