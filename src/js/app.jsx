@@ -6,9 +6,7 @@ import 'whatwg-fetch';
 import RenderShip from './components/rendership.jsx';
 import Cell from './components/cell.jsx';
 import $ from 'jquery';
-// import Draggabilly from 'draggabilly';
 
-// console.log('Draggabilly', Draggabilly);
 
 const SHIPS = [
   {id: '2',   length: 2, x: 1, y: 0, rotation: 0, overlapping: false},
@@ -132,7 +130,6 @@ class Game extends React.Component {
   }
 
   componentDidMount() {
-    // console.log('Component did mount', this.props.params.id);
     this.setState({
       loading: false,
       yourturn: true,
@@ -177,8 +174,6 @@ class Game extends React.Component {
   }
 
   shipMoved(ship) {
-    // console.log('Ship moved!', ship)
-    // console.log('Your ships', this.state.ships)
     // This'll render the ships with their new position.
     // Now we need to figure out if any of the ships are overlapping
     // and thus mark them as such.
@@ -202,7 +197,6 @@ class Game extends React.Component {
       let intersection = [...coords1].filter(x => coords2.has(x))
       return intersection.length > 0
     }
-    // console.log('5th ship', this.state.ships[4], 'coords:', getAllCoordinates(this.state.ships[4]))
     this.state.ships.forEach((ship) => {
       ship.overlapping = false
     })
@@ -210,24 +204,17 @@ class Game extends React.Component {
       this.state.ships.forEach((inner) => {
         if (inner.id !== outer.id) {
           // now we can compare two ships
-          // console.log('COMPARE', inner.id, outer.id)
           if (isOverlapping(inner, outer)) {
             inner.overlapping = true
-          }
-
-          if (inner.overlapping) {
-            console.log(inner, outer, 'ARE OVERLAPPING')
           }
         }
       })
     })
-    console.log('SETTING SHIPS', this.state.ships)
     this.setState({ships: this.state.ships}) // looks weird
   }
 
 
   render() {
-    // console.log('Render Game!', this.state.grid);
     let grids = null;
     if (!this.state.loading) {
       if (this.state.designmode) {
@@ -291,7 +278,6 @@ class ShowGrid extends React.Component {
 
   updateDimensions() {
     this.setState({width: $(window).width()})
-    // console.log('updateDimensions', )
   }
 
   componentWillMount() {
@@ -326,7 +312,6 @@ class ShowGrid extends React.Component {
     }
     // the whole gridWidth is $(window).width() - 2px for the whole table
     let width = (gridWidth - 2) / 10;
-    console.log("EACH GRID WIDTH", width)
     return (
       <div className="grid">
         <table>
