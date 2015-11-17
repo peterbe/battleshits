@@ -16,13 +16,20 @@ export default class RenderShip extends React.Component {
     let draggie = new Draggabilly(element, {
       containment: '.grid',
     });
-    draggie.on('dragEnd', this.dragEnd.bind(this, this.props.width))
-    // draggie.on('dragEnd', this.dragEnd.bind(this, this.props.width))
+    draggie.on('dragEnd', this.dragEnd.bind(this))
+    draggie.on('staticClick', this.staticClick.bind(this))
     this.setState({
       draggie: draggie,
       width: $('.grid tr').width()/10,
       height: $('.grid table').height()/10,
     })
+  }
+
+  staticClick() {
+    // single click on a ship
+    this.props.ship.rotation += 90
+    this.props.ship.rotation %= 360
+    this.props.onRotate(this.props.ship)
   }
 
   dragEnd() {
@@ -64,17 +71,25 @@ export default class RenderShip extends React.Component {
       left: ship.x * width + ship.x * borderWidth,
     }
 
+    console.log('Render', ship.id, ship.rotation)
+    let filename
     if (ship.rotation === 90 || ship.rotation === 270) {
       style.width = width
       style.height = ship.length * height
+      filename = `${ship.id}v.png`
     } else {
       style.width = ship.length * width
       style.height = height
+      filename = `${ship.id}.png`
     }
+    // style.width = ship.length * width
+    // style.height = height
+    // style.transform = 'rotate(' + ship.rotation + 'deg)'
     // style.width = style.width + 'px';
     // style.height = style.height + 'px';
     style.backgroundSize = style.width
-    let src = `static/images/ships/${ship.id}.png`
+
+    let src = `static/images/ships/${filename}`
     // src += '?r=' + Math.random();
     let className = `ship ship${ship.id}`
     if (ship.overlapping) {

@@ -1871,7 +1871,8 @@ function Draggabilly( element, options ) {
   // querySelector if string
   this.element = typeof element == 'string' ?
     document.querySelector( element ) : element;
-
+  this.element._originalTransformProperty = this.element.style[transformProperty];
+  console.log('this.element._originalTransformProperty', this.element._originalTransformProperty);
   if ( jQuery ) {
     this.$element = jQuery( this.element );
   }
@@ -1976,6 +1977,7 @@ Draggabilly.prototype._addTransformPosition = function( style ) {
     return;
   }
   var transform = style[ transformProperty ];
+  console.log('_addTransformPosition, transform=', transform);
   // bail out if value is 'none'
   if ( transform.indexOf('matrix') !== 0 ) {
     return;
@@ -2199,7 +2201,14 @@ Draggabilly.prototype.setLeftTop = function() {
 Draggabilly.prototype.positionDrag = transformProperty ?
   function() {
     // position with transform
-    this.element.style[ transformProperty ] = translate( this.dragPoint.x, this.dragPoint.y );
+    console.log('this.element.style[ '+transformProperty+ ' ] = translate( '+this.dragPoint.x+','+ this.dragPoint.y +')');
+    var previous;
+    if (this.element._originalTransformProperty) {
+      previous = this.element._originalTransformProperty + ' ';
+    } else {
+      previous = '';
+    }
+    this.element.style[ transformProperty ] = previous + translate( this.dragPoint.x, this.dragPoint.y );
   } : Draggabilly.prototype.setLeftTop;
 
 // ----- staticClick ----- //
@@ -2225,7 +2234,8 @@ Draggabilly.prototype.destroy = function() {
   this.disable();
   // reset styles
   if ( transformProperty ) {
-    this.element.style[ transformProperty ] = '';
+    console.log('DESTROY!', this.element._originalTransformProperty);
+    this.element.style[ transformProperty ] = this.element._originalTransformProperty || '';
   }
   this.element.style.left = '';
   this.element.style.top = '';

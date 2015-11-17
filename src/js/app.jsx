@@ -11,8 +11,8 @@ import $ from 'jquery';
 const SHIPS = [
   {id: '2',   length: 2, x: 1, y: 0, rotation: 0, overlapping: false},
   {id: '3-1', length: 3, x: 7, y: 1, rotation: 0, overlapping: false},
-  {id: '3-2', length: 3, x: 6, y: 2, rotation: 0, overlapping: false},
-  {id: '4',   length: 4, x: 5, y: 3, rotation: 0, overlapping: false},
+  {id: '3-2', length: 3, x: 6, y: 2, rotation: 90, overlapping: false},
+  {id: '4',   length: 4, x: 5, y: 3, rotation: 270, overlapping: false},
   {id: '5',   length: 5, x: 4, y: 8, rotation: 0, overlapping: false},
 ]
 
@@ -179,21 +179,21 @@ class Game extends React.Component {
     // and thus mark them as such.
     let getAllCoordinates = (ship) => {
       let coords = new Set()
-      let vertical = ship.vertical ? 1 : 0
-      let horizontal = ship.vertical ? 0 : 1
+      let vertical = ship.rotation === 90 || ship.rotation === 270 ? 1 : 0
+      let horizontal = vertical ? 0 : 1
       for (let i=0; i < ship.length; i++) {
         coords.add(
-          ship.x + i * horizontal + ',' +
-          ship.y + i * vertical
+          (ship.x + i * horizontal) + ',' +
+          (ship.y + i * vertical)
         )
       }
+      console.log('Coordinates', ship.id, coords)
       return coords
     }
     let isOverlapping = (ship1, ship2) => {
       // list ALL their coordinates and compare if any of them match
       let coords1 = getAllCoordinates(ship1)
       let coords2 = getAllCoordinates(ship2)
-      // let intersection = new Set([...coords1].filter(x => coords2.has(x)))
       let intersection = [...coords1].filter(x => coords2.has(x))
       return intersection.length > 0
     }
@@ -213,6 +213,10 @@ class Game extends React.Component {
     this.setState({ships: this.state.ships}) // looks weird
   }
 
+  shipRotated(ship) {
+    console.log('Ship rotated!', ship)
+    this.shipMoved(ship)
+  }
 
   render() {
     let grids = null;
@@ -228,6 +232,7 @@ class Game extends React.Component {
               hideShips={false}
               cellClicked={this.cellClicked.bind(this, true)}
               onMove={this.shipMoved.bind(this)}
+              onRotate={this.shipRotated.bind(this)}
               />
           </div>
         )
@@ -251,6 +256,7 @@ class Game extends React.Component {
               hideShips={true}
               cellClicked={this.cellClicked.bind(this, false)}
               onMove={this.shipMoved.bind(this)}
+              onRotate={this.shipRotated.bind(this)}
               />
           </div>
         )
@@ -343,7 +349,9 @@ class ShowGrid extends React.Component {
               key={ship.id}
               ship={ship}
               width={width}
-              onMove={this.props.onMove.bind(this)}/>
+              onMove={this.props.onMove.bind(this)}
+              onRotate={this.props.onRotate.bind(this)}
+              />
           })
         }
       </div>
