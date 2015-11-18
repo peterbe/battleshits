@@ -2,7 +2,7 @@ import React from 'react';
 import $ from 'jquery';
 
 
-export default class RenderShip extends React.Component {
+export default class Ship extends React.Component {
   constructor() {
     super()
     this.state = {
@@ -12,12 +12,16 @@ export default class RenderShip extends React.Component {
   }
 
   componentDidMount() {
-    let element = document.querySelector('.ship.ship' + this.props.ship.id);
-    let draggie = new Draggabilly(element, {
-      containment: '.grid',
-    });
-    draggie.on('dragEnd', this.dragEnd.bind(this))
-    draggie.on('staticClick', this.staticClick.bind(this))
+    console.log('Ship mounted, props=', this.props)
+    let draggie = null
+    if (this.props.canMove) {
+      let element = document.querySelector('.ship.ship' + this.props.ship.id);
+      draggie = new Draggabilly(element, {
+        containment: '.grid',
+      });
+      draggie.on('dragEnd', this.dragEnd.bind(this))
+      draggie.on('staticClick', this.staticClick.bind(this))
+    }
     this.setState({
       draggie: draggie,
       width: $('.grid tr').width()/10,
@@ -71,7 +75,6 @@ export default class RenderShip extends React.Component {
       left: ship.x * width + ship.x * borderWidth,
     }
 
-    console.log('Render', ship.id, ship.rotation)
     let filename
     if (ship.rotation === 90 || ship.rotation === 270) {
       style.width = width
@@ -82,15 +85,9 @@ export default class RenderShip extends React.Component {
       style.height = height
       filename = `${ship.id}.png`
     }
-    // style.width = ship.length * width
-    // style.height = height
-    // style.transform = 'rotate(' + ship.rotation + 'deg)'
-    // style.width = style.width + 'px';
-    // style.height = style.height + 'px';
     style.backgroundSize = style.width
 
     let src = `static/images/ships/${filename}`
-    // src += '?r=' + Math.random();
     let className = `ship ship${ship.id}`
     if (ship.overlapping) {
       className += ' overlapping'

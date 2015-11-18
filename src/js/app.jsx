@@ -3,8 +3,7 @@ import ReactDOM from 'react-dom';
 import { Router, IndexRoute, Route, Link } from 'react-router';
 import createBrowserHistory from 'history/lib/createBrowserHistory';
 import 'whatwg-fetch';
-import RenderShip from './components/rendership.jsx';
-import Cell from './components/cell.jsx';
+import Grid from './components/grid.jsx';
 import $ from 'jquery';
 
 
@@ -187,7 +186,6 @@ class Game extends React.Component {
           (ship.y + i * vertical)
         )
       }
-      console.log('Coordinates', ship.id, coords)
       return coords
     }
     let isOverlapping = (ship1, ship2) => {
@@ -218,17 +216,45 @@ class Game extends React.Component {
     this.shipMoved(ship)
   }
 
+  _countOverlaps() {
+    let overlaps = 0
+    this.state.ships.forEach((ship) => {
+      overlaps += ship.overlapping
+    })
+    return overlaps
+  }
+
+  onDoneButtonClick() {
+    let overlaps = this._countOverlaps()
+    if (overlaps) {
+      alert(overlaps + ' ships are still overlapping you big fart!')
+    } else {
+      this.setState({designmode: false})
+    }
+  }
+
   render() {
     let grids = null;
     if (!this.state.loading) {
       if (this.state.designmode) {
+        let disabledDoneButton = this._countOverlaps() > 0
+        let doneButton = (
+            <button
+                className="done-button"
+                onClick={this.onDoneButtonClick.bind(this)}
+                disabled={disabledDoneButton}>
+              I have placed my shitty ships
+            </button>
+        )
+
         grids = (
           <div className="designmode">
+            {doneButton}
             <h4>Place your ships</h4>
-            <ShowGrid
+            <Grid
               ships={this.state.ships}
               grid={this.state.grid}
-              canEdit={true}
+              canMove={true}
               hideShips={false}
               cellClicked={this.cellClicked.bind(this, true)}
               onMove={this.shipMoved.bind(this)}
@@ -237,22 +263,24 @@ class Game extends React.Component {
           </div>
         )
       } else {
+        console.log('OPPONENT', this.state.opponent)
         grids = (
           <div className="grids">
             <h4>Your grid</h4>
-            <ShowGrid
+            <Grid
               grid={this.state.grid}
               ships={this.state.ships}
-              canEdit={true}
+              canMove={true}
               hideShips={false}
               cellClicked={this.cellClicked.bind(this, true)}
               onMove={this.shipMoved.bind(this)}
+              onRotate={this.shipRotated.bind(this)}
               />
             <h4>{`${this.state.opponent.name}'s`} grid</h4>
-            <ShowGrid
+            <Grid
               grid={this.state.opponent.grid}
               ships={this.state.opponent.ships}
-              canEdit={false}
+              canMove={false}
               hideShips={true}
               cellClicked={this.cellClicked.bind(this, false)}
               onMove={this.shipMoved.bind(this)}
@@ -274,90 +302,6 @@ class Game extends React.Component {
 }
 
 
-class ShowGrid extends React.Component {
-  constructor() {
-    super()
-    this.state = {
-      width: $(window).width()
-    }
-  }
-
-  updateDimensions() {
-    this.setState({width: $(window).width()})
-  }
-
-  componentWillMount() {
-    this.updateDimensions()
-  }
-
-  componentDidMount() {
-      window.addEventListener("resize", this.updateDimensions.bind(this))
-  }
-
-  componentWillUnmount() {
-      window.removeEventListener("resize", this.updateDimensions.bind(this))
-  }
-
-
-  render() {
-    let grid = this.props.grid;
-
-    let rows = [];
-    for (let i=0; i < 10; i++) {
-      let row = [];
-      for (let j=0; j < 10; j++) {
-        row.push(grid[i * 10 + j]);
-      }
-      rows.push(row);
-    }
-    // let gridWidth = $(window).width()
-    let gridWidth = this.state.width
-    // gridWidth=1000
-    if (!gridWidth) {
-      throw new Error('width of grid not known')
-    }
-    // the whole gridWidth is $(window).width() - 2px for the whole table
-    let width = (gridWidth - 2) / 10;
-    return (
-      <div className="grid">
-        <table>
-          <tbody>
-          {
-            rows.map((row, i) => {
-              return (
-                <tr key={`row${i}`}>
-                  {
-                    row.map((cell, j) => {
-                      return <Cell
-                        key={i * 10 + j}
-                        state={cell}
-                        width={width}
-                        hideShips={this.props.hideShips}
-                        cellClicked={this.props.cellClicked.bind(this, i * 10 + j)}
-                        />
-                    })
-                  }
-                </tr>
-              )
-            })
-          }
-          </tbody>
-        </table>
-        {
-          this.props.ships.map((ship) => {
-            return <RenderShip
-              key={ship.id}
-              ship={ship}
-              width={width}
-              onMove={this.props.onMove.bind(this)}
-              onRotate={this.props.onRotate.bind(this)}
-              />
-          })
-        }
-      </div>
-    )
-  }
-}
 
 
 /*<Router history={createBrowserHistory()}>*/
