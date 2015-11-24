@@ -39,17 +39,84 @@ for (let i=0; i<100;i++) {
   }
 }
 
+let apiGet = (url) => {
+
+  if (url==='/api/games/') {
+    return new Promise((resolve) => {
+        resolve({
+          games: [
+            {id: 1, designmode: true, yourturn: false, opponent: {name: 'Jim', designmode: false}},
+            {id: 2, designmode: false, yourturn: true, opponent: {name: 'Matt C', designmode: false}},
+          ]
+        })
+    });
+  }
+  if (url==='/api/games/1') {
+    return new Promise((resolve) => {
+        resolve({
+          game: {
+            id: 1,
+            yourturn: false,
+            designmode: true,
+            grid: _YOUR,
+            ships: SHIPS.copyWithin(0, 0),
+            opponent: {
+              grid: _OPP,
+              name: 'Jim',
+              designmode: false,
+              ships: SHIPS.copyWithin(0, 0),
+            }
+          }
+        })
+    });
+
+    // this.setState({
+    //   loading: false,
+    //   yourturn: game.yourturn,
+    //   designmode: game.designmode,
+    //   id: game.id,
+    //   grid: game.grid,
+    //   ships: game.ships,
+    //   // ships: SHIPS.copyWithin(0, 0),
+    //   opponent: {
+    //     // grid: _OPP,
+    //     grid: game.opponent.grid,
+    //     name: game.opponent.name,
+    //     // ships: SHIPS.copyWithin(0, 0),
+    //     ships: game.opponent.ships
+    //   }
+    // })
+
+  }
+  throw new Error('HACKING!' + url)
+  return fetch(url)
+  .then((r) => {
+    if (r.status === 200) {
+      return r.json()
+    }
+    throw new Error(r.status)
+  })
+  .catch((ex) => {
+    console.error('FETCH API error', ex)
+    throw ex
+  })
+}
+
+let apiSet = (url, options) => {
+  if (url==='/api/games/1' && options.designed) {
+    return new Promise((resolve) => {
+      resolve({ok: true})
+    })
+  }
+  throw new Error('HACKING!' + url)
+}
+
 class Homepage extends React.Component {
   constructor() {
     super();
-    this.state = {
-      games: [{
-        id: 1,
-        yourturn: false,
-        yours: _YOUR,
-        opponent: _OPP,
-      }]
-    };
+    // this.state = {
+    //   games: []
+    // };
   }
 
   render() {
@@ -78,26 +145,61 @@ class Games extends React.Component {
   constructor() {
     super();
     this.state = {
-      games: [1],
+      games: [],
     };
   }
 
+  componentDidMount() {
+    apiGet('/api/games/')
+    .then((result) => this.setState({games: result.games}))
+  }
+
+  startRandomGame() {
+    alert('Work harder')
+    apiGet('/api/games/create/random')
+  }
+
   render() {
-    return (
-      <div>
-        <h2>Games</h2>
+    let ongoingGames = null;
+    if (this.state.games.length) {
+      ongoingGames = (
         <ul>
           {
-            this.state.games.map((id) => {
+            this.state.games.map((game) => {
               return (
-                <li key={id}>
-                  Hi! {id}
-                  <Link to={`/game/${id}`}>Game {id}</Link>
+                <li key={game.id}>
+                  <Link to={`/game/${game.id}`}>
+                    {
+                      game.yourturn ?
+                      `Your turn against ${game.opponent.name}` :
+                      `${game.opponent.name}'s turn`
+                    }
+                  </Link>
                 </li>
               )
             })
           }
         </ul>
+      )
+    }
+    let startNewForm = (
+      <div>
+        <h3>Start a new game</h3>
+        <button onClick={this.startRandomGame.bind(this)}
+          >Play against next available random person</button>
+        <br/>
+        <button>Invite someone to play with</button> (no f'ing Facebook!)
+      </div>
+    )
+    return (
+      <div>
+        <h2>Games</h2>
+          <div>
+            <h3>Ongoing games you have</h3>
+            {this.state.games.length ? ongoingGames : <i>none</i>}
+          </div>
+        <hr/>
+        {startNewForm}
       </div>
     )
 
@@ -119,27 +221,38 @@ class Game extends React.Component {
       loading: true,
       yourturn: false,
       grid: [],  // your grid
-      ships: SHIPS.copyWithin(0, 0),
+      ships: [],
       opponent: {
         name: null,
         grid: [],
-        ships: SHIPS.copyWithin(0, 0),
+        ships: [],
       },
     }
   }
 
   componentDidMount() {
-    this.setState({
-      loading: false,
-      yourturn: true,
-      designmode: true,
-      id: this.props.params.id,
-      grid: _YOUR,
-      opponent: {
-        grid: _OPP,
-        name: 'Jim'
-      }
+    apiGet('/api/games/' + this.props.params.id)
+    .then((result) => {
+      let game = result.game
+      this.setState({
+        loading: false,
+        yourturn: game.yourturn,
+        designmode: game.designmode,
+        id: game.id,
+        grid: game.grid,
+        ships: game.ships,
+        // ships: SHIPS.copyWithin(0, 0),
+        opponent: {
+          // grid: _OPP,
+          grid: game.opponent.grid,
+          name: game.opponent.name,
+          designmode: game.opponent.designmode,
+          // ships: SHIPS.copyWithin(0, 0),
+          ships: game.opponent.ships
+        }
+      })
     })
+
   }
 
   cellClicked(yours, key) {
@@ -230,6 +343,7 @@ class Game extends React.Component {
       alert(overlaps + ' ships are still overlapping you big fart!')
     } else {
       this.setState({designmode: false})
+      apiSet('/api/games/' + this.state.id, {designed: true})
     }
   }
 
@@ -246,11 +360,9 @@ class Game extends React.Component {
               I have placed my shitty ships
             </button>
         )
-
         grids = (
           <div className="designmode">
             {doneButton}
-            <h4>Place your ships</h4>
             <Grid
               ships={this.state.ships}
               grid={this.state.grid}
@@ -262,15 +374,16 @@ class Game extends React.Component {
               />
           </div>
         )
+      } else if (this.state.opponent.designmode) {
+        <p>{this.state.opponent.name} is scheming and planning</p>
       } else {
-        console.log('OPPONENT', this.state.opponent)
         grids = (
           <div className="grids">
             <h4>Your grid</h4>
             <Grid
               grid={this.state.grid}
               ships={this.state.ships}
-              canMove={true}
+              canMove={false}
               hideShips={false}
               cellClicked={this.cellClicked.bind(this, true)}
               onMove={this.shipMoved.bind(this)}
@@ -290,12 +403,25 @@ class Game extends React.Component {
         )
       }
     }
+    console.log(this.state)
+    let statusHead
+    if (this.state.designmode) {
+      statusHead = <h3>Status: Place your shitty ships!</h3>
+    } else if (this.state.opponent.designmode) {
+      statusHead = <h3>Status: {this.state.opponent.name + '\u0027'}s placing ships</h3>
+    } else {
+      if (this.state.yourturn) {
+        statusHead = <h3>Status: Your turn</h3>
+      } else {
+        statusHead = <h3>Status {this.state.opponent.name + '\u0027'}s turn</h3>
+      }
+    }
+
     return (
       <div>
         <h2>Playing against <i>{this.state.opponent.name}</i></h2>
-        <h3>Turn? {this.state.yourturn ? 'Yours' : `${this.state.opponent.name}'s`}</h3>
+        {this.state.loading ? 'Loading...' : statusHead}
         {grids}
-        {this.state.loading ? 'Loading...' : null}
       </div>
     )
   }

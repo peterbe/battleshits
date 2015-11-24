@@ -12,16 +12,12 @@ export default class Ship extends React.Component {
   }
 
   componentDidMount() {
-    console.log('Ship mounted, props=', this.props)
-    let draggie = null
-    if (this.props.canMove) {
-      let element = document.querySelector('.ship.ship' + this.props.ship.id);
-      draggie = new Draggabilly(element, {
-        containment: '.grid',
-      });
-      draggie.on('dragEnd', this.dragEnd.bind(this))
-      draggie.on('staticClick', this.staticClick.bind(this))
-    }
+    let element = document.querySelector('.ship.ship' + this.props.ship.id);
+    let draggie = new Draggabilly(element, {
+      containment: '.grid',
+    });
+    draggie.on('dragEnd', this.dragEnd.bind(this))
+    draggie.on('staticClick', this.staticClick.bind(this))
     this.setState({
       draggie: draggie,
       width: $('.grid tr').width()/10,
@@ -99,7 +95,14 @@ export default class Ship extends React.Component {
     if (this.state.draggie) {
       this.state.draggie.element.style.left = style.left + 'px'
       this.state.draggie.element.style.top = style.top + 'px'
+
+      if (this.props.canMove) {
+        this.state.draggie.enable();
+      } else {
+        this.state.draggie.disable();
+      }
     }
+    
     return (
       <img src={src}
         key={ship.id}

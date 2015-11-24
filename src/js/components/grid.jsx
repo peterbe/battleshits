@@ -48,6 +48,19 @@ export default class Grid extends React.Component {
     }
     // the whole gridWidth is $(window).width() - 2px for the whole table
     let width = (gridWidth - 2) / 10;
+    let ships = null
+    if (!this.props.hideShips) {
+      ships = this.props.ships.map((ship) => {
+        return <Ship
+          key={ship.id}
+          ship={ship}
+          width={width}
+          canMove={this.props.canMove}
+          onMove={this.props.onMove.bind(this)}
+          onRotate={this.props.onRotate.bind(this)}
+          />
+      })
+    }
     return (
       <div className="grid">
         <table>
@@ -73,18 +86,7 @@ export default class Grid extends React.Component {
           }
           </tbody>
         </table>
-        {
-          this.props.ships.map((ship) => {
-            return <Ship
-              key={ship.id}
-              ship={ship}
-              width={width}
-              canMove={this.props.canMove}
-              onMove={this.props.onMove.bind(this)}
-              onRotate={this.props.onRotate.bind(this)}
-              />
-          })
-        }
+        {ships}
       </div>
     )
   }
