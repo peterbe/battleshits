@@ -62,7 +62,7 @@ export default class Grid extends React.Component {
       })
     }
     let bombs = null
-    console.log('RENDER GRID', grid)
+    // console.log('RENDER GRID', grid)
     bombs = grid.map((cell, i) => {
       if (cell > 0) {
         return <Bomb
@@ -75,13 +75,9 @@ export default class Grid extends React.Component {
         return null
       }
     })
-    // if (cellstate) {
-    //   console.log('CELL', style)
-    //   bomb = <Bomb state={cellstate}/>
-    // }
 
     return (
-      <div className="grid" id={this.props.domID}>
+      <div className="grid">
         <table>
           <tbody>
           {
@@ -92,6 +88,7 @@ export default class Grid extends React.Component {
                     row.map((cell, j) => {
                       return <Cell
                         key={i * 10 + j}
+                        index={i * 10 + j}
                         state={cell}
                         width={width}
                         hideShips={this.props.hideShips}

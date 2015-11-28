@@ -25,8 +25,8 @@ export default class Bomb extends React.Component {
     }[this.props.state]
 
     let index = this.props.index
-    let x = (index + 1) % 10
-    let y = Math.floor((index + 1) / 10)
+    let x = index % 10
+    let y = Math.floor(index / 10)
 
     let width = this.state.width || this.props.width
     let height = this.state.height || this.props.width

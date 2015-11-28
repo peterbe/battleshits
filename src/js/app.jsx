@@ -289,20 +289,23 @@ class Game extends React.Component {
 
   }
 
-  cellClicked(yours, key) {
-    THIS IS WHAT TO WORK ON NEXT
+  cellClicked(yours, index) {
     // you clicked, so if it's not your turn ignore
     if (!this.state.yourturn) {
       console.log('ignore click')
       return
     }
-    console.log('Clicked', yours, key)
-    let grid
-    if (yours) {
-      grid = this.state.grid
-    } else {
-      grid = this.state.opponent.grid
-    }
+    // XXX we also need to ignore the click if you clicked on a slot that already has something in it
+    // console.log(this.state)
+    console.log('key', index)
+    this.bombSlot(index, yours)
+    // console.log('Clicked', yours, key)
+    // let grid
+    // if (yours) {
+    //   grid = this.state.grid
+    // } else {
+    //   grid = this.state.opponent.grid
+    // }
 
     //
     // let _sum = SHIPS.reduce((a, b) => { return a + b });
@@ -388,42 +391,44 @@ class Game extends React.Component {
         this.setState({opponent: this.state.opponent})
         // console.log('yourturn?', this.state.yourturn)
         setTimeout(() => {
-          this.startAIGame()
+          this.makeAIMove()
         }, 1000)
       }
     }
   }
 
-  startAIGame() {
-    console.log('START AI GAME!')
-    if (!this.state.yourturn) {
-      // let's make a move for the computer
-      // XXX make this NOT random or next available one
-      let slots = []
-      this.state.grid.forEach((slot, i) => {
-        if (slot === 0) {
-          slots.push(i)
-        }
-      })
-      // now we know all the slots that haven't been bombed yet
-      let i = slots[Math.floor(Math.random() * slots.length)]
-      this.bombSlot(i, true)
-
+  makeAIMove() {
+    // console.log('START AI GAME!')
+    if (this.state.yourturn) {
+      throw new Error("Not the AI's turn")
     }
+
+    // let's make a move for the computer
+    // XXX make this NOT random or next available one
+    let slots = []
+    this.state.grid.forEach((slot, i) => {
+      if (slot === 0) {
+        slots.push(i)
+      }
+    })
+    // now we know all the slots that haven't been bombed yet
+    let i = slots[Math.floor(Math.random() * slots.length)]
+    this.bombSlot(i, true)
+
   }
 
   _newCellState(index, ships) {
-    let x = (index + 1) % 10
-    let y = Math.floor((index + 1) / 10)
+    let x = index % 10
+    let y = Math.floor(index / 10)
     let xy = x + ',' + y
-    let newstate = 1 // missed
-    ships.forEach((ship) => {
+    for (var ship of ships) {
       let coords = this._getAllCoordinates(ship)
       if (coords.has(xy)) {
-        newstate = 2 // explosion
+        // XXX we should now investigate if all coords of this ship has had an explosion and if so say "You sank my..."
+        return 2 // explosion
       }
-    })
-    return newstate
+    }
+    return 1 // missed
   }
 
   bombSlot(index, opponentmove) {
@@ -441,8 +446,13 @@ class Game extends React.Component {
       yourturn = false
       element = opponentsElement
       nextElement = yoursElement
-      this.state.opponent.grid[index] = this_.newCellState(index, this.state.opponent.ships)
+      this.state.opponent.grid[index] = this._newCellState(index, this.state.opponent.ships)
     }
+
+    // if (!opponentmove) {
+    //   console.log('bombSlot', index)
+    //   console.log(this.state.opponent.grid)
+    // }
     element.scrollIntoView({block: "end", behavior: "smooth"})
     setTimeout(() => {
       this.setState({
@@ -452,7 +462,12 @@ class Game extends React.Component {
       })
       setTimeout(() => {
         nextElement.scrollIntoView({block: "end", behavior: "smooth"})
-      }, 2000)
+        if (!this.state.yourturn && this.state.opponent.ai) {
+          setTimeout(() => {
+            this.makeAIMove()
+          }, 1000)
+        }
+      }, 1000)
     }, 500)
   }
 
@@ -489,28 +504,38 @@ class Game extends React.Component {
       } else {
         grids = (
           <div className="grids">
-            <h4>Your grid</h4>
-            <Grid
-              domID="yours"
-              grid={this.state.grid}
-              ships={this.state.ships}
-              canMove={false}
-              hideShips={false}
-              cellClicked={this.cellClicked.bind(this, true)}
-              onMove={this.shipMoved.bind(this)}
-              onRotate={this.shipRotated.bind(this)}
-              />
-            <h4>{`${this.state.opponent.name}'s`} grid</h4>
-            <Grid
-              domID="opponents"
-              grid={this.state.opponent.grid}
-              ships={this.state.opponent.ships}
-              canMove={false}
-              hideShips={true}
-              cellClicked={this.cellClicked.bind(this, false)}
-              onMove={this.shipMoved.bind(this)}
-              onRotate={this.shipRotated.bind(this)}
-              />
+            <div id="yours">
+              <h4>
+                Your grid
+                { !this.state.yourturn ?
+                  ` (${this.state.opponent.name}'s turn)` : null
+                }
+              </h4>
+              <Grid
+                grid={this.state.grid}
+                ships={this.state.ships}
+                canMove={false}
+                hideShips={false}
+                cellClicked={this.cellClicked.bind(this, true)}
+                onMove={this.shipMoved.bind(this)}
+                onRotate={this.shipRotated.bind(this)}
+                />
+            </div>
+            <div id="opponents">
+              <h4>
+                {`${this.state.opponent.name}'s`} grid
+                { this.state.yourturn ? ' (Your turn)' : null}
+              </h4>
+              <Grid
+                grid={this.state.opponent.grid}
+                ships={this.state.opponent.ships}
+                canMove={false}
+                hideShips={true}
+                cellClicked={this.cellClicked.bind(this, false)}
+                onMove={this.shipMoved.bind(this)}
+                onRotate={this.shipRotated.bind(this)}
+                />
+            </div>
           </div>
         )
       }
@@ -534,6 +559,10 @@ class Game extends React.Component {
         <h2>Playing against <i>{this.state.opponent.name}</i></h2>
         {this.state.loading ? 'Loading...' : statusHead}
         {grids}
+        <p>
+          Bottom of the page this is!
+        </p>
+
       </div>
     )
   }
