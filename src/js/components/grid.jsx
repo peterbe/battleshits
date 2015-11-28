@@ -2,7 +2,7 @@ import React from 'react';
 import $ from 'jquery';
 import Cell from './cell.jsx';
 import Ship from './ship.jsx';
-
+import Bomb from './bomb.jsx';
 
 export default class Grid extends React.Component {
   constructor() {
@@ -61,8 +61,27 @@ export default class Grid extends React.Component {
           />
       })
     }
+    let bombs = null
+    console.log('RENDER GRID', grid)
+    bombs = grid.map((cell, i) => {
+      if (cell > 0) {
+        return <Bomb
+          key={i}
+          index={i}
+          state={cell}
+          width={width}
+          />
+      } else {
+        return null
+      }
+    })
+    // if (cellstate) {
+    //   console.log('CELL', style)
+    //   bomb = <Bomb state={cellstate}/>
+    // }
+
     return (
-      <div className="grid">
+      <div className="grid" id={this.props.domID}>
         <table>
           <tbody>
           {
@@ -87,6 +106,7 @@ export default class Grid extends React.Component {
           </tbody>
         </table>
         {ships}
+        {bombs}
       </div>
     )
   }

@@ -19,24 +19,26 @@ const SHIPS = [
 const _YOUR = [];
 const _OPP = [];
 for (let i=0; i<100;i++) {
-  if (Math.random()>0.9) {
-    _YOUR.push(2);
-  } else if (Math.random()>0.9) {
-    _YOUR.push(3);
-  } else if (Math.random()>0.9) {
-    _YOUR.push(1);
-  } else {
-    _YOUR.push(0);
-  }
-  if (Math.random()>0.92) {
-    _OPP.push(2);
-  } else if (Math.random()>0.92) {
-    _OPP.push(3);
-  } else if (Math.random()>0.92) {
-    _OPP.push(1);
-  } else {
-    _OPP.push(0);
-  }
+  // if (Math.random()>0.9) {
+  //   _YOUR.push(2);
+  // } else if (Math.random()>0.9) {
+  //   _YOUR.push(3);
+  // } else if (Math.random()>0.9) {
+  //   _YOUR.push(1);
+  // } else {
+  //   _YOUR.push(0);
+  // }
+  _YOUR.push(0);
+  // if (Math.random()>0.92) {
+  //   _OPP.push(2);
+  // } else if (Math.random()>0.92) {
+  //   _OPP.push(3);
+  // } else if (Math.random()>0.92) {
+  //   _OPP.push(1);
+  // } else {
+  //   _OPP.push(0);
+  // }
+  _OPP.push(0);
 }
 
 let apiGet = (url) => {
@@ -47,6 +49,7 @@ let apiGet = (url) => {
           games: [
             {id: 1, designmode: true, yourturn: false, opponent: {name: 'Jim', designmode: false}},
             {id: 2, designmode: false, yourturn: true, opponent: {name: 'Matt C', designmode: false}},
+            {id: 3, designmode: true, yourturn: false, opponent: {name: 'Holy Acorn', ai: true, designmode: true}},
           ]
         })
     });
@@ -63,13 +66,34 @@ let apiGet = (url) => {
             opponent: {
               grid: _OPP,
               name: 'Jim',
+              ai: false,
               designmode: false,
               ships: SHIPS.copyWithin(0, 0),
             }
           }
         })
     });
-
+  }
+  if (url==='/api/games/3') {
+    return new Promise((resolve) => {
+        resolve({
+          game: {
+            id: 3,
+            yourturn: false,
+            designmode: true,
+            grid: _YOUR,
+            ships: SHIPS.copyWithin(0, 0),
+            opponent: {
+              grid: _OPP,
+              name: 'Holy Acorn',
+              ai: true,
+              designmode: true,
+              ships: SHIPS.copyWithin(0, 0),
+            }
+          }
+        })
+    });
+  }
     // this.setState({
     //   loading: false,
     //   yourturn: game.yourturn,
@@ -87,7 +111,7 @@ let apiGet = (url) => {
     //   }
     // })
 
-  }
+
   throw new Error('HACKING!' + url)
   return fetch(url)
   .then((r) => {
@@ -104,6 +128,11 @@ let apiGet = (url) => {
 
 let apiSet = (url, options) => {
   if (url==='/api/games/1' && options.designed) {
+    return new Promise((resolve) => {
+      resolve({ok: true})
+    })
+  }
+  if (url==='/api/games/3' && options.designed) {
     return new Promise((resolve) => {
       resolve({ok: true})
     })
@@ -173,6 +202,10 @@ class Games extends React.Component {
                       game.yourturn ?
                       `Your turn against ${game.opponent.name}` :
                       `${game.opponent.name}'s turn`
+                    }
+                    {
+                      game.opponent.ai ?
+                      ' (computer)' : null
                     }
                   </Link>
                 </li>
@@ -246,6 +279,7 @@ class Game extends React.Component {
           // grid: _OPP,
           grid: game.opponent.grid,
           name: game.opponent.name,
+          ai: game.opponent.ai,
           designmode: game.opponent.designmode,
           // ships: SHIPS.copyWithin(0, 0),
           ships: game.opponent.ships
@@ -256,7 +290,7 @@ class Game extends React.Component {
   }
 
   cellClicked(yours, key) {
-
+    THIS IS WHAT TO WORK ON NEXT
     // you clicked, so if it's not your turn ignore
     if (!this.state.yourturn) {
       console.log('ignore click')
@@ -285,26 +319,28 @@ class Game extends React.Component {
 
   }
 
+  _getAllCoordinates(ship) {
+    let coords = new Set()
+    let vertical = ship.rotation === 90 || ship.rotation === 270 ? 1 : 0
+    let horizontal = vertical ? 0 : 1
+    for (let i=0; i < ship.length; i++) {
+      coords.add(
+        (ship.x + i * horizontal) + ',' +
+        (ship.y + i * vertical)
+      )
+    }
+    return coords
+  }
+
   shipMoved(ship) {
     // This'll render the ships with their new position.
     // Now we need to figure out if any of the ships are overlapping
     // and thus mark them as such.
-    let getAllCoordinates = (ship) => {
-      let coords = new Set()
-      let vertical = ship.rotation === 90 || ship.rotation === 270 ? 1 : 0
-      let horizontal = vertical ? 0 : 1
-      for (let i=0; i < ship.length; i++) {
-        coords.add(
-          (ship.x + i * horizontal) + ',' +
-          (ship.y + i * vertical)
-        )
-      }
-      return coords
-    }
+
     let isOverlapping = (ship1, ship2) => {
       // list ALL their coordinates and compare if any of them match
-      let coords1 = getAllCoordinates(ship1)
-      let coords2 = getAllCoordinates(ship2)
+      let coords1 = this._getAllCoordinates(ship1)
+      let coords2 = this._getAllCoordinates(ship2)
       let intersection = [...coords1].filter(x => coords2.has(x))
       return intersection.length > 0
     }
@@ -325,7 +361,7 @@ class Game extends React.Component {
   }
 
   shipRotated(ship) {
-    console.log('Ship rotated!', ship)
+    // console.log('Ship rotated!', ship)
     this.shipMoved(ship)
   }
 
@@ -344,7 +380,80 @@ class Game extends React.Component {
     } else {
       this.setState({designmode: false})
       apiSet('/api/games/' + this.state.id, {designed: true})
+      if (this.state.opponent.ai) {
+        // you're playing against the computer, let the computer
+        // make the next move
+        // XXX here we should randomly place the AI's ships
+        this.state.opponent.designmode = false
+        this.setState({opponent: this.state.opponent})
+        // console.log('yourturn?', this.state.yourturn)
+        setTimeout(() => {
+          this.startAIGame()
+        }, 1000)
+      }
     }
+  }
+
+  startAIGame() {
+    console.log('START AI GAME!')
+    if (!this.state.yourturn) {
+      // let's make a move for the computer
+      // XXX make this NOT random or next available one
+      let slots = []
+      this.state.grid.forEach((slot, i) => {
+        if (slot === 0) {
+          slots.push(i)
+        }
+      })
+      // now we know all the slots that haven't been bombed yet
+      let i = slots[Math.floor(Math.random() * slots.length)]
+      this.bombSlot(i, true)
+
+    }
+  }
+
+  _newCellState(index, ships) {
+    let x = (index + 1) % 10
+    let y = Math.floor((index + 1) / 10)
+    let xy = x + ',' + y
+    let newstate = 1 // missed
+    ships.forEach((ship) => {
+      let coords = this._getAllCoordinates(ship)
+      if (coords.has(xy)) {
+        newstate = 2 // explosion
+      }
+    })
+    return newstate
+  }
+
+  bombSlot(index, opponentmove) {
+    let yourturn
+    let yoursElement = document.querySelector('#yours')
+    let opponentsElement = document.querySelector('#opponents')
+    let element
+    let nextElement
+    if (opponentmove) {
+      yourturn = true
+      element = yoursElement
+      nextElement = opponentsElement
+      this.state.grid[index] = this._newCellState(index, this.state.ships)
+    } else {
+      yourturn = false
+      element = opponentsElement
+      nextElement = yoursElement
+      this.state.opponent.grid[index] = this_.newCellState(index, this.state.opponent.ships)
+    }
+    element.scrollIntoView({block: "end", behavior: "smooth"})
+    setTimeout(() => {
+      this.setState({
+        grid: this.state.grid,
+        opponent: this.state.opponent,
+        yourturn: yourturn,
+      })
+      setTimeout(() => {
+        nextElement.scrollIntoView({block: "end", behavior: "smooth"})
+      }, 2000)
+    }, 500)
   }
 
   render() {
@@ -364,6 +473,7 @@ class Game extends React.Component {
           <div className="designmode">
             {doneButton}
             <Grid
+              domID="yours"
               ships={this.state.ships}
               grid={this.state.grid}
               canMove={true}
@@ -381,6 +491,7 @@ class Game extends React.Component {
           <div className="grids">
             <h4>Your grid</h4>
             <Grid
+              domID="yours"
               grid={this.state.grid}
               ships={this.state.ships}
               canMove={false}
@@ -391,6 +502,7 @@ class Game extends React.Component {
               />
             <h4>{`${this.state.opponent.name}'s`} grid</h4>
             <Grid
+              domID="opponents"
               grid={this.state.opponent.grid}
               ships={this.state.opponent.ships}
               canMove={false}
@@ -403,7 +515,7 @@ class Game extends React.Component {
         )
       }
     }
-    console.log(this.state)
+    // console.log(this.state)
     let statusHead
     if (this.state.designmode) {
       statusHead = <h3>Status: Place your shitty ships!</h3>
@@ -413,7 +525,7 @@ class Game extends React.Component {
       if (this.state.yourturn) {
         statusHead = <h3>Status: Your turn</h3>
       } else {
-        statusHead = <h3>Status {this.state.opponent.name + '\u0027'}s turn</h3>
+        statusHead = <h3>Status: {this.state.opponent.name + '\u0027'}s turn</h3>
       }
     }
 
