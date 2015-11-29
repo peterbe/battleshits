@@ -299,7 +299,7 @@ class Game extends React.Component {
       return
     }
     // XXX we also need to ignore the click if you clicked on a slot that already has something in it
-    // console.log(this.state)
+    console.log(this.state)
     this.bombSlot(index, yours)
   }
 

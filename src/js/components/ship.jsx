@@ -27,6 +27,7 @@ export default class Ship extends React.Component {
 
   staticClick() {
     // single click on a ship
+    if (!this.props.canMove) return
     let ship = this.props.ship
     ship.rotation += 90
     ship.rotation %= 360
