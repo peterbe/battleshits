@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { Router, IndexRoute, Route, Link } from 'react-router'
+import { Router, IndexRoute, Route, Link, Navigation } from 'react-router'
 import createBrowserHistory from 'history/lib/createBrowserHistory'
 import 'whatwg-fetch'
 import Grid from './components/grid.jsx'
@@ -143,8 +143,8 @@ let apiSet = (url, options) => {
 }
 
 class Homepage extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     // this.state = {
     //   games: []
     // };
@@ -173,8 +173,8 @@ class App extends React.Component {
 }
 
 class Games extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props)
     this.state = {
       games: [],
     };
@@ -185,9 +185,13 @@ class Games extends React.Component {
     .then((result) => this.setState({games: result.games}))
   }
 
-  startRandomGame() {
-    alert('Work harder')
-    apiGet('/api/games/create/random')
+  startRandomGame(ai) {
+    console.log('Start random game', ai)
+    console.log('context', this.context)
+    console.log('context.router', this.context.router)
+    // this.context.transitionTo('/games/3')
+    // alert('Work harder', )
+    // apiGet('/api/games/create/random')
   }
 
   render() {
@@ -220,8 +224,11 @@ class Games extends React.Component {
     let startNewForm = (
       <div>
         <h3>Start a new game</h3>
-        <button onClick={this.startRandomGame.bind(this)}
+        <button onClick={this.startRandomGame.bind(this, false)}
           >Play against next available random person</button>
+        <br/>
+        <button onClick={this.startRandomGame.bind(this, true)}
+          >Play against the computer</button>
         <br/>
         <button>Invite someone to play with</button> (no f'ing Facebook!)
       </div>
@@ -376,8 +383,13 @@ class Game extends React.Component {
       this.setState({designmode: false})
       apiSet('/api/games/' + this.state.id, {designed: true})
       if (this.state.opponent.ai) {
-        // you're playing against the computer, let the computer
-        // make the next move
+        // You're playing against the computer, let the computer
+        // make the next move.
+        // First, randomly place the computer's ships.
+        this._randomlyPlaceShips(
+          this.state.opponent.ships
+        )
+        console.log('OPPONENTS SHIPS AFTERWARDS', this.state.opponent.ships)
         // XXX here we should randomly place the AI's ships
         this.state.opponent.designmode = false
         this.setState({opponent: this.state.opponent})
@@ -385,6 +397,46 @@ class Game extends React.Component {
         setTimeout(() => {
           this.makeAIMove()
         }, 1000)
+      }
+    }
+  }
+
+  _randomlyPlaceShips(ships) {
+    let isOverlapping = (ship1, ship2) => {
+      // list ALL their coordinates and compare if any of them match
+      let coords1 = this._getAllCoordinates(ship1)
+      let coords2 = this._getAllCoordinates(ship2)
+      let intersection = [...coords1].filter(x => coords2.has(x))
+      return intersection.length > 0
+    }
+
+    let prev = {}  // remember what previous numbers we have generated
+    let randomPosition = (type) => {
+      if (!prev[type]) {
+        prev[type] = []
+      }
+      let r = Math.floor(Math.random() * 100)
+      if (prev[type].indexOf(r) > -1) {
+        return randomPosition(type)
+      }
+      prev[type].push(r)
+      return r
+    }
+    let randomRotation = () => {
+      let rotations = [0, 0, 90]
+      return rotations[Math.random() * rotations.length]
+    }
+    for (var ship of ships) {
+      // randomly place the ship somewhere
+      ship.x = randomPosition('x')
+      ship.y = randomPosition('y')
+      ship.rotation = randomRotation()
+
+      // now compare this to all other ships
+      for (var other in ships) {
+        if (other.id != ship.id) {
+          console.log(isOverlapping(ship, other))
+        }
       }
     }
   }
