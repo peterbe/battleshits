@@ -187,11 +187,8 @@ class Games extends React.Component {
 
   startRandomGame(ai) {
     console.log('Start random game', ai)
-    console.log('context', this.context)
-    console.log('context.router', this.context.router)
-    // this.context.transitionTo('/games/3')
-    // alert('Work harder', )
-    // apiGet('/api/games/create/random')
+    console.log(this.state.games)
+    // REDIRECT TO THE CREATED GAME this.props.history.replaceState(null, '/game/3')
   }
 
   render() {
@@ -248,6 +245,7 @@ class Games extends React.Component {
   }
 }
 
+
 class Game extends React.Component {
   constructor() {
     super();
@@ -296,7 +294,6 @@ class Game extends React.Component {
       })
     })
     Sounds.preLoadSounds()
-
   }
 
   cellClicked(yours, index) {
