@@ -12,7 +12,7 @@ const SHIPS = [
   {id: '2',   length: 2, x: 1, y: 0, rotation: 0, overlapping: false},
   {id: '3-1', length: 3, x: 7, y: 1, rotation: 0, overlapping: false},
   {id: '3-2', length: 3, x: 6, y: 2, rotation: 90, overlapping: false},
-  {id: '4',   length: 4, x: 5, y: 3, rotation: 270, overlapping: false},
+  {id: '4',   length: 4, x: 5, y: 3, rotation: 90, overlapping: false},
   {id: '5',   length: 5, x: 4, y: 8, rotation: 0, overlapping: false},
 ]
 
@@ -345,7 +345,20 @@ class Game extends React.Component {
   }
 
   shipRotated(ship) {
-    // console.log('Ship rotated!', ship)
+    // Sometimes when you rotate, the bottom part of the ship might
+    // stick out outside the grid. We'll move it back into the grid then.
+    if (ship.rotation === 90 || ship.rotation === 270) {
+      // first check if it's y number + length is too long
+      if ((ship.y + ship.length) > 10) {
+        ship.y -= ship.y + ship.length - 10
+      }
+    } else {
+      // ship lies horizontal
+      if (ship.x + ship.length > 10) {
+        ship.x -= ship.x + ship.length - 10
+      }
+    }
+
     this.shipMoved(ship)
   }
 

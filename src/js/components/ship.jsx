@@ -27,9 +27,51 @@ export default class Ship extends React.Component {
 
   staticClick() {
     // single click on a ship
-    this.props.ship.rotation += 90
-    this.props.ship.rotation %= 360
-    this.props.onRotate(this.props.ship)
+    let ship = this.props.ship
+    ship.rotation += 90
+    ship.rotation %= 360
+
+    /* Rotation is always clockwise. The x,y coordinates of the ship is
+     the ship's nose. If a ship is length 3 and located like this:
+     1 2 3
+     _|_|_  1
+     *|*|*  2
+     _|_|_  3
+     _|_|_  4
+
+    ...it will become this:
+
+    1 2 3
+    _|_|_  1
+    *|_|_  2
+    *|_|_  3
+    *|_|_  4
+
+    ...when in fact we want this:
+
+    1 2 3
+    _|*|_  1
+    _|*|_  2
+    _|*|_  3
+    _|_|_  4
+    */
+
+    let movement = {
+      2: 0,
+      3: 1,
+      4: 1,
+      5: 2,
+    }[ship.length]
+
+    if (ship.rotation === 90 || ship.rotation === 270) {
+      // went from horizontal to vertical
+      ship.x += movement
+      ship.y -= movement
+    } else {
+      ship.x -= movement
+      ship.y += movement
+    }
+    this.props.onRotate(ship)
   }
 
   dragEnd() {
@@ -88,6 +130,7 @@ export default class Ship extends React.Component {
     if (ship.overlapping) {
       className += ' overlapping'
     }
+    className += ` rotation${ship.rotation}`
 
     // The draggabilly plugin will forcibly set the top and left
     // on the element and these might be different from what they
@@ -102,7 +145,7 @@ export default class Ship extends React.Component {
         this.state.draggie.disable();
       }
     }
-    
+
     return (
       <img src={src}
         key={ship.id}
