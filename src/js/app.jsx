@@ -294,12 +294,10 @@ class Game extends React.Component {
 
   cellClicked(yours, index) {
     // you clicked, so if it's not your turn ignore
-    if (!this.state.yourturn) {
+    if (!this.state.yourturn || yours) {
       console.log('ignore click')
       return
     }
-    // XXX we also need to ignore the click if you clicked on a slot that already has something in it
-    console.log(this.state)
     this.bombSlot(index, yours)
   }
 
