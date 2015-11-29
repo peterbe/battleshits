@@ -1,10 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { Router, IndexRoute, Route, Link } from 'react-router';
-import createBrowserHistory from 'history/lib/createBrowserHistory';
-import 'whatwg-fetch';
-import Grid from './components/grid.jsx';
-import $ from 'jquery';
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { Router, IndexRoute, Route, Link } from 'react-router'
+import createBrowserHistory from 'history/lib/createBrowserHistory'
+import 'whatwg-fetch'
+import Grid from './components/grid.jsx'
+import Sounds from './components/sounds.js'
+import $ from 'jquery'
 
 
 const SHIPS = [
@@ -40,6 +41,7 @@ for (let i=0; i<100;i++) {
   // }
   _OPP.push(0);
 }
+
 
 let apiGet = (url) => {
 
@@ -286,6 +288,7 @@ class Game extends React.Component {
         }
       })
     })
+    Sounds.preLoadSounds()
 
   }
 
@@ -297,29 +300,7 @@ class Game extends React.Component {
     }
     // XXX we also need to ignore the click if you clicked on a slot that already has something in it
     // console.log(this.state)
-    console.log('key', index)
     this.bombSlot(index, yours)
-    // console.log('Clicked', yours, key)
-    // let grid
-    // if (yours) {
-    //   grid = this.state.grid
-    // } else {
-    //   grid = this.state.opponent.grid
-    // }
-
-    //
-    // let _sum = SHIPS.reduce((a, b) => { return a + b });
-    // let countShipCells = 0;
-    // grid.forEach((cell) => {
-    //   // 1 if there's a ship
-    //   // 2 if it's bombed
-    //   // 3 if it's bombed on a ship
-    //   // 0 if it's empty
-    //   if (cell === 1 || cell === 3) {
-    //     countShipCells++;
-    //   }
-    // });
-
   }
 
   _getAllCoordinates(ship) {
@@ -437,22 +418,30 @@ class Game extends React.Component {
     let opponentsElement = document.querySelector('#opponents')
     let element
     let nextElement
+    let newCellstate
     if (opponentmove) {
       yourturn = true
       element = yoursElement
       nextElement = opponentsElement
-      this.state.grid[index] = this._newCellState(index, this.state.ships)
+      newCellstate = this._newCellState(index, this.state.ships)
+      this.state.grid[index] = newCellstate
     } else {
       yourturn = false
       element = opponentsElement
       nextElement = yoursElement
-      this.state.opponent.grid[index] = this._newCellState(index, this.state.opponent.ships)
+      newCellstate = this._newCellState(index, this.state.opponent.ships)
+      this.state.opponent.grid[index] = newCellstate
     }
 
-    // if (!opponentmove) {
-    //   console.log('bombSlot', index)
-    //   console.log(this.state.opponent.grid)
-    // }
+    let audioElement
+    if (newCellstate === 1) {
+      // explosion!
+      audioElement = Sounds.getRandomAudioElement('fart')
+    } else {
+      audioElement = Sounds.getRandomAudioElement('explosion')
+    }
+    audioElement.play()
+
     element.scrollIntoView({block: "end", behavior: "smooth"})
     setTimeout(() => {
       this.setState({
