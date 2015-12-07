@@ -56,6 +56,26 @@ let apiGet = (url) => {
         })
     });
   }
+  if (url==='/api/games/0') {
+    return new Promise((resolve) => {
+        resolve({
+          game: {
+            id: 0,
+            yourturn: false,
+            designmode: true,
+            grid: _YOUR,
+            ships: SHIPS.copyWithin(0, 0),
+            opponent: {
+              grid: _OPP,
+              name: 'Computer',
+              ai: true,
+              designmode: true,
+              ships: SHIPS.copyWithin(0, 0),
+            }
+          }
+        })
+    });
+  }
   if (url==='/api/games/1') {
     return new Promise((resolve) => {
         resolve({
@@ -188,7 +208,20 @@ class Games extends React.Component {
   startRandomGame(ai) {
     console.log('Start random game', ai)
     console.log(this.state.games)
+    if (ai) {
+      let game = {
+        id: 0,
+        designmode: true,
+        yourturn: false,
+        opponent: {
+          name: 'Computer',
+          ai: true,
+          designmode: true
+        }
+      }
+    }
     // REDIRECT TO THE CREATED GAME this.props.history.replaceState(null, '/game/3')
+    this.props.history.replaceState(null, '/game/0')
   }
 
   render() {

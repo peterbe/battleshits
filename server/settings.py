@@ -38,11 +38,8 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 
 INSTALLED_APPS = [
     # Project specific apps
-    'headsupper.base',
-    'headsupper.api',
-
-    # Third party
-    'django_jinja',
+    'battleshits.base',
+    'battleshits.api',
 
     # Django apps
     'django.contrib.admin',
@@ -52,11 +49,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.sites',
 
-    # allauth
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.github',
 ]
 
 for app in config('EXTRA_APPS', default='', cast=Csv()):
@@ -66,7 +58,7 @@ for app in config('EXTRA_APPS', default='', cast=Csv()):
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'headsupper.api.middleware.JsonBodyCsrfViewMiddleware',
+    'server.api.middleware.JsonBodyCsrfViewMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
@@ -75,9 +67,9 @@ MIDDLEWARE_CLASSES = (
     # 'csp.middleware.CSPMiddleware',
 )
 
-ROOT_URLCONF = 'headsupper.urls'
+ROOT_URLCONF = 'battleshits.urls'
 
-WSGI_APPLICATION = 'headsupper.wsgi.application'
+WSGI_APPLICATION = 'battleshits.wsgi.application'
 
 
 # Database
@@ -116,7 +108,7 @@ TEMPLATES = [
             'match_extension': '.jinja',
             'newstyle_gettext': True,
             'context_processors': [
-                # 'headsupper.base.context_processors.settings',
+                # 'battleshits.base.context_processors.settings',
                 # 'django.template.context_processors.request',
             ],
         }
@@ -184,29 +176,11 @@ EMAIL_USE_TLS = config(
     cast=bool
 )
 
-EMAIL_FROM_NAME = 'Headsupper.io'
-EMAIL_FROM_EMAIL = 'oi@headsupper.io'
 
-
-GITHUB_API_ROOT = 'https://api.github.com'
-
-
-AUTHENTICATION_BACKENDS = (
-    'allauth.account.auth_backends.AuthenticationBackend',
-)
+#AUTHENTICATION_BACKENDS = (
+##    'allauth.account.auth_backends.AuthenticationBackend',
+#)
 SITE_ID = 1
 
 
 LOGIN_REDIRECT_URL = '/'
-
-# django-allauth stuff
-ACCOUNT_AUTHENTICATION_METHOD = 'username'
-ACCOUNT_UNIQUE_EMAIL = False
-ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # might change this some day
-ACCOUNT_LOGOUT_ON_GET = True  # yolo
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = config(
-    'ACCOUNT_DEFAULT_HTTP_PROTOCOL',
-    default='http'
-)
