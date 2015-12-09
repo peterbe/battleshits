@@ -7,11 +7,11 @@ import $ from 'jquery'
 
 
 const SHIPS = [
-  {id: '2',   length: 2, x: 1, y: 0, rotation: 0, overlapping: false},
-  {id: '3-1', length: 3, x: 7, y: 1, rotation: 0, overlapping: false},
-  {id: '3-2', length: 3, x: 6, y: 2, rotation: 90, overlapping: false},
-  {id: '4',   length: 4, x: 5, y: 3, rotation: 90, overlapping: false},
-  {id: '5',   length: 5, x: 4, y: 8, rotation: 0, overlapping: false},
+  {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
+  {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
+  {id: '3-2', length: 3, x: 0, y: 2, rotation: 0, overlapping: false},
+  {id: '4',   length: 4, x: 0, y: 3, rotation: 0, overlapping: false},
+  {id: '5',   length: 5, x: 0, y: 4, rotation: 0, overlapping: false},
 ]
 
 
@@ -124,7 +124,7 @@ let _randomlyPlaceShips = (ships) => {
     return r
   }
   let randomRotation = () => {
-    let rotations = [0, 0, 90]
+    let rotations = [0, 90]
     return rotations[Math.floor(Math.random() * rotations.length)]
   }
   for (var ship of ships) {
@@ -164,7 +164,7 @@ let apiGet = (url) => {
     return new Promise((resolve) => {
         resolve({
           games: [
-            _GAME1, _GAME2, _GAME3
+            //_GAME1, _GAME2, _GAME3
           ]
         })
     });
@@ -315,7 +315,9 @@ class Games extends React.Component {
   }
 
   startRandomGame(ai) {
-    console.log('Start random game', ai)
+    const _copyArrayOfObjects = (seq) => {
+      return Array.from(seq, item => Object.assign({}, item))
+    }
     if (ai) {
       let game = {
         id: -1,
@@ -323,23 +325,22 @@ class Games extends React.Component {
         designmode: true,
         yourturn: false,
         grid: Array.from(_EMPTY_GRID),
-        ships: Array.from(SHIPS),
+        ships: _copyArrayOfObjects(SHIPS),
         opponent: {
           name: 'Computer',
           ai: true,
           grid: Array.from(_EMPTY_GRID),
-          ships: Array.from(SHIPS),
+          ships: _copyArrayOfObjects(SHIPS),
           designmode: true
         }
       }
       game.ships = _randomlyPlaceShips(game.ships)
+      game.opponent.ships = _randomlyPlaceShips(game.opponent.ships)
       let games = this.state.games
       games.push(game)
       this.setState({games: games})
       this.props.onGameSelect(game)
     }
-    // REDIRECT TO THE CREATED GAME this.props.history.replaceState(null, '/game/3')
-    // this.props.history.replaceState(null, '/game/0')
   }
 
   render() {
