@@ -40,9 +40,7 @@ export default class Grid extends React.Component {
       }
       rows.push(row);
     }
-    // let gridWidth = $(window).width()
     let gridWidth = this.state.width
-    // gridWidth=1000
     if (!gridWidth) {
       throw new Error('width of grid not known')
     }
@@ -62,7 +60,6 @@ export default class Grid extends React.Component {
       })
     }
     let bombs = null
-    // console.log('RENDER GRID', grid)
     bombs = grid.map((cell, i) => {
       if (cell > 0) {
         return <Bomb

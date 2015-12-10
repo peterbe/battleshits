@@ -104,8 +104,11 @@ export default class Ship extends React.Component {
 
   render() {
     let ship = this.props.ship
-    let width = this.state.width || this.props.width
-    let height = this.state.height || this.props.width
+
+    // let width = this.state.width || this.props.width
+    // let height = this.state.height || this.props.width
+    let width = this.props.width || this.state.width
+    let height = this.props.width || this.state.height
 
     let borderWidth = 0 // for each <td> (collapsed table)
 
