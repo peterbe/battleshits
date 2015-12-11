@@ -47,7 +47,34 @@ export default class Grid extends React.Component {
     // the whole gridWidth is $(window).width() - 2px for the whole table
     let width = (gridWidth - 2) / 10;
     let ships = null
-    if (!this.props.hideShips) {
+    if (this.props.hideShips) {
+      // only show the ships if they have been fully bombed
+      ships = []
+      for (let ship of this.props.ships) {
+        if (ship.bombed) {
+         ships.push(<Ship
+           key={ship.id}
+           ship={ship}
+           width={width}
+           canMove={this.props.canMove}
+           onMove={this.props.onMove.bind(this)}
+           onRotate={this.props.onRotate.bind(this)}
+           />)
+         }
+      }
+      // ships = this.props.ships.filter((ship) => {
+      //   if (ship.bombed) {
+      //     return <Ship
+      //       key={ship.id}
+      //       ship={ship}
+      //       width={width}
+      //       canMove={this.props.canMove}
+      //       onMove={this.props.onMove.bind(this)}
+      //       onRotate={this.props.onRotate.bind(this)}
+      //       />
+      //   }
+      // })
+    } else {
       ships = this.props.ships.map((ship) => {
         return <Ship
           key={ship.id}

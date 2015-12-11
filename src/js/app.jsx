@@ -10,7 +10,7 @@ const SHIPS = [
   {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
   {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
   {id: '3-2', length: 3, x: 0, y: 2, rotation: 0, overlapping: false},
-  {id: '4',   length: 4, x: 0, y: 3, rotation: 0, overlapping: false},
+  {id: '4',   length: 4, x: 0, y: 3, rotation: 0, overlapping: false, bombed:true},
   {id: '5',   length: 5, x: 0, y: 4, rotation: 0, overlapping: false},
 ]
 
@@ -100,6 +100,19 @@ let _getAllCoordinates = (ship) => {
   return coords
 }
 
+let _getAllPoints = (ship) => {
+  // a ship has x, y, length and a rotation
+  let points = []
+  let vertical = ship.rotation === 90 || ship.rotation === 270 ? 1 : 0
+  let horizontal = vertical ? 0 : 1
+  for (let i=0; i < ship.length; i++) {
+    points.push(
+      (ship.x + i * horizontal) + (ship.y + i * vertical) * 10
+    )
+  }
+  return points
+}
+
 let _isOverlapping = (ship1, ship2) => {
   // list ALL their coordinates and compare if any of them match
   let coords1 = _getAllCoordinates(ship1)
@@ -117,6 +130,9 @@ let _randomlyPlaceShips = (ships) => {
       prev[type] = []
     }
     let r = Math.floor(Math.random() * 10)
+    // r += 3
+    // r=Math.min(9, r)
+    // console.log('R', r)
     if (prev[type].indexOf(r) > -1) {
       return randomPosition(type)
     }
@@ -498,6 +514,7 @@ class Game extends React.Component {
     }
 
     this.shipMoved(ship)
+    Sounds.getAudioElement('click').play()
   }
 
   _countOverlaps() {
@@ -557,11 +574,10 @@ class Game extends React.Component {
     for (var ship of ships) {
       let coords = _getAllCoordinates(ship)
       if (coords.has(xy)) {
-        // XXX we should now investigate if all coords of this ship has had an explosion and if so say "You sank my..."
-        return 2 // explosion
+        return [2, ship] // explosion
       }
     }
-    return 1 // missed
+    return [1, null] // missed
   }
 
   bombSlot(index, opponentmove) {
@@ -572,18 +588,34 @@ class Game extends React.Component {
     let element
     let nextElement
     let newCellstate
+    let ship
 
     game.yourturn = opponentmove
     if (opponentmove) {
       element = yoursElement
-      nextElement = opponentsElement
-      newCellstate = this._newCellState(index, game.ships)
+      nextElement = opponentsElement;
+      [newCellstate, ship] = this._newCellState(index, game.ships)
       game.grid[index] = newCellstate
     } else {
       element = opponentsElement
-      nextElement = yoursElement
-      newCellstate = this._newCellState(index, game.opponent.ships)
+      nextElement = yoursElement;
+      [newCellstate, ship] = this._newCellState(index, game.opponent.ships)
       game.opponent.grid[index] = newCellstate
+    }
+    if (newCellstate === 2) {
+      let bombed = true
+      for (let point of _getAllPoints(ship)) {
+        if (game.opponent.grid[point] !== 2) {
+          bombed = false
+        }
+      }
+      if (bombed) {
+        setTimeout(() => {
+          alert('You bombed my ' + ship.id + '!!')
+        }, 600)
+
+      }
+      ship.bombed = bombed
     }
 
     let audioElement
@@ -678,7 +710,6 @@ class Game extends React.Component {
         </div>
       )
     }
-    // console.log(this.state)
     let statusHead
     if (game.designmode) {
       statusHead = <h3>Status: Place your shitty ships!</h3>

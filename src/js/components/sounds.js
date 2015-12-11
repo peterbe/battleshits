@@ -3,6 +3,7 @@ const FARTSOUNDS = [
   'static/sounds/DriveByFarting-SoundBible.com-155971633.mp3',
   'static/sounds/QuickFart-SoundBible.com-655578646.mp3',
   'static/sounds/Uuuuuu-Paula-1357936016.mp3',
+  'static/sounds/SquishFart-SoundBible.com-115133916.mp3',
 ]
 
 const EXPLOSIONSOUNDS = [
@@ -16,6 +17,10 @@ const MISCSOUNDS = [
   'static/sounds/Bunker_Buster_Missle-Mike_Koenig-1405344373.mp3',
 ]
 
+const CLICKSOUNDS = [
+  'static/sounds/click.mp3',
+]
+
 
 class Sounds {
 
@@ -24,7 +29,11 @@ class Sounds {
   }
 
   preLoadSounds() {
-    let pairs = [['fart', FARTSOUNDS], ['explosion', EXPLOSIONSOUNDS]]
+    let pairs = [
+      ['fart', FARTSOUNDS],
+      ['explosion', EXPLOSIONSOUNDS],
+      ['click', CLICKSOUNDS]
+    ]
     for (var pair of pairs) {
       let group = pair[1]
       let cls = pair[0]
@@ -54,6 +63,14 @@ class Sounds {
     }
     this.previousRandomAudioElement[type] = node
     return node
+  }
+
+  getAudioElement(type) {
+    let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
+    if (nodes.length < 1) {
+      throw new Error(`No sound for '${type}'`)
+    }
+    return nodes[0]
   }
 
 }
