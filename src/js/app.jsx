@@ -10,7 +10,7 @@ const SHIPS = [
   {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
   {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
   {id: '3-2', length: 3, x: 0, y: 2, rotation: 0, overlapping: false},
-  {id: '4',   length: 4, x: 0, y: 3, rotation: 0, overlapping: false, bombed:true},
+  {id: '4',   length: 4, x: 0, y: 3, rotation: 0, overlapping: false},
   {id: '5',   length: 5, x: 0, y: 4, rotation: 0, overlapping: false},
 ]
 
@@ -342,6 +342,10 @@ class Games extends React.Component {
         yourturn: false,
         grid: Array.from(_EMPTY_GRID),
         ships: _copyArrayOfObjects(SHIPS),
+        rules: {
+          drops: 3
+        },
+        _drops: 0,  //
         opponent: {
           name: 'Computer',
           ai: true,
@@ -533,6 +537,11 @@ class Game extends React.Component {
     } else {
       game.designmode = false
       this.props.changeGame(game)
+
+      // When the game starts, and the second grid appears, the browser
+      // will, for some reason, sometimes scroll down a bit. Prevent that.
+      // document.querySelector('#yours').scrollIntoView()
+      // console.log('Game changed')
       // this.setState({designmode: false})
       // apiSet('/api/games/' + this.state.id, {designed: true})
       if (game.opponent.ai) {
@@ -541,6 +550,7 @@ class Game extends React.Component {
         game.opponent.designmode = false
         this.props.changeGame(game)
         setTimeout(() => {
+          document.querySelector('#yours').scrollIntoView()
           this.makeAIMove()
         }, 1000)
       }
@@ -564,7 +574,6 @@ class Game extends React.Component {
     // now we know all the slots that haven't been bombed yet
     let i = slots[Math.floor(Math.random() * slots.length)]
     this.bombSlot(i, true)
-
   }
 
   _newCellState(index, ships) {
@@ -590,7 +599,25 @@ class Game extends React.Component {
     let newCellstate
     let ship
 
-    game.yourturn = opponentmove
+    let isBombed = (grid, ship) => {
+      for (let point of _getAllPoints(ship)) {
+        if (game.opponent.grid[point] !== 2) {
+          return false
+        }
+      }
+      return true
+    }
+
+    // the turn only changes if you've dropped as many as the rules
+    // call for.
+    game._drops = game._drops || 0
+    game._drops++
+    let turnchange = false
+    if (game._drops == game.rules.drops) {
+      game.yourturn = opponentmove
+      turnchange = true
+      game._drops = 0
+    }
     if (opponentmove) {
       element = yoursElement
       nextElement = opponentsElement;
@@ -603,19 +630,27 @@ class Game extends React.Component {
       game.opponent.grid[index] = newCellstate
     }
     if (newCellstate === 2) {
-      let bombed = true
-      for (let point of _getAllPoints(ship)) {
-        if (game.opponent.grid[point] !== 2) {
-          bombed = false
+      let bombed
+      if (opponentmove) {
+        bombed = isBombed(game.opponent.grid, ship)
+        if (bombed) {
+          setTimeout(() => {
+            alert('I bombed your ' + ship.id + '!!')
+          }, 400)
+        }
+      } else {
+        bombed = isBombed(game.grid, ship)
+        if (bombed) {
+          setTimeout(() => {
+            alert('You bombed my ' + ship.id + '!!')
+          }, 400)
         }
       }
+      ship.bombed = bombed
       if (bombed) {
-        setTimeout(() => {
-          alert('You bombed my ' + ship.id + '!!')
-        }, 600)
+        // XXX might need to figure out if the game is over
 
       }
-      ship.bombed = bombed
     }
 
     let audioElement
@@ -627,24 +662,49 @@ class Game extends React.Component {
     }
     audioElement.play()
 
-    element.scrollIntoView({block: "end", behavior: "smooth"})
+    // if (turnchange) {
+    //   console.log('Turnchange, scroll to', element)
+    //   element.scrollIntoView({block: "end", behavior: "smooth"})
+    // }
 
     setTimeout(() => {
       this.props.changeGame(game)
       setTimeout(() => {
-        nextElement.scrollIntoView({block: "end", behavior: "smooth"})
+        if (turnchange) {
+          nextElement.scrollIntoView({block: "end", behavior: "smooth"})
+        }
         if (!game.yourturn && game.opponent.ai) {
           setTimeout(() => {
             this.makeAIMove()
-          }, 1000)
+          }, 800)
         }
-      }, 1000)
-    }, 500)
+      }, 800)
+    }, 400)
   }
 
   render() {
     let game = this.props.game
     let grids = null;
+
+    let yourHeader = "Your grid"
+    if (!game.yourturn) {
+      if (game._drops && game._drops < game.rules.drops) {
+        // XXX multiline strings??
+        yourHeader += ` (${game.opponent.name}'s turn, ${game._drops} of ${game.rules.drops})`
+      } else {
+        yourHeader += ` (${game.opponent.name}'s turn)`
+      }
+    }
+
+    let opponentHeader = `${game.opponent.name}'s grid`
+    if (game.yourturn) {
+      if (game._drops && game._drops < game.rules.drops) {
+        opponentHeader += ` (Your turn, ${game._drops} of ${game.rules.drops})`
+      } else {
+        opponentHeader += ` (Your turn)`
+      }
+    }
+
     if (game.designmode) {
       let disabledDoneButton = this._countOverlaps() > 0
       let doneButton = (
@@ -677,10 +737,7 @@ class Game extends React.Component {
         <div className="grids">
           <div id="yours">
             <h4>
-              Your grid
-              { !game.yourturn ?
-                ` (${game.opponent.name}'s turn)` : null
-              }
+              {yourHeader}
             </h4>
             <Grid
               grid={game.grid}
@@ -694,8 +751,7 @@ class Game extends React.Component {
           </div>
           <div id="opponents">
             <h4>
-              {`${game.opponent.name}'s`} grid
-              { game.yourturn ? ' (Your turn)' : null}
+              {opponentHeader}
             </h4>
             <Grid
               grid={game.opponent.grid}
