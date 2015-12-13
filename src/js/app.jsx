@@ -343,7 +343,7 @@ class Games extends React.Component {
         grid: Array.from(_EMPTY_GRID),
         ships: _copyArrayOfObjects(SHIPS),
         rules: {
-          drops: 3
+          drops: 4,
         },
         _drops: 0,  //
         opponent: {
@@ -635,14 +635,14 @@ class Game extends React.Component {
         bombed = isBombed(game.opponent.grid, ship)
         if (bombed) {
           setTimeout(() => {
-            alert('I bombed your ' + ship.id + '!!')
+            alert(`I sunk your battleshit! Ha ha!`)
           }, 400)
         }
       } else {
         bombed = isBombed(game.grid, ship)
         if (bombed) {
           setTimeout(() => {
-            alert('You bombed my ' + ship.id + '!!')
+            alert(`You sunk my battleshit you jerk!`)
           }, 400)
         }
       }
@@ -705,50 +705,86 @@ class Game extends React.Component {
       }
     }
 
+    // if (game.designmode) {
+    //   let disabledDoneButton = this._countOverlaps() > 0
+      // let doneButton = (
+      //     <button
+      //         className="done-button"
+      //         onClick={this.onDoneButtonClick.bind(this)}
+      //         disabled={disabledDoneButton}>
+      //       I have placed my shitty ships
+      //     </button>
+      // )
+      // grids = (
+      //   <div className="designmode">
+      //     {doneButton}
+      //     <Grid
+      //       domID="yours"
+      //       ships={game.ships}
+      //       grid={game.grid}
+      //       canMove={true}
+      //       hideShips={false}
+      //       cellClicked={this.cellClicked.bind(this, true)}
+      //       onMove={this.shipMoved.bind(this)}
+      //       onRotate={this.shipRotated.bind(this)}
+      //       />
+      //   </div>
+      // )
+    // } else if (game.opponent.designmode) {
+    //   <p>{game.opponent.name} is scheming and planning</p>
+    // } else {
+      // grids = (
+      //   <div className="grids">
+      //     <div id="yours">
+      //       <h4>
+      //         {yourHeader}
+      //       </h4>
+      //       <Grid
+      //         grid={game.grid}
+      //         ships={game.ships}
+      //         canMove={false}
+      //         hideShips={false}
+      //         cellClicked={this.cellClicked.bind(this, true)}
+      //         onMove={this.shipMoved.bind(this)}
+      //         onRotate={this.shipRotated.bind(this)}
+      //         />
+      //     </div>
+      //     <div id="opponents">
+      //       <h4>
+      //         {opponentHeader}
+      //       </h4>
+      //       <Grid
+      //         grid={game.opponent.grid}
+      //         ships={game.opponent.ships}
+      //         canMove={false}
+      //         hideShips={true}
+      //         cellClicked={this.cellClicked.bind(this, false)}
+      //         onMove={this.shipMoved.bind(this)}
+      //         onRotate={this.shipRotated.bind(this)}
+      //         />
+      //     </div>
+      //   </div>
+      // )
+    // }
+    let statusHead
     if (game.designmode) {
-      let disabledDoneButton = this._countOverlaps() > 0
-      let doneButton = (
-          <button
-              className="done-button"
-              onClick={this.onDoneButtonClick.bind(this)}
-              disabled={disabledDoneButton}>
-            I have placed my shitty ships
-          </button>
-      )
-      grids = (
-        <div className="designmode">
-          {doneButton}
-          <Grid
-            domID="yours"
-            ships={game.ships}
-            grid={game.grid}
-            canMove={true}
-            hideShips={false}
-            cellClicked={this.cellClicked.bind(this, true)}
-            onMove={this.shipMoved.bind(this)}
-            onRotate={this.shipRotated.bind(this)}
-            />
-        </div>
-      )
+      statusHead = <h3>Status: Place your shitty ships!</h3>
     } else if (game.opponent.designmode) {
-      <p>{game.opponent.name} is scheming and planning</p>
+      statusHead = <h3>Status: {game.opponent.name + '\u0027'}s placing ships</h3>
     } else {
-      grids = (
-        <div className="grids">
-          <div id="yours">
-            <h4>
-              {yourHeader}
-            </h4>
-            <Grid
-              grid={game.grid}
-              ships={game.ships}
-              canMove={false}
-              hideShips={false}
-              cellClicked={this.cellClicked.bind(this, true)}
-              onMove={this.shipMoved.bind(this)}
-              onRotate={this.shipRotated.bind(this)}
-              />
-          </div>
+      if (game.yourturn) {
+        statusHead = <h3>Status: Your turn</h3>
+      } else {
+        statusHead = <h3>Status: {game.opponent.name + '\u0027'}s turn</h3>
+      }
+    }
+
+    let opponent = null
+    if (!game.designmode) {
+      if (game.opponent.designmode) {
+        opponent = <p>{game.opponent.name} is scheming and planning</p>
+      } else {
+        opponent = (
           <div id="opponents">
             <h4>
               {opponentHeader}
@@ -763,30 +799,53 @@ class Game extends React.Component {
               onRotate={this.shipRotated.bind(this)}
               />
           </div>
-        </div>
+        )
+      }
+    // } else {
+    //   opponent = <p>No opponent yet</p>
+    }
+    let doneButton = null
+
+    if (game.designmode) {
+      let disabledDoneButton = this._countOverlaps() > 0
+      doneButton = (
+        <button
+            className="done-button"
+            onClick={this.onDoneButtonClick.bind(this)}
+            disabled={disabledDoneButton}>
+          I have placed my shitty ships
+        </button>
       )
     }
-    let statusHead
-    if (game.designmode) {
-      statusHead = <h3>Status: Place your shitty ships!</h3>
-    } else if (game.opponent.designmode) {
-      statusHead = <h3>Status: {game.opponent.name + '\u0027'}s placing ships</h3>
-    } else {
-      if (game.yourturn) {
-        statusHead = <h3>Status: Your turn</h3>
-      } else {
-        statusHead = <h3>Status: {game.opponent.name + '\u0027'}s turn</h3>
-      }
-    }
+
+    let yours = (
+      <div id="yours">
+        { game.designmode ? doneButton : <h4>{yourHeader}</h4>}
+        <Grid
+          grid={game.grid}
+          ships={game.ships}
+          canMove={game.designmode}
+          hideShips={false}
+          cellClicked={this.cellClicked.bind(this, true)}
+          onMove={this.shipMoved.bind(this)}
+          onRotate={this.shipRotated.bind(this)}
+          />
+      </div>
+    )
 
     return (
       <div>
         <h2>Playing against <i>{game.opponent.name}</i></h2>
         {statusHead}
-        {grids}
-        <p>
-          Bottom of the page this is!
-        </p>
+        <div className="grids">
+
+          { yours }
+
+          { opponent }
+
+        </div>
+        <hr/>
+        <h5>You and your darn options!</h5>
       </div>
     )
   }

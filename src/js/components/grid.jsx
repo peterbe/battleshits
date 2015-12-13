@@ -13,19 +13,24 @@ export default class Grid extends React.Component {
   }
 
   updateDimensions() {
+    console.log("Setting state on ", this.props)
     this.setState({width: $(window).width()})
+    console.log('Sat state.\n')
   }
 
   componentWillMount() {
+    console.log('componentWillMount:')
     this.updateDimensions()
   }
 
   componentDidMount() {
-      window.addEventListener("resize", this.updateDimensions.bind(this))
+    console.log('componentDidMount:')
+    window.addEventListener("resize", this.updateDimensions.bind(this))
   }
 
   componentWillUnmount() {
-      window.removeEventListener("resize", this.updateDimensions.bind(this))
+    console.log('componentWillUnmount:')
+    window.removeEventListener("resize", this.updateDimensions.bind(this))
   }
 
 
@@ -62,18 +67,6 @@ export default class Grid extends React.Component {
            />)
          }
       }
-      // ships = this.props.ships.filter((ship) => {
-      //   if (ship.bombed) {
-      //     return <Ship
-      //       key={ship.id}
-      //       ship={ship}
-      //       width={width}
-      //       canMove={this.props.canMove}
-      //       onMove={this.props.onMove.bind(this)}
-      //       onRotate={this.props.onRotate.bind(this)}
-      //       />
-      //   }
-      // })
     } else {
       ships = this.props.ships.map((ship) => {
         return <Ship
@@ -99,6 +92,12 @@ export default class Grid extends React.Component {
         return null
       }
     })
+
+    let positions = []
+    for (let s of this.props.ships) {
+      positions.push([s.id, s.x, s.y])
+    }
+    if (!this.props.hideShips) console.log(this.props.hideShips, ...positions)
 
     return (
       <div className="grid">

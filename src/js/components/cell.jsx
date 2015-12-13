@@ -9,7 +9,7 @@ export default class Cell extends React.Component {
       <td
         onClick={this.props.cellClicked.bind(this)}
         style={style}
-        >{/*this.props.index*/}</td>
+        >{this.props.index}</td>
     )
   }
 }
