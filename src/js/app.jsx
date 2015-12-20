@@ -363,6 +363,7 @@ class Games extends React.Component {
         rules: {
           drops: 5,
         },
+        gameover: false,
         _drops: 0,  //
         opponent: {
           name: 'Computer',
@@ -644,10 +645,13 @@ class Game extends React.Component {
           allBombed = _isAllBombed(game.opponent.ships)
         }
         if (allBombed) {
+          game.gameover = true
           if (opponentmove) {
-            alert("You lost!")
+            this.setState({yourMessage: `You lost! (aka. you suck)`})
+            // alert("You lost!")
           } else {
-            alert("You won!")
+            this.setState({yourMessage: `You won! Moahaha!`})
+            // alert("You won!")
           }
         }
       }
