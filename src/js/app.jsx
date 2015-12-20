@@ -7,9 +7,9 @@ import $ from 'jquery'
 
 
 const SHIPS = [
-  {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
-  {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
-  {id: '3-2', length: 3, x: 0, y: 2, rotation: 0, overlapping: false},
+  // {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
+  // {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
+  // {id: '3-2', length: 3, x: 0, y: 2, rotation: 0, overlapping: false},
   {id: '4',   length: 4, x: 0, y: 3, rotation: 0, overlapping: false},
   {id: '5',   length: 5, x: 0, y: 4, rotation: 0, overlapping: false},
 ]
@@ -105,12 +105,32 @@ let _getAllPoints = (ship) => {
   let points = []
   let vertical = ship.rotation === 90 || ship.rotation === 270 ? 1 : 0
   let horizontal = vertical ? 0 : 1
-  for (let i=0; i < ship.length; i++) {
+  let x = ship.x
+  let y = ship.y
+  for (let i = 0; i < ship.length; i++) {
     points.push(
-      (ship.x + i * horizontal) + (ship.y + i * vertical) * 10
+      (x + i * horizontal) + (y + i * vertical) * 10
     )
   }
   return points
+}
+
+let _isBombed = (grid, ship) => {
+  for (let point of _getAllPoints(ship)) {
+    if (grid[point] !== 2) {
+      return false
+    }
+  }
+  return true
+}
+
+let _isAllBombed = (ships) => {
+  for (let ship of ships) {
+    if (!ship.bombed) {
+      return false
+    }
+  }
+  return true
 }
 
 let _isOverlapping = (ship1, ship2) => {
@@ -130,9 +150,6 @@ let _randomlyPlaceShips = (ships) => {
       prev[type] = []
     }
     let r = Math.floor(Math.random() * 10)
-    // r += 3
-    // r=Math.min(9, r)
-    // console.log('R', r)
     if (prev[type].indexOf(r) > -1) {
       return randomPosition(type)
     }
@@ -145,6 +162,7 @@ let _randomlyPlaceShips = (ships) => {
   }
   for (var ship of ships) {
     // randomly place the ship somewhere
+    console.log('Setting random ship.x position')
     ship.x = randomPosition('x')
     ship.y = randomPosition('y')
     ship.rotation = randomRotation()
@@ -343,7 +361,7 @@ class Games extends React.Component {
         grid: Array.from(_EMPTY_GRID),
         ships: _copyArrayOfObjects(SHIPS),
         rules: {
-          drops: 4,
+          drops: 5,
         },
         _drops: 0,  //
         opponent: {
@@ -356,6 +374,7 @@ class Games extends React.Component {
       }
       game.ships = _randomlyPlaceShips(game.ships)
       game.opponent.ships = _randomlyPlaceShips(game.opponent.ships)
+      console.log('CHEATING:', game.opponent.ships)
       let games = this.state.games
       games.push(game)
       this.setState({games: games})
@@ -423,6 +442,8 @@ class Game extends React.Component {
     super(props)
     this.state = {
       loading: true,
+      yourMessage: null,
+      opponentMessage: null,
       // yourturn: false,
       // grid: [],  // your grid
       // ships: [],
@@ -435,37 +456,6 @@ class Game extends React.Component {
   }
 
   componentDidMount() {
-    // console.log("GAME", this.props.game)
-    // let state = this.props.game
-    // state.loading = false
-    // this.setState(state)
-    // console.log('THIS.STATE', this.state)
-    // this.setState({loading: false})
-    // throw "work harder"
-
-    // apiGet('/api/games/' + this.props.params.id)
-    // .then((result) => {
-    //   let game = result.game
-    //   this.setState({
-    //     loading: false,
-    //     yourturn: game.yourturn,
-    //     designmode: game.designmode,
-    //     id: game.id,
-    //     grid: game.grid,
-    //     ships: game.ships,
-    //     // ships: SHIPS.copyWithin(0, 0),
-    //     opponent: {
-    //       // grid: _OPP,
-    //       grid: game.opponent.grid,
-    //       name: game.opponent.name,
-    //       ai: game.opponent.ai,
-    //       designmode: game.opponent.designmode,
-    //       // ships: SHIPS.copyWithin(0, 0),
-    //       ships: game.opponent.ships
-    //     }
-    //   })
-    // })
-
     // XXX replace this with service worker or manifest or something
     Sounds.preLoadSounds()
   }
@@ -508,11 +498,13 @@ class Game extends React.Component {
     if (ship.rotation === 90 || ship.rotation === 270) {
       // first check if it's y number + length is too long
       if ((ship.y + ship.length) > 10) {
+        console.log('shipRotated y')
         ship.y -= ship.y + ship.length - 10
       }
     } else {
       // ship lies horizontal
       if (ship.x + ship.length > 10) {
+        console.log('shipRotated x')
         ship.x -= ship.x + ship.length - 10
       }
     }
@@ -540,10 +532,6 @@ class Game extends React.Component {
 
       // When the game starts, and the second grid appears, the browser
       // will, for some reason, sometimes scroll down a bit. Prevent that.
-      // document.querySelector('#yours').scrollIntoView()
-      // console.log('Game changed')
-      // this.setState({designmode: false})
-      // apiSet('/api/games/' + this.state.id, {designed: true})
       if (game.opponent.ai) {
         // You're playing against the computer, let the computer
         // make the next move.
@@ -580,7 +568,7 @@ class Game extends React.Component {
     let x = index % 10
     let y = Math.floor(index / 10)
     let xy = x + ',' + y
-    for (var ship of ships) {
+    for (let ship of ships) {
       let coords = _getAllCoordinates(ship)
       if (coords.has(xy)) {
         return [2, ship] // explosion
@@ -598,15 +586,6 @@ class Game extends React.Component {
     let nextElement
     let newCellstate
     let ship
-
-    let isBombed = (grid, ship) => {
-      for (let point of _getAllPoints(ship)) {
-        if (game.opponent.grid[point] !== 2) {
-          return false
-        }
-      }
-      return true
-    }
 
     // the turn only changes if you've dropped as many as the rules
     // call for.
@@ -631,25 +610,46 @@ class Game extends React.Component {
     }
     if (newCellstate === 2) {
       let bombed
+      let allBombed = false
       if (opponentmove) {
-        bombed = isBombed(game.opponent.grid, ship)
+        bombed = _isBombed(game.grid, ship)
         if (bombed) {
+          this.setState({yourMessage: `You sunk my battleshit (length ${ship.length})!`})
           setTimeout(() => {
-            alert(`I sunk your battleshit! Ha ha!`)
-          }, 400)
+            this.setState({yourMessage: null})
+          }, 4000)
+          // setTimeout(() => {
+          //   alert(`I sunk your battleshit! Ha ha!`)
+          // }, 400)
         }
       } else {
-        bombed = isBombed(game.grid, ship)
+        bombed = _isBombed(game.opponent.grid, ship)
         if (bombed) {
+          this.setState({opponentMessage: `I sunk your battleshit (length ${ship.length})! Ha ha!`})
           setTimeout(() => {
-            alert(`You sunk my battleshit you jerk!`)
-          }, 400)
+            this.setState({opponentMessage: null})
+          }, 4000)
+          // setTimeout(() => {
+          //   alert(`You sunk my battleshit you jerk!`)
+          // }, 400)
         }
       }
       ship.bombed = bombed
       if (bombed) {
+        console.log('SHIP IS BOMBED!', ship)
         // XXX might need to figure out if the game is over
-
+        if (opponentmove) {
+          allBombed = _isAllBombed(game.ships)
+        } else {
+          allBombed = _isAllBombed(game.opponent.ships)
+        }
+        if (allBombed) {
+          if (opponentmove) {
+            alert("You lost!")
+          } else {
+            alert("You won!")
+          }
+        }
       }
     }
 
@@ -705,67 +705,6 @@ class Game extends React.Component {
       }
     }
 
-    // if (game.designmode) {
-    //   let disabledDoneButton = this._countOverlaps() > 0
-      // let doneButton = (
-      //     <button
-      //         className="done-button"
-      //         onClick={this.onDoneButtonClick.bind(this)}
-      //         disabled={disabledDoneButton}>
-      //       I have placed my shitty ships
-      //     </button>
-      // )
-      // grids = (
-      //   <div className="designmode">
-      //     {doneButton}
-      //     <Grid
-      //       domID="yours"
-      //       ships={game.ships}
-      //       grid={game.grid}
-      //       canMove={true}
-      //       hideShips={false}
-      //       cellClicked={this.cellClicked.bind(this, true)}
-      //       onMove={this.shipMoved.bind(this)}
-      //       onRotate={this.shipRotated.bind(this)}
-      //       />
-      //   </div>
-      // )
-    // } else if (game.opponent.designmode) {
-    //   <p>{game.opponent.name} is scheming and planning</p>
-    // } else {
-      // grids = (
-      //   <div className="grids">
-      //     <div id="yours">
-      //       <h4>
-      //         {yourHeader}
-      //       </h4>
-      //       <Grid
-      //         grid={game.grid}
-      //         ships={game.ships}
-      //         canMove={false}
-      //         hideShips={false}
-      //         cellClicked={this.cellClicked.bind(this, true)}
-      //         onMove={this.shipMoved.bind(this)}
-      //         onRotate={this.shipRotated.bind(this)}
-      //         />
-      //     </div>
-      //     <div id="opponents">
-      //       <h4>
-      //         {opponentHeader}
-      //       </h4>
-      //       <Grid
-      //         grid={game.opponent.grid}
-      //         ships={game.opponent.ships}
-      //         canMove={false}
-      //         hideShips={true}
-      //         cellClicked={this.cellClicked.bind(this, false)}
-      //         onMove={this.shipMoved.bind(this)}
-      //         onRotate={this.shipRotated.bind(this)}
-      //         />
-      //     </div>
-      //   </div>
-      // )
-    // }
     let statusHead
     if (game.designmode) {
       statusHead = <h3>Status: Place your shitty ships!</h3>
@@ -794,9 +733,11 @@ class Game extends React.Component {
               ships={game.opponent.ships}
               canMove={false}
               hideShips={true}
+              opponent={true}
               cellClicked={this.cellClicked.bind(this, false)}
               onMove={this.shipMoved.bind(this)}
               onRotate={this.shipRotated.bind(this)}
+              message={this.state.opponentMessage}
               />
           </div>
         )
@@ -826,11 +767,14 @@ class Game extends React.Component {
           ships={game.ships}
           canMove={game.designmode}
           hideShips={false}
+          opponent={false}
           cellClicked={this.cellClicked.bind(this, true)}
           onMove={this.shipMoved.bind(this)}
           onRotate={this.shipRotated.bind(this)}
+          message={this.state.yourMessage}
           />
       </div>
+
     )
 
     return (

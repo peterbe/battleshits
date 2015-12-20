@@ -4,6 +4,29 @@ import Cell from './cell.jsx';
 import Ship from './ship.jsx';
 import Bomb from './bomb.jsx';
 
+class Message extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      hidden: false
+    }
+  }
+  onClick() {
+    this.setState({hidden: true})
+  }
+  render() {
+    if (this.props.message && !this.state.hidden) {
+      return (
+        <div className="message" onClick={this.onClick.bind(this)}>
+          <h3>{this.props.message}</h3>
+        </div>
+      )
+    }
+    return null
+
+  }
+}
+
 export default class Grid extends React.Component {
   constructor() {
     super()
@@ -13,30 +36,30 @@ export default class Grid extends React.Component {
   }
 
   updateDimensions() {
-    console.log("Setting state on ", this.props)
+    // console.log("Setting state on ", this.props)
     this.setState({width: $(window).width()})
-    console.log('Sat state.\n')
+    // console.log('Sat state.\n')
   }
 
   componentWillMount() {
-    console.log('componentWillMount:')
-    this.updateDimensions()
+    // console.log('componentWillMount:')
+    // this.updateDimensions()
   }
 
-  componentDidMount() {
-    console.log('componentDidMount:')
-    window.addEventListener("resize", this.updateDimensions.bind(this))
-  }
-
-  componentWillUnmount() {
-    console.log('componentWillUnmount:')
-    window.removeEventListener("resize", this.updateDimensions.bind(this))
-  }
+  // componentDidMount() {
+  //   console.log('componentDidMount:')
+  //   window.addEventListener("resize", this.updateDimensions.bind(this))
+  // }
+  //
+  // componentWillUnmount() {
+  //   console.log('componentWillUnmount:')
+  //   window.removeEventListener("resize", this.updateDimensions.bind(this))
+  // }
 
 
   render() {
     let grid = this.props.grid;
-
+    let prefix = (this.props.opponent ? 'opponent' : 'yours')
     let rows = [];
     for (let i=0; i < 10; i++) {
       let row = [];
@@ -51,39 +74,45 @@ export default class Grid extends React.Component {
     }
     // the whole gridWidth is $(window).width() - 2px for the whole table
     let width = (gridWidth - 2) / 10;
-    let ships = null
+    let ships = []
     if (this.props.hideShips) {
       // only show the ships if they have been fully bombed
-      ships = []
+      // ships = []
       for (let ship of this.props.ships) {
         if (ship.bombed) {
-         ships.push(<Ship
-           key={ship.id}
-           ship={ship}
-           width={width}
-           canMove={this.props.canMove}
-           onMove={this.props.onMove.bind(this)}
-           onRotate={this.props.onRotate.bind(this)}
-           />)
+          ships.push(
+            <Ship
+              key={prefix + ship.id}
+              prefix={prefix}
+              ship={ship}
+              width={width}
+              canMove={false}
+              onMove={this.props.onMove.bind(this)}
+              onRotate={this.props.onRotate.bind(this)}
+              />
+           )
          }
       }
     } else {
-      ships = this.props.ships.map((ship) => {
-        return <Ship
-          key={ship.id}
-          ship={ship}
-          width={width}
-          canMove={this.props.canMove}
-          onMove={this.props.onMove.bind(this)}
-          onRotate={this.props.onRotate.bind(this)}
+      for (let ship of this.props.ships) {
+        ships.push(
+          <Ship
+            key={prefix + ship.id}
+            prefix={prefix}
+            ship={ship}
+            width={width}
+            canMove={this.props.canMove}
+            onMove={this.props.onMove.bind(this)}
+            onRotate={this.props.onRotate.bind(this)}
           />
-      })
+        )
+      }
     }
     let bombs = null
     bombs = grid.map((cell, i) => {
       if (cell > 0) {
         return <Bomb
-          key={i}
+          key={prefix + i}
           index={i}
           state={cell}
           width={width}
@@ -92,15 +121,9 @@ export default class Grid extends React.Component {
         return null
       }
     })
-
-    let positions = []
-    for (let s of this.props.ships) {
-      positions.push([s.id, s.x, s.y])
-    }
-    if (!this.props.hideShips) console.log(this.props.hideShips, ...positions)
-
     return (
       <div className="grid">
+        <Message message={this.props.message}/>
         <table>
           <tbody>
           {
@@ -125,6 +148,7 @@ export default class Grid extends React.Component {
           }
           </tbody>
         </table>
+
         {ships}
         {bombs}
       </div>

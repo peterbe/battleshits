@@ -12,7 +12,12 @@ export default class Ship extends React.Component {
   }
 
   componentDidMount() {
-    let element = document.querySelector('.ship.ship' + this.props.ship.id);
+    let element = document.querySelector(
+      '.ship.ship' + this.props.ship.id + `.${this.props.prefix}ship`
+    )
+    if (!element) {
+      throw new Error('Ship element could not be found')
+    }
     let draggie = new Draggabilly(element, {
       containment: '.grid',
     });
@@ -135,15 +140,19 @@ export default class Ship extends React.Component {
       className += ' overlapping'
     }
     className += ` rotation${ship.rotation}`
+    className += ` ${this.props.prefix}ship`
 
     // The draggabilly plugin will forcibly set the top and left
     // on the element and these might be different from what they
     // should be, so we make sure that gets set.
     if (this.state.draggie) {
-      this.state.draggie.element.style.left = style.left + 'px'
-      this.state.draggie.element.style.top = style.top + 'px'
+      // console.log('Draggie exists', this.props.canMove)
+      // this.state.draggie.element.style.left = style.left + 'px'
+      // this.state.draggie.element.style.top = style.top + 'px'
 
       if (this.props.canMove) {
+        this.state.draggie.element.style.left = style.left + 'px'
+        this.state.draggie.element.style.top = style.top + 'px'
         this.state.draggie.enable();
       } else {
         this.state.draggie.disable();
@@ -152,9 +161,9 @@ export default class Ship extends React.Component {
 
     return (
       <img src={src}
-        key={ship.id}
+        key={this.props.prefix + ship.id}
         className={className}
-        title={ship.id}
+        title={this.props.prefix + ' ' + ship.id}
         style={style}/>
     )
   }

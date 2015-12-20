@@ -52,6 +52,25 @@
     background-size: 22px;
   }
 
+  .message {
+    margin: 0 auto;
+    position: absolute;
+    top: 150px;
+    text-align: center;
+    width: 100%;
+    z-index: 1001;
+  }
+  .message h3 {
+    font-size: 3em;
+    color: white;
+    font-family: 'Comic Sans', sans-serif;
+    text-shadow:
+     -1px -1px 0 #000,
+      1px -1px 0 #000,
+      -1px 1px 0 #000,
+       1px 1px 0 #000;
+  }
+
   .grid {
     position: relative;
   }
@@ -100,6 +119,8 @@
     width: 81px;
     height: 48px;
   }*/
+  /*img.yoursship { border:1px solid green}
+  img.opponentship { border:1px solid red}*/
   </style>
 </head>
 <body>
@@ -110,6 +131,7 @@
 <script src="static/js/draggabilly.pkgd.min.js"></script>
 <!-- <script src="static/js/draggabilly.pkgd.js"></script> -->
 <!-- <script src="static/js/draggabilly.hack.js"></script> -->
+<script>window.POSITIONS=[]</script>
 <script src="bundle.js"></script>
 </body>
 </html>
