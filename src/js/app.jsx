@@ -361,7 +361,7 @@ class Games extends React.Component {
         grid: Array.from(_EMPTY_GRID),
         ships: _copyArrayOfObjects(SHIPS),
         rules: {
-          drops: 5,
+          drops: 3,
         },
         gameover: false,
         _drops: 0,  //
@@ -510,8 +510,8 @@ class Game extends React.Component {
       }
     }
 
-    this.shipMoved(ship)
     Sounds.getAudioElement('click').play()
+    this.shipMoved(ship)
   }
 
   _countOverlaps() {

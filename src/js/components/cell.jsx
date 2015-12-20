@@ -15,9 +15,11 @@ export default class Cell extends React.Component {
     let _coord = this._indexToCoord(this.props.index)  // used for debugging
     _coord=''  // XXX wish this could depend on an environment variable
 
+    // onClick={this.props.cellClicked.bind(this)}
     return (
       <td
-        onClick={this.props.cellClicked.bind(this)}
+
+        onTouchStart={this.props.cellClicked.bind(this)}
         style={style}
         >{_coord}</td>
     )
