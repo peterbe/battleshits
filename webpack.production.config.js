@@ -9,7 +9,7 @@ var config = {
   },
   module: {
     loaders: [{
-      test: /\.jsx$/,
+      test: /\.jsx?$/,
 
       // There is not need to run the loader through
       // vendors
