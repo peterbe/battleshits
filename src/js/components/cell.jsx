@@ -13,6 +13,7 @@ export default class Cell extends React.Component {
     let style = {width: this.props.width, height: height}
 
     let _coord = this._indexToCoord(this.props.index)  // used for debugging
+    _coord=''  // XXX wish this could depend on an environment variable
 
     return (
       <td

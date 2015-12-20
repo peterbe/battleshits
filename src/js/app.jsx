@@ -7,9 +7,9 @@ import $ from 'jquery'
 
 
 const SHIPS = [
-  // {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
-  // {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
-  // {id: '3-2', length: 3, x: 0, y: 2, rotation: 0, overlapping: false},
+  {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
+  {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
+  {id: '3-2', length: 3, x: 0, y: 2, rotation: 0, overlapping: false},
   {id: '4',   length: 4, x: 0, y: 3, rotation: 0, overlapping: false},
   {id: '5',   length: 5, x: 0, y: 4, rotation: 0, overlapping: false},
 ]
