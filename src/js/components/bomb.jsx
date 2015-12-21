@@ -3,20 +3,6 @@ import $ from 'jquery';
 
 
 export default class Bomb extends React.Component {
-  constructor() {
-    super()
-    this.state = {
-      width: null,
-    }
-  }
-
-  componentDidMount() {
-    this.setState({
-      width: $('.grid tr').width()/10,
-      height: $('.grid table').height()/10,
-    })
-  }
-
 
   render() {
     let src = {
@@ -28,8 +14,10 @@ export default class Bomb extends React.Component {
     let x = index % 10
     let y = Math.floor(index / 10)
 
-    let width = this.state.width || this.props.width
-    let height = this.state.height || this.props.width
+    // XXX this can be optimized
+    let width = $('.grid tr').width()/10
+    let height = $('.grid table').height()/10
+
     let borderWidth = 0 // for each <td> (collapsed table)
     let style = {
       top: y * height + y * borderWidth,

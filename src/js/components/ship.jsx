@@ -7,7 +7,7 @@ export default class Ship extends React.Component {
     super()
     this.state = {
       draggie: null,
-      width: null,
+      // width: null,
     }
   }
 
@@ -18,6 +18,7 @@ export default class Ship extends React.Component {
     if (!element) {
       throw new Error('Ship element could not be found')
     }
+    console.log('Draggie element', element)
     let draggie = new Draggabilly(element, {
       containment: '.grid',
     });
@@ -25,12 +26,11 @@ export default class Ship extends React.Component {
     draggie.on('staticClick', this.staticClick.bind(this))
     this.setState({
       draggie: draggie,
-      width: $('.grid tr').width()/10,
-      height: $('.grid table').height()/10,
     })
   }
 
   staticClick() {
+    console.log('staticClick')
     // single click on a ship
     if (!this.props.canMove) return
     let ship = this.props.ship
@@ -73,21 +73,26 @@ export default class Ship extends React.Component {
       // went from horizontal to vertical
       ship.x += movement
       ship.y -= movement
+      ship.y = Math.max(0, ship.y)
     } else {
       ship.x -= movement
       ship.y += movement
+      ship.x = Math.max(0, ship.x)
     }
     this.props.onRotate(ship)
   }
 
   dragEnd() {
+    console.log('dragEnd')
     let x = this.state.draggie.position.x
     let y = this.state.draggie.position.y
     // These coordinates represent the top-left hand corner.
     // But we're going to ignore that and seek with the middle of the
     // first corner of the left-most (or top-most) square
-    let width = this.state.width
-    let height = this.state.height
+    // let width = this.state.width
+    // let height = this.state.height
+    let width = $('.grid tr').width()/10
+    let height = $('.grid table').height()/10
     x += width / 2
     y += height / 2
     let x1 = 0
@@ -110,10 +115,8 @@ export default class Ship extends React.Component {
   render() {
     let ship = this.props.ship
 
-    // let width = this.state.width || this.props.width
-    // let height = this.state.height || this.props.width
-    let width = this.props.width || this.state.width
-    let height = this.props.width || this.state.height
+    let width = $('.grid tr').width()/10
+    let height = $('.grid table').height()/10
 
     let borderWidth = 0 // for each <td> (collapsed table)
 

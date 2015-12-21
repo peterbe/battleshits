@@ -162,7 +162,6 @@ let _randomlyPlaceShips = (ships) => {
   }
   for (var ship of ships) {
     // randomly place the ship somewhere
-    console.log('Setting random ship.x position')
     ship.x = randomPosition('x')
     ship.y = randomPosition('y')
     ship.rotation = randomRotation()
@@ -462,6 +461,7 @@ class Game extends React.Component {
   }
 
   cellClicked(yours, index) {
+    console.log('cellClicked', index)
     // you clicked, so if it's not your turn ignore
     if (!this.props.game.yourturn || yours) {
       console.log('ignore click')
@@ -499,13 +499,11 @@ class Game extends React.Component {
     if (ship.rotation === 90 || ship.rotation === 270) {
       // first check if it's y number + length is too long
       if ((ship.y + ship.length) > 10) {
-        console.log('shipRotated y')
         ship.y -= ship.y + ship.length - 10
       }
     } else {
       // ship lies horizontal
       if (ship.x + ship.length > 10) {
-        console.log('shipRotated x')
         ship.x -= ship.x + ship.length - 10
       }
     }

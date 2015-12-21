@@ -31,30 +31,29 @@ export default class Grid extends React.Component {
   constructor() {
     super()
     this.state = {
-      width: $(window).width()
+      width: $(window).width()  // premliminary
+      // width: $('.grid tr').width()
+
     }
   }
 
   updateDimensions() {
-    // console.log("Setting state on ", this.props)
-    this.setState({width: $(window).width()})
-    // console.log('Sat state.\n')
+    if ($('.grid tr').width()) {
+      this.setState({width: $('.grid tr').width()})
+    }
   }
 
-  componentWillMount() {
-    // console.log('componentWillMount:')
-    // this.updateDimensions()
+  // componentWillMount() {
+  //   this.updateDimensions()
+  // }
+
+  componentDidMount() {
+    window.addEventListener("resize", this.updateDimensions.bind(this))
   }
 
-  // componentDidMount() {
-  //   console.log('componentDidMount:')
-  //   window.addEventListener("resize", this.updateDimensions.bind(this))
-  // }
-  //
-  // componentWillUnmount() {
-  //   console.log('componentWillUnmount:')
-  //   window.removeEventListener("resize", this.updateDimensions.bind(this))
-  // }
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.updateDimensions.bind(this))
+  }
 
 
   render() {
@@ -74,7 +73,9 @@ export default class Grid extends React.Component {
     }
     // the whole gridWidth is $(window).width() - 2px for the whole table
     let width = (gridWidth - 2) / 10;
+    let height = (gridWidth - 2) / 10;
     let ships = []
+
     if (this.props.hideShips) {
       // only show the ships if they have been fully bombed
       // ships = []
@@ -86,6 +87,7 @@ export default class Grid extends React.Component {
               prefix={prefix}
               ship={ship}
               width={width}
+              height={height}
               canMove={false}
               onMove={this.props.onMove.bind(this)}
               onRotate={this.props.onRotate.bind(this)}
@@ -101,6 +103,7 @@ export default class Grid extends React.Component {
             prefix={prefix}
             ship={ship}
             width={width}
+            height={height}
             canMove={this.props.canMove}
             onMove={this.props.onMove.bind(this)}
             onRotate={this.props.onRotate.bind(this)}
@@ -116,6 +119,7 @@ export default class Grid extends React.Component {
           index={i}
           state={cell}
           width={width}
+          height={height}
           />
       } else {
         return null
