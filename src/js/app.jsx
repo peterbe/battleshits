@@ -1,9 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import 'whatwg-fetch'
+import $ from 'jquery'
 import Grid from './components/grid.jsx'
 import Sounds from './components/sounds.js'
-import $ from 'jquery'
+import { getOneElement } from './components/utils.js'
+
 
 
 const SHIPS = [
@@ -537,7 +539,7 @@ class Game extends React.Component {
         game.opponent.designmode = false
         this.props.changeGame(game)
         setTimeout(() => {
-          document.querySelector('#yours').scrollIntoView()
+          getOneElement('#yours').scrollIntoView()
           this.makeAIMove()
         }, 1000)
       }
@@ -579,8 +581,8 @@ class Game extends React.Component {
   bombSlot(index, opponentmove) {
     let game = this.props.game
     let yourturn
-    let yoursElement = document.querySelector('#yours')
-    let opponentsElement = document.querySelector('#opponents')
+    let yoursElement = getOneElement('#yours')
+    let opponentsElement = getOneElement('#opponents')
     let element
     let nextElement
     let newCellstate

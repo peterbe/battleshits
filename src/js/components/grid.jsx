@@ -43,12 +43,13 @@ export default class Grid extends React.Component {
     }
   }
 
-  // componentWillMount() {
-  //   this.updateDimensions()
-  // }
+  componentWillMount() {
+    this.updateDimensions()
+  }
 
   componentDidMount() {
     window.addEventListener("resize", this.updateDimensions.bind(this))
+    this.updateDimensions()
   }
 
   componentWillUnmount() {
@@ -67,6 +68,7 @@ export default class Grid extends React.Component {
       }
       rows.push(row);
     }
+
     let gridWidth = this.state.width
     if (!gridWidth) {
       throw new Error('width of grid not known')

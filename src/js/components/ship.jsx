@@ -1,5 +1,6 @@
 import React from 'react';
 import $ from 'jquery';
+import { getOneElement } from './utils.js'
 
 
 export default class Ship extends React.Component {
@@ -12,13 +13,9 @@ export default class Ship extends React.Component {
   }
 
   componentDidMount() {
-    let element = document.querySelector(
+    let element = getOneElement(
       '.ship.ship' + this.props.ship.id + `.${this.props.prefix}ship`
     )
-    if (!element) {
-      throw new Error('Ship element could not be found')
-    }
-    console.log('Draggie element', element)
     let draggie = new Draggabilly(element, {
       containment: '.grid',
     });
@@ -30,7 +27,6 @@ export default class Ship extends React.Component {
   }
 
   staticClick() {
-    console.log('staticClick')
     // single click on a ship
     if (!this.props.canMove) return
     let ship = this.props.ship
@@ -84,6 +80,9 @@ export default class Ship extends React.Component {
 
   dragEnd() {
     console.log('dragEnd')
+    let width = $('.grid tr').width()/10
+    let height = $('.grid table').height()/10
+
     let x = this.state.draggie.position.x
     let y = this.state.draggie.position.y
     // These coordinates represent the top-left hand corner.
@@ -91,8 +90,7 @@ export default class Ship extends React.Component {
     // first corner of the left-most (or top-most) square
     // let width = this.state.width
     // let height = this.state.height
-    let width = $('.grid tr').width()/10
-    let height = $('.grid table').height()/10
+
     x += width / 2
     y += height / 2
     let x1 = 0
@@ -149,10 +147,6 @@ export default class Ship extends React.Component {
     // on the element and these might be different from what they
     // should be, so we make sure that gets set.
     if (this.state.draggie) {
-      // console.log('Draggie exists', this.props.canMove)
-      // this.state.draggie.element.style.left = style.left + 'px'
-      // this.state.draggie.element.style.top = style.top + 'px'
-
       if (this.props.canMove) {
         this.state.draggie.element.style.left = style.left + 'px'
         this.state.draggie.element.style.top = style.top + 'px'

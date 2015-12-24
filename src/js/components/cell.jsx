@@ -16,28 +16,27 @@ export default class Cell extends React.Component {
     return x + ',' + y
   }
 
-  onTouchStart() {
-    this.props.cellClicked()
-    this.setState({touched: true})
-  }
-
-  onClick() {
-    /* This is a hack so that onClick works in non-touch browsers.
-       The onTouchStart makes it instant clicks on mobiles.
-       On devices that support onTouchStart we don't want both
-       to fire. */
-    if (!this.state.touched) {
-      this.props.cellClicked()
-    } else {
-      console.log('Ignore click')
-    }
-  }
+  // onTouchStart() {
+  //   this.props.cellClicked()
+  //   this.setState({touched: true})
+  // }
+  //
+  // onClick() {
+  //   /* This is a hack so that onClick works in non-touch browsers.
+  //      The onTouchStart makes it instant clicks on mobiles.
+  //      On devices that support onTouchStart we don't want both
+  //      to fire. */
+  //   if (!this.state.touched) {
+  //     this.props.cellClicked()
+  //   } else {
+  //     console.log('Ignore click')
+  //   }
+  // }
 
   render() {
     let height = this.props.width
 
     let style = {width: this.props.width, height: height}
-
     let _coord = this._indexToCoord(this.props.index)  // used for debugging
     _coord=''  // XXX wish this could depend on an environment variable
 
