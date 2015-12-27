@@ -463,7 +463,6 @@ class Game extends React.Component {
   }
 
   cellClicked(yours, index) {
-    console.log('cellClicked', index)
     // you clicked, so if it's not your turn ignore
     if (!this.props.game.yourturn || yours) {
       console.log('ignore click')
