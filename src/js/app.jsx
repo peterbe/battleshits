@@ -5,7 +5,7 @@ import $ from 'jquery'
 import Grid from './components/grid.jsx'
 import Sounds from './components/sounds.js'
 import { getOneElement } from './components/utils.js'
-
+import Message from './components/message.jsx';
 
 
 const SHIPS = [
@@ -444,8 +444,7 @@ class Game extends React.Component {
     super(props)
     this.state = {
       loading: true,
-      yourMessage: null,
-      opponentMessage: null,
+      message: null,
       // yourturn: false,
       // grid: [],  // your grid
       // ships: [],
@@ -614,9 +613,9 @@ class Game extends React.Component {
       if (opponentmove) {
         bombed = _isBombed(game.grid, ship)
         if (bombed) {
-          this.setState({yourMessage: `You sunk my battleshit (length ${ship.length})!`})
+          this.setState({message: `You sunk my battleshit (length ${ship.length})!`})
           setTimeout(() => {
-            this.setState({yourMessage: null})
+            this.setState({message: null})
           }, 4000)
           // setTimeout(() => {
           //   alert(`I sunk your battleshit! Ha ha!`)
@@ -625,10 +624,10 @@ class Game extends React.Component {
       } else {
         bombed = _isBombed(game.opponent.grid, ship)
         if (bombed) {
-          this.setState({opponentMessage: `I sunk your battleshit (length ${ship.length})! Ha ha!`})
+          this.setState({message: `I sunk your battleshit (length ${ship.length})! Ha ha!`})
           setTimeout(() => {
-            this.setState({opponentMessage: null})
-          }, 4000)
+            this.setState({message: null})
+          }, 400000)
           // setTimeout(() => {
           //   alert(`You sunk my battleshit you jerk!`)
           // }, 400)
@@ -646,10 +645,10 @@ class Game extends React.Component {
         if (allBombed) {
           game.gameover = true
           if (opponentmove) {
-            this.setState({yourMessage: `You lost! (aka. you suck)`})
+            this.setState({message: `You lost! (aka. you suck)`})
             // alert("You lost!")
           } else {
-            this.setState({yourMessage: `You won! Moahaha!`})
+            this.setState({message: `You won! Moahaha!`})
             // alert("You won!")
           }
         }
@@ -740,7 +739,6 @@ class Game extends React.Component {
               cellClicked={this.cellClicked.bind(this, false)}
               onMove={this.shipMoved.bind(this)}
               onRotate={this.shipRotated.bind(this)}
-              message={this.state.opponentMessage}
               />
           </div>
         )
@@ -774,16 +772,15 @@ class Game extends React.Component {
           cellClicked={this.cellClicked.bind(this, true)}
           onMove={this.shipMoved.bind(this)}
           onRotate={this.shipRotated.bind(this)}
-          message={this.state.yourMessage}
           />
       </div>
-
     )
 
     return (
       <div>
         <h2>Playing against <i>{game.opponent.name}</i></h2>
         {statusHead}
+        <Message message={this.state.message}/>
         <div className="grids">
 
           { yours }

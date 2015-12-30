@@ -4,28 +4,6 @@ import Cell from './cell.jsx';
 import Ship from './ship.jsx';
 import Bomb from './bomb.jsx';
 
-class Message extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      hidden: false
-    }
-  }
-  onClick() {
-    this.setState({hidden: true})
-  }
-  render() {
-    if (this.props.message && !this.state.hidden) {
-      return (
-        <div className="message" onClick={this.onClick.bind(this)}>
-          <h3>{this.props.message}</h3>
-        </div>
-      )
-    }
-    return null
-
-  }
-}
 
 export default class Grid extends React.Component {
   constructor() {
@@ -129,7 +107,7 @@ export default class Grid extends React.Component {
     })
     return (
       <div className="grid">
-        <Message message={this.props.message}/>
+
         <table>
           <tbody>
           {

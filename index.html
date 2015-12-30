@@ -141,12 +141,48 @@
   }
 }
 
+.message-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom:0;
+	left:0;
+	z-index:999;
+	opacity:1;
+	pointer-events:none;
+	-webkit-transition:all 0.3s;
+	-moz-transition:all 0.3s;
+	transition:all 0.3s;
+}
+.message-modal>div {
+	width:90%;
+	position:relative;
+	margin:50% auto;
+  padding:2rem;
+  text-align:center;
+}
+.message-modal h3 {
+  font-size: 2.5em;
+  color: white;
+  font-family: 'Comic Sans', sans-serif;
+  text-shadow:
+   -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+     1px 1px 0 #000;
+}
   </style>
 </head>
 <body>
 
   <div id="mount-point">
   </div>
+
+<!--<div class="modal">
+  <div>
+    <h3>Some text ghtat goes here.</h3>
+  </div>
+</div>-->
 
 <script src="/static/js/draggabilly.pkgd.min.js"></script>
 <script src="bundle.js"></script>
