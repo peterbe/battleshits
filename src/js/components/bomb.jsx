@@ -8,6 +8,7 @@ export default class Bomb extends React.Component {
     let src = {
       1: "static/images/poop.png",
       2: "static/images/explosion.png",
+      3: "static/images/toiletroll.png",
     }[this.props.state]
 
     let index = this.props.index

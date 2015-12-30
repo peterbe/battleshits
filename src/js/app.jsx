@@ -573,6 +573,10 @@ class Game extends React.Component {
         return [2, ship] // explosion
       }
     }
+    if (Math.random() > 0.7) {
+      return [3, null] // missed
+    }
+
     return [1, null] // missed
   }
 
