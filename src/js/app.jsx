@@ -22,25 +22,7 @@ const _OPP = []
 const _EMPTY_GRID = []
 for (let i = 0; i < 100; i++) {
   _EMPTY_GRID.push(0)
-  // if (Math.random()>0.9) {
-  //   _YOUR.push(2);
-  // } else if (Math.random()>0.9) {
-  //   _YOUR.push(3);
-  // } else if (Math.random()>0.9) {
-  //   _YOUR.push(1);
-  // } else {
-  //   _YOUR.push(0);
-  // }
   _YOUR.push(0);
-  // if (Math.random()>0.92) {
-  //   _OPP.push(2);
-  // } else if (Math.random()>0.92) {
-  //   _OPP.push(3);
-  // } else if (Math.random()>0.92) {
-  //   _OPP.push(1);
-  // } else {
-  //   _OPP.push(0);
-  // }
   _OPP.push(0);
 }
 
@@ -573,7 +555,7 @@ class Game extends React.Component {
         return [2, ship] // explosion
       }
     }
-    if (Math.random() > 0.7) {
+    if (Math.random() > 0.8) {
       return [3, null] // missed
     }
 
@@ -631,7 +613,7 @@ class Game extends React.Component {
           this.setState({message: `I sunk your battleshit (length ${ship.length})! Ha ha!`})
           setTimeout(() => {
             this.setState({message: null})
-          }, 400000)
+          }, 4000)
           // setTimeout(() => {
           //   alert(`You sunk my battleshit you jerk!`)
           // }, 400)
