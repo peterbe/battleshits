@@ -590,7 +590,7 @@ class Game extends React.Component {
         bombed = _isBombed(game.grid, ship)
         if (bombed) {
           this.setState({message: `
-            ${game.opponent.name} sunk your battleshit (length ${ship.length})!
+            ${game.opponent.name} sunk your battleshit (${ship.length})!
           `})
           setTimeout(() => {
             this.setState({message: null})
@@ -603,7 +603,7 @@ class Game extends React.Component {
         bombed = _isBombed(game.opponent.grid, ship)
         if (bombed) {
           this.setState({message: `
-            I sunk your battleshit (length ${ship.length})!\nHa ha!`
+            I sunk your battleshit (${ship.length})!\nHa ha!`
           })
           setTimeout(() => {
             this.setState({message: null})
