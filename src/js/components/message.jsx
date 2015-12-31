@@ -13,10 +13,16 @@ export default class Message extends React.Component {
   }
   render() {
     if (this.props.message && !this.state.hidden) {
+      let messages = this.props.message.trim().split('\n')
+      let _messages = []
+      messages.forEach((m, i) => {
+        m = m.trim()
+        _messages.push(<h3 key={'message' + i}>{m}</h3>)
+      })
       return (
         <div className="message-modal" onClick={this.onClick.bind(this)}>
           <div>
-            <h3>{this.props.message}</h3>
+            {_messages}
           </div>
         </div>
       )

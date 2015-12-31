@@ -555,8 +555,8 @@ class Game extends React.Component {
         return [2, ship] // explosion
       }
     }
-    if (Math.random() > 0.8) {
-      return [3, null] // missed
+    if (Math.random() > 0.9) {
+      return [3, null] // missed but toilet paper
     }
 
     return [1, null] // missed
@@ -572,16 +572,6 @@ class Game extends React.Component {
     let newCellstate
     let ship
 
-    // the turn only changes if you've dropped as many as the rules
-    // call for.
-    game._drops = game._drops || 0
-    game._drops++
-    let turnchange = false
-    if (game._drops == game.rules.drops) {
-      game.yourturn = opponentmove
-      turnchange = true
-      game._drops = 0
-    }
     if (opponentmove) {
       element = yoursElement
       nextElement = opponentsElement;
@@ -599,7 +589,9 @@ class Game extends React.Component {
       if (opponentmove) {
         bombed = _isBombed(game.grid, ship)
         if (bombed) {
-          this.setState({message: `You sunk my battleshit (length ${ship.length})!`})
+          this.setState({message: `
+            ${game.opponent.name} sunk your battleshit (length ${ship.length})!
+          `})
           setTimeout(() => {
             this.setState({message: null})
           }, 4000)
@@ -610,7 +602,9 @@ class Game extends React.Component {
       } else {
         bombed = _isBombed(game.opponent.grid, ship)
         if (bombed) {
-          this.setState({message: `I sunk your battleshit (length ${ship.length})! Ha ha!`})
+          this.setState({message: `
+            I sunk your battleshit (length ${ship.length})!\nHa ha!`
+          })
           setTimeout(() => {
             this.setState({message: null})
           }, 4000)
@@ -639,7 +633,34 @@ class Game extends React.Component {
           }
         }
       }
+    } else if (newCellstate === 3) {
+      if (opponentmove) {
+        this.setState({message: `
+          Toilet paper!\n${game.opponent.name} gets ${game.rules.drops} more drops`
+        })
+      } else {
+        this.setState({message: `
+          Toilet paper!\nYou get ${game.rules.drops} more drops`
+        })
+      }
+      setTimeout(() => {
+        this.setState({message: null})
+      }, 4000)
+      game._drops -= game.rules.drops
     }
+
+
+    // the turn only changes if you've dropped as many as the rules
+    // call for.
+    game._drops = game._drops || 0
+    game._drops++
+    let turnchange = false
+    if (game._drops == game.rules.drops) {
+      game.yourturn = opponentmove
+      turnchange = true
+      game._drops = 0
+    }
+
 
     let audioElement
     if (newCellstate === 1) {
@@ -675,22 +696,33 @@ class Game extends React.Component {
     let grids = null;
 
     let yourHeader = "Your grid"
+    let drops = game.rules.drops
+    let _drops = game._drops
+    // while (_drops < 0) {
+    //   drops++
+    //   _drops++
+    // }
+    // if (_drops < 0) {
+    //   drops += -1 * _drops
+    //   _drops = 1
+    // }
     if (!game.yourturn) {
-      if (game._drops && game._drops < game.rules.drops) {
-        // XXX multiline strings??
-        yourHeader += ` (${game.opponent.name}'s turn, ${game._drops} of ${game.rules.drops})`
-      } else {
-        yourHeader += ` (${game.opponent.name}'s turn)`
-      }
+      // if (game._drops && game._drops < game.rules.drops) {
+        yourHeader += `
+          (${game.opponent.name}'s turn, ${_drops} of ${drops})
+          `
+      // } else {
+      //   yourHeader += ` (${game.opponent.name}'s turn)`
+      // }
     }
 
     let opponentHeader = `${game.opponent.name}'s grid`
     if (game.yourturn) {
-      if (game._drops && game._drops < game.rules.drops) {
-        opponentHeader += ` (Your turn, ${game._drops} of ${game.rules.drops})`
-      } else {
-        opponentHeader += ` (Your turn)`
-      }
+      // if (game._drops && game._drops < game.rules.drops) {
+        opponentHeader += ` (Your turn, ${_drops} of ${drops})`
+      // } else {
+      //   opponentHeader += ` (Your turn)`
+      // }
     }
 
     let statusHead
