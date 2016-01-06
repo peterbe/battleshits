@@ -58,7 +58,7 @@ for app in config('EXTRA_APPS', default='', cast=Csv()):
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'server.api.middleware.JsonBodyCsrfViewMiddleware',
+    'battleshits.api.middleware.JsonBodyCsrfViewMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
@@ -177,9 +177,6 @@ EMAIL_USE_TLS = config(
 )
 
 
-#AUTHENTICATION_BACKENDS = (
-##    'allauth.account.auth_backends.AuthenticationBackend',
-#)
 SITE_ID = 1
 
 

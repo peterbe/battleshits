@@ -177,15 +177,15 @@ let _randomlyPlaceShips = (ships) => {
 
 let apiGet = (url) => {
 
-  if (url==='/api/games/') {
-    return new Promise((resolve) => {
-        resolve({
-          games: [
-            //_GAME1, _GAME2, _GAME3
-          ]
-        })
-    });
-  }
+  // if (url==='/api/games/') {
+  //   return new Promise((resolve) => {
+  //       resolve({
+  //         games: [
+  //           //_GAME1, _GAME2, _GAME3
+  //         ]
+  //       })
+  //   });
+  // }
 
   // if (url==='/api/games/0') {
   //   return new Promise((resolve) => {
@@ -238,11 +238,13 @@ let apiGet = (url) => {
     //   }
     // })
 
-  throw new Error('HACKING!' + url)
-  return fetch(url)
+  // throw new Error('HACKING!' + url)
+  return fetch(url, {credentials: 'same-origin'})
   .then((r) => {
     if (r.status === 200) {
       return r.json()
+      // console.log('DATA', data)
+      // return data
     }
     throw new Error(r.status)
   })
@@ -252,18 +254,32 @@ let apiGet = (url) => {
   })
 }
 
-let apiSet = (url, options) => {
-  if (url==='/api/games/1' && options.designed) {
-    return new Promise((resolve) => {
-      resolve({ok: true})
-    })
+let apiSet = (url, data) => {
+  // data.csrfmiddlewaretoken = sessionStorage.getItem('csrfmiddlewaretoken')
+  if (!sessionStorage.getItem('csrfmiddlewaretoken')) {
+    throw new Error('No csrfmiddlewaretoken in sessionStorage')
   }
-  if (url==='/api/games/3' && options.designed) {
-    return new Promise((resolve) => {
-      resolve({ok: true})
-    })
-  }
-  throw new Error('HACKING!' + url)
+  return fetch(url, {
+    method: 'post',
+    credentials: 'same-origin',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-CSRFToken': sessionStorage.getItem('csrfmiddlewaretoken'),
+    },
+    body: JSON.stringify(data)
+  })
+  // if (url==='/api/games/1' && options.designed) {
+  //   return new Promise((resolve) => {
+  //     resolve({ok: true})
+  //   })
+  // }
+  // if (url==='/api/games/3' && options.designed) {
+  //   return new Promise((resolve) => {
+  //     resolve({ok: true})
+  //   })
+  // }
+  // throw new Error('HACKING!' + url)
 }
 
 // class Homepage extends React.Component {
@@ -288,6 +304,7 @@ class App extends React.Component {
     super(props)
     this.state = {
       game: null,
+      games: [],
     }
   }
 
@@ -297,9 +314,51 @@ class App extends React.Component {
     this.setState({game: game})
   }
 
+  onGamesChange(games) {
+    // because a game has been added or removed
+    // apiSet('/api/save', {games: games})
+    // .then((r) => {
+    //   return r.json()
+    // })
+    // .then((response) => {
+    //   console.log('SAVED', response)
+    // })
+  }
+
   changeGame(game) {
-    // XXX save this state on the server
     this.setState({game: game})
+    apiSet('/api/save', {game: game})
+    .then((r) => {
+      return r.json()
+    })
+    .then((response) => {
+      if (response.id !== game.id) {
+        game.id = response.id
+      }
+    })
+  }
+
+  componentWillMount() {
+    apiGet('/api/signedin')
+    .then((result) => {
+      sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
+      if (result.username) {
+        sessionStorage.setItem('username', result.username)
+        if (result.first_name) {
+          localStorage.setItem('name', result.first_name)
+        }
+        apiGet('/api/games')
+        .then((result) => this.setState({games: result.games}))
+      } else {
+        apiSet('/api/login', {})
+        .then((result) => {
+          sessionStorage.setItem('username', result.username)
+          this.setState({games: []})
+          // apiGet('/api/games')
+          // .then((result) => this.setState({games: result.games}))
+        })
+      }
+    })
   }
 
   render() {
@@ -307,10 +366,16 @@ class App extends React.Component {
       <div>
         <div>
           <h1>Battleshits</h1>
+          <h2>You Will Never Shit in Peace</h2>
           {
             this.state.game ?
-            <Game game={this.state.game} changeGame={this.changeGame.bind(this)}/> :
-            <Games onGameSelect={this.onGameSelect.bind(this)}/>
+            <Game
+              game={this.state.game}
+              changeGame={this.changeGame.bind(this)}/> :
+            <Games
+              games={this.state.games}
+              onGamesChange={this.onGamesChange.bind(this)}
+              onGameSelect={this.onGameSelect.bind(this)}/>
           }
         </div>
       </div>
@@ -321,14 +386,15 @@ class App extends React.Component {
 class Games extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {
-      games: [],
-    };
+    // this.state = {
+    //   games: [],
+    // };
   }
 
   componentDidMount() {
-    apiGet('/api/games/')
-    .then((result) => this.setState({games: result.games}))
+    // this.setState({games: this.props.games})
+    // apiGet('/api/games')
+    // .then((result) => this.setState({games: result.games}))
   }
 
   startRandomGame(ai) {
@@ -359,20 +425,32 @@ class Games extends React.Component {
       game.ships = _randomlyPlaceShips(game.ships)
       game.opponent.ships = _randomlyPlaceShips(game.opponent.ships)
       console.log('CHEATING:', game.opponent.ships)
-      let games = this.state.games
+      let games = this.props.games
       games.push(game)
-      this.setState({games: games})
+      this.props.onGamesChange(games)
+      // this.setState({games: games})
       this.props.onGameSelect(game)
     }
   }
 
   render() {
     let ongoingGames = null;
-    if (this.state.games.length) {
+    if (this.props.games.length) {
       ongoingGames = (
         <ul>
           {
-            this.state.games.map((game) => {
+            this.props.games.map((game) => {
+              let bombsDropped = 0
+              game.grid.forEach((cell) => {
+                if (!cell) {
+                  bombsDropped++
+                }
+              })
+              game.opponent.grid.forEach((cell) => {
+                if (!cell) {
+                  bombsDropped++
+                }
+              })
               return (
                 <li key={game.id}>
                   <button onClick={this.props.onGameSelect.bind(this, game)}>
@@ -385,6 +463,7 @@ class Games extends React.Component {
                       game.opponent.ai ?
                       ' (computer)' : null
                     }
+                    {` ${bombsDropped} bombs dropped`}
                   </button>
                 </li>
               )
@@ -410,7 +489,7 @@ class Games extends React.Component {
         <h2>Games</h2>
           <div>
             <h3>Ongoing games you have</h3>
-            {this.state.games.length ? ongoingGames : <i>none</i>}
+            {this.props.games.length ? ongoingGames : <i>none</i>}
           </div>
         <hr/>
         {startNewForm}
@@ -441,6 +520,14 @@ class Game extends React.Component {
   componentDidMount() {
     // XXX replace this with service worker or manifest or something
     Sounds.preLoadSounds()
+
+    // The game component has been mounted. Perhaps the game was between
+    // a human and the computer and it's the computer's turn.
+    let game = this.props.game
+    if (game.opponent.ai && !game.yourturn && !game.designmode && !game.opponent.designmode) {
+      getOneElement('#yours').scrollIntoView()
+      this.makeAIMove()
+    }
   }
 
   cellClicked(yours, index) {
@@ -663,11 +750,15 @@ class Game extends React.Component {
 
 
     let audioElement
-    if (newCellstate === 1) {
+    if (newCellstate === 3) {
+      // toilet
+      audioElement = Sounds.getAudioElement('yes')
+    } else if (newCellstate === 2) {
       // explosion!
-      audioElement = Sounds.getRandomAudioElement('fart')
-    } else {
       audioElement = Sounds.getRandomAudioElement('explosion')
+    } else {
+      audioElement = Sounds.getRandomAudioElement('fart')
+
     }
     audioElement.play()
 

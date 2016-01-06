@@ -1,18 +1,22 @@
 import json
 import logging
+import uuid
 
 from django import http
 from django.template.context_processors import csrf
 from django.utils.functional import wraps
 from django.views.decorators.http import require_POST
 from django.forms.models import model_to_dict
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib import auth
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.conf import settings
 
-from headsupper.base.models import Project, Payload
-from . import forms
-from . import utils
+from battleshits.base.models import Game
 
 
-logger = logging.getLogger('headsupper.api')
+logger = logging.getLogger('battleshits.api')
 
 
 def xhr_login_required(view_func):
@@ -44,7 +48,27 @@ def signedin(request):
         data = {
             'username': None,
         }
+    t = csrf(request)
+    data['csrf_token'] = str(t['csrf_token'])
     return http.JsonResponse(data)
+
+
+def random_username():
+    return uuid.uuid4().hex[:30]
+
+
+def login(request):
+    assert not request.user.is_authenticated()
+    user = get_user_model().objects.create(
+        username=random_username(),
+    )
+    user.set_unusable_password()
+    user.save()
+    user.backend = settings.AUTHENTICATION_BACKENDS[0]
+    request.user = user
+    auth.login(request, user)
+    # data = json.loads(request.body)
+    return signedin(request)
 
 
 def csrfmiddlewaretoken(request):
@@ -54,61 +78,41 @@ def csrfmiddlewaretoken(request):
     })
 
 
-def project_to_dict(project):
-    p = model_to_dict(project)
-    p.pop('creator')
-    return p
-
-
-@xhr_login_required
-def list_projects(request):
-    projects = []
-    qs = Project.objects.filter(creator=request.user)
-    for project in qs.order_by('created'):
-        p = project_to_dict(project)
-        payloads = {}
-        payloads['times_used'] = Payload.objects.filter(
-            project=project,
-        ).count()
-        payloads['times_messages_sent'] = Payload.objects.filter(
-            project=project,
-            http_error=201,
-        ).count()
-        p['payloads'] = payloads
-        projects.append(p)
-    return http.JsonResponse({'projects': projects})
-
-
 @require_POST
 @xhr_login_required
-def add_project(request):
+def save(request):
     data = json.loads(request.body)
-    form = forms.ProjectForm(data)
-    if not form.is_valid():
-        return http.JsonResponse({'_errors': form.errors})
+    # print "DATA"
+    # from pprint import pprint
+    # pprint(data)
+    if 'game' in data:
+        game = data['game']
+        game_id = game['id']
+        if game_id < 0:
+            # it's never been saved before
+            player2_id = game['opponent'].get('id')
+            if player2_id:
+                player2 = get_user_model().objects.get(id=player2_id)
+            else:
+                player2 = None
+            game_obj = Game.objects.create(
+                player1=request.user,
+                player2=player2,
+                state=game
+            )
+        else:
+            game_obj = Game.objects.get(id=game_id)
+            game_obj.state = game
+            game_obj.save()
+        return http.JsonResponse({'ok': True, 'id': game_obj.id})
+    else:
+        raise NotImplementedError(data)
 
-    project = form.save(commit=False)
-    project.creator = request.user
-    default = Project._meta.get_field('trigger_word').default
-    project.trigger_word = project.trigger_word or default
-    project.save()
 
-    return http.JsonResponse({'project': project_to_dict(project)})
-
-
-@require_POST
 @xhr_login_required
-def delete_project(request, id):
-    project = Project.objects.get(id=id, creator=request.user)
-    project.delete()
-    return http.JsonResponse({'ok': True})
-
-
-@xhr_login_required
-def preview_github_full_name(request):
-    full_name = request.GET.get('full_name', '').strip()
-    if not full_name:
-        return http.HttpResponseBadRequest('full_name')
-    return http.JsonResponse({
-        'project': utils.find_github_project(full_name)
-    })
+def list_games(request):
+    games = Game.objects.filter(
+        Q(player1=request.user) | Q(player2=request.user)
+    ).order_by('-modified')
+    states = [x.state for x in games]
+    return http.JsonResponse({'games': states})

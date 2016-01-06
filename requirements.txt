@@ -1,44 +1,25 @@
-# sha256: ZExcwtBko41DlidUnmOCqLwouAokP-XLukCx79K6ves
-# sha256: LRdOSj9UcI0NW2_xv1SucWUug7sG11drOyDZFrKcNlM
-Django==1.8.5
+# sha256: 47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU
+# sha256: Bf5LGah3jUtIu_H038oxBogf6nmCZkVT5_f4YWBvfGY
+Django==1.9
 
 # sha256: 8uJz7TSsu1YJYtXPEpF5NtjfAil98JvTCJuFRtRYQTg
 # sha256: ygF2j97N4TQwHzFwdDIm9g7f9cOTXxJDc3jr2RFQY1M
 dj-database-url==0.3.0
-
+# sha256: bRlhhNHosUC8WvHV7tqK7tJqJBMX2IYJkug-is76YXc
+# sha256: CctSIV20qMaKdl8toz-vvQSedhHLcHCP-MX3o8ic42Q
+# sha256: _oRGsvaAqZrBFK8skPi2nlYFL_TSNZxRCo3GHSUqwyU
+# sha256: DZ-AQ8PSJip60tjPjf0mMLEiB-abgptvQJLkdVaj9XI
+# sha256: fMvmZlU1vAzBPIPatxtCS94JmfXwppsptVfsxBzQ-Nw
+# sha256: 2UaJQ7SceY0_raLnbdWYMut4bgsBlqEI3n7TquPKFsE
+# sha256: VRVYFGbxp6p097Q1MRvb1oay8t2k8MfJX4AsREsF7ak
+# sha256: 47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU
+# sha256: JngUMXSDVx5jejLRXXHvbI47BaLsupeysNcfp-qesfU
+# sha256: LB08DkySnxQBh5y1zpoEOvzoUlX5Q5vXzrrwJRScWiA
 # sha256: as-au751fvddwuzZ2RunSVR5Qauv--af8ghqnjfUkEw
 psycopg2==2.6.1
 
 # sha256: ufv3R_qOcR0zDy9Da5suz17tnrZ6Y3yoGrzRHCq-3sg
 python-decouple==2.3
 
-# sha256: pOwa_1m5WhS0XrLiN2GgF56YMZ2lp-t2tW6ozce4ccM
-MarkupSafe==0.23
-
-# sha256: 0yV2uq13_dnmhZvpfCtqPBem9IQ2Q4nbcx8Gl7ehlmE
-django-csp==2.0.3
-# sha256: SZo1E9IQ5S4P6nG22blkk_uFJ8bhEXyOptZ55S_lRo0
-# sha256: dSvaZrHQ7mA7P4T9u-MEKMAc9d3bvlNfaPFUYR6kfiU
-# sha256: 3EVC3q3CQiTYXJS4O6dCZ-08DHAFxnRlBz609Tl3t-E
-# sha256: 4EJpKJu1YIpR4IVAVEPWZNXAAGrxPkiHEmd41AMPVYw
-# sha256: tLRPhgYHRInHh7FhT-OU1VF4rNSgOHURze0pH5umZ6s
-# sha256: Z0feMRC3gqy4hVLWkLEM8PkaKvKmhKoBgchlre2er7g
-# sha256: HaSPYz4vsnVdGnvze1O9rgNtLEoqPnB5dr4VsTKpdss
-# sha256: GcQv3xfVsemlri2bZLsVpWEpXwUd9WXjodjzcPLlrWc
-# sha256: PKYjIXxdbKwE9dOhWxBj9_0CBCCh1tqDk2ezlQL1ggQ
-# sha256: 0rB1P_Vca9-NMttl8coG22YKmBtxMikuDi0c_5gxXJU
-# sha256: Ae7RsiJtw4bY5Gei_4xPGqCMZdXX58Q6oJS9RdW9aLo
-# sha256: xZimtoUNvMAIQ2UYeOgoLax3yV4Z2EhHtpGO6z7Y8MI
-# sha256: KzsgkZr88G-QpOWKoqLIKmAbcd1aNSrzZHjlM31KFs0
-pytz==2015.6
-
-# sha256: b0wujFraFwOf8cHji8Ub6pMXrzZ24oRmFIyN9fx48TI
-django-jinja==1.4.1
-
-# sha256: UCb-DKlgBwm2iucOCGocoADArwLoisjLEIAwxrW-jG0
-html2text==2015.6.21
-# sha256: ifGx8l3Ne2j1FOjTQaWy60ZvlgrnVoIuqrSAo8GoHCg
-# sha256: hP6NW_Tc3MSQAkRsR6FG0XrBD6zwDZCGZZBkrEO2wls
-requests==2.8.1
 # sha256: fn9zpnXFGHErrdeDJ54m0WQUDz_C7XoyECw9CKaipKc
 jsonfield==1.0.3

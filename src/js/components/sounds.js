@@ -21,6 +21,10 @@ const CLICKSOUNDS = [
   'static/sounds/click.mp3',
 ]
 
+const YESSOUNDS = [
+  'static/sounds/yesss.mp3',
+]
+
 
 class Sounds {
 
@@ -32,7 +36,8 @@ class Sounds {
     let pairs = [
       ['fart', FARTSOUNDS],
       ['explosion', EXPLOSIONSOUNDS],
-      ['click', CLICKSOUNDS]
+      ['click', CLICKSOUNDS],
+      ['yes', YESSOUNDS],
     ]
     for (var pair of pairs) {
       let group = pair[1]
