@@ -10,6 +10,7 @@ const EXPLOSIONSOUNDS = [
   'static/sounds/Bomb-SoundBible.com-891110113.mp3',
   'static/sounds/DepthChargeShort-SoundBible.com-1303947570.mp3',
   'static/sounds/Explosion-SoundBible.com-2019248186.mp3',
+  'static/sounds/explosion1.mp3',
 ]
 
 const MISCSOUNDS = [
@@ -26,34 +27,55 @@ const YESSOUNDS = [
 ]
 
 
+const GROUPS = {
+  'fart': FARTSOUNDS,
+  'explosion': EXPLOSIONSOUNDS,
+  'click': CLICKSOUNDS,
+  'yes': YESSOUNDS,
+}
+
 class Sounds {
 
   constructor() {
-    this.previousRandomAudioElement = {}
+    this._previousRandomAudioElement = {}
+    this.enabled = true
   }
 
   preLoadSounds() {
-    let pairs = [
-      ['fart', FARTSOUNDS],
-      ['explosion', EXPLOSIONSOUNDS],
-      ['click', CLICKSOUNDS],
-      ['yes', YESSOUNDS],
-    ]
-    for (var pair of pairs) {
-      let group = pair[1]
-      let cls = pair[0]
-      for (var src of group) {
-        let element = document.createElement('audio')
-        element.type = 'audio/mpeg'
-        element.preload = 'auto'
-        element.src = src
-        element.dataset['type'] = cls
-        document.body.appendChild(element)
+    if (this.enabled) {
+      for (let type of Object.keys(GROUPS)) {
+        let group = GROUPS[type]
+        for (var src of group) {
+          let element = document.createElement('audio')
+          element.type = 'audio/mpeg'
+          element.preload = 'auto'
+          element.src = src
+          element.dataset['type'] = type
+          document.body.appendChild(element)
+        }
       }
     }
   }
 
-  getRandomAudioElement(type) {
+  enable() {
+    this.enabled = true
+  }
+
+  disable() {
+    this.enabled = false
+  }
+
+  play(type) {
+    if (this.enabled) {
+      if (GROUPS[type].length === 1) {
+        this._getAudioElement(type).play()
+      } else {
+        this._getRandomAudioElement(type).play()
+      }
+    }
+  }
+
+  _getRandomAudioElement(type) {
     let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
     if (nodes.length < 2) {
       throw new Error(`Not enough sounds for '${type}'`)
@@ -62,15 +84,15 @@ class Sounds {
       return nodes[Math.floor(Math.random() * nodes.length)]
     }
     let node = get()
-    if (this.previousRandomAudioElement[type] && this.previousRandomAudioElement[type] == node) {
+    if (this._previousRandomAudioElement[type] && this._previousRandomAudioElement[type] == node) {
       // recurse!
-      return this.getRandomAudioElement(type)
+      return this._getRandomAudioElement(type)
     }
-    this.previousRandomAudioElement[type] = node
+    this._previousRandomAudioElement[type] = node
     return node
   }
 
-  getAudioElement(type) {
+  _getAudioElement(type) {
     let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
     if (nodes.length < 1) {
       throw new Error(`No sound for '${type}'`)

@@ -326,7 +326,7 @@ class App extends React.Component {
   }
 
   changeGame(game) {
-    this.setState({game: game})
+    console.log('Change game, grid:', game.grid, 'opponent grid:', game.opponent.grid)
     apiSet('/api/save', {game: game})
     .then((r) => {
       return r.json()
@@ -335,6 +335,11 @@ class App extends React.Component {
       if (response.id !== game.id) {
         game.id = response.id
       }
+      this.setState({game: game})
+    })
+    .catch((ex) => {
+      console.warn('Saving game failed. Update state anyway')
+      this.setState({game: game})
     })
   }
 
@@ -436,21 +441,21 @@ class Games extends React.Component {
   render() {
     let ongoingGames = null;
     if (this.props.games.length) {
+      let games = this.props.games.filter(game => {
+        return !game.gameover
+      })
       ongoingGames = (
         <ul>
           {
-            this.props.games.map((game) => {
-              let bombsDropped = 0
-              game.grid.forEach((cell) => {
-                if (!cell) {
-                  bombsDropped++
-                }
-              })
-              game.opponent.grid.forEach((cell) => {
-                if (!cell) {
-                  bombsDropped++
-                }
-              })
+            games.map((game) => {
+              // let bombsDropped = 0
+              let bombsDropped = game.grid.filter(cell => {
+                return cell > 0
+              }).length
+              bombsDropped += game.opponent.grid.filter(cell => {
+                return cell > 0
+              }).length
+              console.log(game.gameover)
               return (
                 <li key={game.id}>
                   <button onClick={this.props.onGameSelect.bind(this, game)}>
@@ -506,6 +511,7 @@ class Game extends React.Component {
     this.state = {
       loading: true,
       message: null,
+      sound: localStorage.getItem('soundoff') ? false : true,
       // yourturn: false,
       // grid: [],  // your grid
       // ships: [],
@@ -576,8 +582,9 @@ class Game extends React.Component {
         ship.x -= ship.x + ship.length - 10
       }
     }
-
-    Sounds.getAudioElement('click').play()
+    if (this.state.sound) {
+      Sounds.play('click')
+    }
     this.shipMoved(ship)
   }
 
@@ -596,7 +603,7 @@ class Game extends React.Component {
       alert(overlaps + ' ships are still overlapping you big fart!')
     } else {
       game.designmode = false
-      this.props.changeGame(game)
+      //
 
       // When the game starts, and the second grid appears, the browser
       // will, for some reason, sometimes scroll down a bit. Prevent that.
@@ -609,6 +616,8 @@ class Game extends React.Component {
           getOneElement('#yours').scrollIntoView()
           this.makeAIMove()
         }, 1000)
+      } else {
+        this.props.changeGame(game)
       }
     }
   }
@@ -748,19 +757,18 @@ class Game extends React.Component {
       game._drops = 0
     }
 
-
-    let audioElement
-    if (newCellstate === 3) {
-      // toilet
-      audioElement = Sounds.getAudioElement('yes')
-    } else if (newCellstate === 2) {
-      // explosion!
-      audioElement = Sounds.getRandomAudioElement('explosion')
-    } else {
-      audioElement = Sounds.getRandomAudioElement('fart')
-
+    if (this.state.sound) {
+      // play a sound about the bomb attempt
+      if (newCellstate === 3) {
+        // toilet
+        Sounds.play('yes')
+      } else if (newCellstate === 2) {
+        // explosion!
+        Sounds.play('explosion')
+      } else {
+        Sounds.play('fart')
+      }
     }
-    audioElement.play()
 
     // if (turnchange) {
     //   console.log('Turnchange, scroll to', element)
@@ -780,6 +788,15 @@ class Game extends React.Component {
         }
       }, 800)
     }, 400)
+  }
+
+  toggleSound() {
+    if (this.state.sound) {
+      localStorage.setItem('soundoff', true)
+    } else {
+      localStorage.removeItem('soundoff')
+    }
+    this.setState({sound: !this.state.sound})
   }
 
   render() {
@@ -898,7 +915,11 @@ class Game extends React.Component {
 
         </div>
         <hr/>
-        <h5>You and your darn options!</h5>
+        <h5>You and your game options!</h5>
+        <button onClick={this.toggleSound.bind(this)}>
+          { this.state.sound ? 'Sound off' : 'Sound on' }
+        </button>
+
       </div>
     )
   }

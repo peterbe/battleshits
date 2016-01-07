@@ -100,9 +100,13 @@ def save(request):
                 player2=player2,
                 state=game
             )
+            game_obj.state['id'] = game_obj.id
+            game_obj.save()
         else:
             game_obj = Game.objects.get(id=game_id)
             game_obj.state = game
+            if game['gameover']:
+                game_obj.gameover = True
             game_obj.save()
         return http.JsonResponse({'ok': True, 'id': game_obj.id})
     else:
@@ -114,5 +118,6 @@ def list_games(request):
     games = Game.objects.filter(
         Q(player1=request.user) | Q(player2=request.user)
     ).order_by('-modified')
+    # XXX we should maybe only return truly ongoing games
     states = [x.state for x in games]
     return http.JsonResponse({'games': states})
