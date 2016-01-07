@@ -530,7 +530,7 @@ class Game extends React.Component {
     // The game component has been mounted. Perhaps the game was between
     // a human and the computer and it's the computer's turn.
     let game = this.props.game
-    if (game.opponent.ai && !game.yourturn && !game.designmode && !game.opponent.designmode) {
+    if (game.opponent.ai && !game.yourturn && !game.designmode && !game.opponent.designmode && !game.gameover) {
       getOneElement('#yours').scrollIntoView()
       this.makeAIMove()
     }
@@ -538,7 +538,7 @@ class Game extends React.Component {
 
   cellClicked(yours, index) {
     // you clicked, so if it's not your turn ignore
-    if (!this.props.game.yourturn || yours) {
+    if (!this.props.game.yourturn || yours || this.props.game.gameover) {
       console.log('ignore click')
       return
     }
@@ -781,7 +781,7 @@ class Game extends React.Component {
         if (turnchange) {
           nextElement.scrollIntoView({block: "end", behavior: "smooth"})
         }
-        if (!game.yourturn && game.opponent.ai) {
+        if (!game.yourturn && game.opponent.ai && !game.gameover) {
           setTimeout(() => {
             this.makeAIMove()
           }, 800)
