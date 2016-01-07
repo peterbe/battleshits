@@ -115,9 +115,16 @@ def save(request):
 
 @xhr_login_required
 def list_games(request):
-    games = Game.objects.filter(
+    games_base_qs = Game.objects.filter(
         Q(player1=request.user) | Q(player2=request.user)
-    ).order_by('-modified')
+    )
+    games = games_base_qs.filter(gameover=False).order_by('-modified')
     # XXX we should maybe only return truly ongoing games
     states = [x.state for x in games]
-    return http.JsonResponse({'games': states})
+    wins = games_base_qs.filter(gameover=True).filter(winner=request.user)
+    losses = games_base_qs.filter(gameover=True).exclude(winner=request.user)
+    stats = {
+        'wins': wins.count(),
+        'losses': losses.count(),
+    }
+    return http.JsonResponse({'games': states, 'stats': stats})

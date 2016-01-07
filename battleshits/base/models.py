@@ -16,6 +16,12 @@ class Game(models.Model):
         null=True
     )
 
+    winner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='winner',
+        null=True
+    )
+
     state = JSONField()
     gameover = models.BooleanField(default=False)
 

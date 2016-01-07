@@ -305,6 +305,7 @@ class App extends React.Component {
     this.state = {
       game: null,
       games: [],
+      stats: {},
     }
   }
 
@@ -353,12 +354,14 @@ class App extends React.Component {
           localStorage.setItem('name', result.first_name)
         }
         apiGet('/api/games')
-        .then((result) => this.setState({games: result.games}))
+        .then((result) => {
+          this.setState({games: result.games, stats: result.stats})
+        })
       } else {
         apiSet('/api/login', {})
         .then((result) => {
           sessionStorage.setItem('username', result.username)
-          this.setState({games: []})
+          this.setState({games: [], stats: {}})
           // apiGet('/api/games')
           // .then((result) => this.setState({games: result.games}))
         })
@@ -379,6 +382,7 @@ class App extends React.Component {
               changeGame={this.changeGame.bind(this)}/> :
             <Games
               games={this.state.games}
+              stats={this.state.stats}
               onGamesChange={this.onGamesChange.bind(this)}
               onGameSelect={this.onGameSelect.bind(this)}/>
           }
@@ -412,6 +416,7 @@ class Games extends React.Component {
         saved: false,
         designmode: true,
         yourturn: false,
+        winner: false,
         grid: Array.from(_EMPTY_GRID),
         ships: _copyArrayOfObjects(SHIPS),
         rules: {
@@ -422,6 +427,7 @@ class Games extends React.Component {
         opponent: {
           name: 'Computer',
           ai: true,
+          winner: false,
           grid: Array.from(_EMPTY_GRID),
           ships: _copyArrayOfObjects(SHIPS),
           designmode: true
@@ -478,7 +484,7 @@ class Games extends React.Component {
       )
     }
     let startNewForm = (
-      <div>
+      <div className="section">
         <h3>Start a new game</h3>
         <button onClick={this.startRandomGame.bind(this, false)}
           >Play against next available random person</button>
@@ -489,15 +495,42 @@ class Games extends React.Component {
         <button>Invite someone to play with</button> (no f'ing Facebook!)
       </div>
     )
+
+    let stats = null
+    console.log(this.props.stats)
+    if (this.props.stats.wins || this.props.stats.losses) {
+      stats = (
+        <div className="section">
+          <h3>Stats</h3>
+          <table>
+            <tbody>
+              <tr>
+                <th>Games</th>
+                <th>Wins</th>
+                <th>Losses</th>
+              </tr>
+              <tr>
+                <td>{this.props.stats.wins + this.props.stats.losses}</td>
+                <td>{this.props.stats.wins}</td>
+                <td>{this.props.stats.losses}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+
     return (
       <div>
         <h2>Games</h2>
-          <div>
+          <div className="section">
             <h3>Ongoing games you have</h3>
             {this.props.games.length ? ongoingGames : <i>none</i>}
           </div>
-        <hr/>
-        {startNewForm}
+
+          {startNewForm}
+
+          {stats}
       </div>
     )
 
