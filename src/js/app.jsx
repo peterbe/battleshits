@@ -306,6 +306,7 @@ class App extends React.Component {
       game: null,
       games: [],
       stats: {},
+      synced: false,
     }
   }
 
@@ -327,7 +328,6 @@ class App extends React.Component {
   }
 
   changeGame(game) {
-    console.log('Change game, grid:', game.grid, 'opponent grid:', game.opponent.grid)
     apiSet('/api/save', {game: game})
     .then((r) => {
       return r.json()
@@ -336,11 +336,11 @@ class App extends React.Component {
       if (response.id !== game.id) {
         game.id = response.id
       }
-      this.setState({game: game})
+      this.setState({game: game, synced: true})
     })
     .catch((ex) => {
       console.warn('Saving game failed. Update state anyway')
-      this.setState({game: game})
+      this.setState({game: game, synced: false})
     })
   }
 
@@ -497,7 +497,6 @@ class Games extends React.Component {
     )
 
     let stats = null
-    console.log(this.props.stats)
     if (this.props.stats.wins || this.props.stats.losses) {
       stats = (
         <div className="section">
