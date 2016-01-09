@@ -57,6 +57,7 @@ def random_username():
     return uuid.uuid4().hex[:30]
 
 
+@require_POST
 def login(request):
     assert not request.user.is_authenticated()
     user = get_user_model().objects.create(

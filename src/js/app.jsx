@@ -243,13 +243,11 @@ let apiGet = (url) => {
   .then((r) => {
     if (r.status === 200) {
       return r.json()
-      // console.log('DATA', data)
-      // return data
     }
     throw new Error(r.status)
   })
   .catch((ex) => {
-    console.error('FETCH API error', ex)
+    console.error('FETCH API GET error', ex)
     throw ex
   })
 }
@@ -268,6 +266,17 @@ let apiSet = (url, data) => {
       'X-CSRFToken': sessionStorage.getItem('csrfmiddlewaretoken'),
     },
     body: JSON.stringify(data)
+  })
+  .then((r) => {
+    if (r.status === 200 || r.status === 201) {
+      return r.json()
+    }
+    console.error(r)
+    throw new Error(r.status)
+  })
+  .catch((ex) => {
+    console.error('FETCH API POST error', ex)
+    throw ex
   })
   // if (url==='/api/games/1' && options.designed) {
   //   return new Promise((resolve) => {
@@ -329,9 +338,6 @@ class App extends React.Component {
 
   changeGame(game) {
     apiSet('/api/save', {game: game})
-    .then((r) => {
-      return r.json()
-    })
     .then((response) => {
       if (response.id !== game.id) {
         game.id = response.id
@@ -360,10 +366,9 @@ class App extends React.Component {
       } else {
         apiSet('/api/login', {})
         .then((result) => {
+          sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
           sessionStorage.setItem('username', result.username)
           this.setState({games: [], stats: {}})
-          // apiGet('/api/games')
-          // .then((result) => this.setState({games: result.games}))
         })
       }
     })
@@ -454,14 +459,12 @@ class Games extends React.Component {
         <ul>
           {
             games.map((game) => {
-              // let bombsDropped = 0
               let bombsDropped = game.grid.filter(cell => {
                 return cell > 0
               }).length
               bombsDropped += game.opponent.grid.filter(cell => {
                 return cell > 0
               }).length
-              console.log(game.gameover)
               return (
                 <li key={game.id}>
                   <button onClick={this.props.onGameSelect.bind(this, game)}>
@@ -504,12 +507,10 @@ class Games extends React.Component {
           <table>
             <tbody>
               <tr>
-                <th>Games</th>
                 <th>Wins</th>
                 <th>Losses</th>
               </tr>
               <tr>
-                <td>{this.props.stats.wins + this.props.stats.losses}</td>
                 <td>{this.props.stats.wins}</td>
                 <td>{this.props.stats.losses}</td>
               </tr>
@@ -743,7 +744,6 @@ class Game extends React.Component {
       }
       ship.bombed = bombed
       if (bombed) {
-        console.log('SHIP IS BOMBED!', ship)
         // XXX might need to figure out if the game is over
         if (opponentmove) {
           allBombed = _isAllBombed(game.ships)
