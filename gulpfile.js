@@ -7,7 +7,8 @@ var fs = require('fs');
 gulp.task('buildHtml', function() {
   gulp.src('index.html')
   .pipe(htmlreplace({
-        'trackjs': fs.readFileSync('trackjs.html', 'utf8'),
+        'trackjs': fs.readFileSync('src/snippets/trackjs.html', 'utf8'),
+        'debug': fs.readFileSync('src/snippets/debug.html', 'utf8'),
     }))
   .pipe(gulp.dest('dist/'));
 });
