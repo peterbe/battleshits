@@ -337,7 +337,7 @@ class App extends React.Component {
   }
 
   changeGame(game) {
-    this.setState({game: game, synced: this.state.synced + 1})
+    this.setState({game: game})
     apiSet('/api/save', {game: game})
     .then((response) => {
       if (response.id !== game.id) {
@@ -348,6 +348,7 @@ class App extends React.Component {
     .catch((ex) => {
       console.warn('Saving game failed. Update state anyway')
       // this.setState({game: game, synced: false})
+      this.setState({synced: this.state.synced + 1})
     })
   }
 
@@ -376,8 +377,23 @@ class App extends React.Component {
   }
 
   render() {
+
+    let synced = null
+    if (this.state.synced) {
+      synced = (
+        <p className="syncstatus not-synced">
+          not synced to server
+        </p>
+      )
+    } else {
+      synced = (
+        <p className="syncstatus synced">
+          synced
+        </p>
+      )
+    }
+
     return (
-      <div>
         <div>
           <h1>Battleshits</h1>
           <h2>You Will Never Shit in Peace</h2>
@@ -392,8 +408,10 @@ class App extends React.Component {
               onGamesChange={this.onGamesChange.bind(this)}
               onGameSelect={this.onGameSelect.bind(this)}/>
           }
+
+          { synced }
+
         </div>
-      </div>
     )
   }
 }
