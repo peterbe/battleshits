@@ -315,7 +315,7 @@ class App extends React.Component {
       game: null,
       games: [],
       stats: {},
-      synced: false,
+      synced: 0,
     }
   }
 
@@ -337,16 +337,17 @@ class App extends React.Component {
   }
 
   changeGame(game) {
+    this.setState({game: game, synced: this.state.synced + 1})
     apiSet('/api/save', {game: game})
     .then((response) => {
       if (response.id !== game.id) {
         game.id = response.id
       }
-      this.setState({game: game, synced: true})
+      this.setState({synced: 0})
     })
     .catch((ex) => {
       console.warn('Saving game failed. Update state anyway')
-      this.setState({game: game, synced: false})
+      // this.setState({game: game, synced: false})
     })
   }
 
