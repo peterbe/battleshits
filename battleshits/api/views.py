@@ -108,6 +108,13 @@ def save(request):
             game_obj.state = game
             if game['gameover']:
                 game_obj.gameover = True
+                if game['winner']:
+                    game_obj.winner = request.user
+                elif game['opponent']['winner']:
+                    if player2:
+                        game_obj.winner = player2
+                    else:
+                        assert game['opponent']['ai']
             game_obj.save()
         return http.JsonResponse({'ok': True, 'id': game_obj.id})
     else:
@@ -120,7 +127,6 @@ def list_games(request):
         Q(player1=request.user) | Q(player2=request.user)
     )
     games = games_base_qs.filter(gameover=False).order_by('-modified')
-    # XXX we should maybe only return truly ongoing games
     states = [x.state for x in games]
     wins = games_base_qs.filter(gameover=True).filter(winner=request.user)
     losses = games_base_qs.filter(gameover=True).exclude(winner=request.user)

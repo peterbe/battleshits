@@ -425,7 +425,7 @@ class Games extends React.Component {
         grid: Array.from(_EMPTY_GRID),
         ships: _copyArrayOfObjects(SHIPS),
         rules: {
-          drops: 3,
+          drops: 4,
         },
         gameover: false,
         _drops: 0,  //
@@ -753,11 +753,12 @@ class Game extends React.Component {
         if (allBombed) {
           game.gameover = true
           if (opponentmove) {
-            this.setState({message: `You lost! (aka. you suck)`})
+            this.setState({message: `You lost!\n(aka. you suck)`})
+            game.opponent.winner = true
             // alert("You lost!")
           } else {
-            this.setState({message: `You won! Awesomenessauce!`})
-            // alert("You won!")
+            this.setState({message: `You won!\nAwesomenessauce!`})
+            game.winner = true
           }
         }
       }
