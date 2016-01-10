@@ -756,7 +756,7 @@ class Game extends React.Component {
             this.setState({message: `You lost! (aka. you suck)`})
             // alert("You lost!")
           } else {
-            this.setState({message: `You won! Moahaha!`})
+            this.setState({message: `You won! Awesomenessauce!`})
             // alert("You won!")
           }
         }
