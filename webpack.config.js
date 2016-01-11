@@ -1,5 +1,9 @@
 var webpack = require('webpack');
 
+var definePlugin = new webpack.DefinePlugin({
+  __DEV__: JSON.stringify(JSON.parse(process.env.BUILD_DEV || 'true')),
+});
+
 module.exports = {
   entry: [
     'webpack/hot/only-dev-server',
@@ -19,6 +23,7 @@ module.exports = {
   },
   plugins: [
     new webpack.NoErrorsPlugin(),
+    definePlugin,
   ],
 
 };
