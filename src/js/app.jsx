@@ -8,8 +8,6 @@ import { getOneElement } from './components/utils.js'
 import Message from './components/message.jsx';
 
 
-console.log('dev', __DEV__)
-
 const SHIPS = [
   {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
   {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
@@ -329,13 +327,6 @@ class App extends React.Component {
 
   onGamesChange(games) {
     // because a game has been added or removed
-    // apiSet('/api/save', {games: games})
-    // .then((r) => {
-    //   return r.json()
-    // })
-    // .then((response) => {
-    //   console.log('SAVED', response)
-    // })
   }
 
   changeGame(game) {
@@ -446,7 +437,7 @@ class Games extends React.Component {
         grid: Array.from(_EMPTY_GRID),
         ships: _copyArrayOfObjects(SHIPS),
         rules: {
-          drops: 4,
+          drops: 3,
         },
         gameover: false,
         _drops: 0,  //

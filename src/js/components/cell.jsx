@@ -38,8 +38,8 @@ export default class Cell extends React.Component {
 
     let style = {width: this.props.width, height: height}
     let _coord = ''
-    if (window.DEBUG) {
-      _coord = this._indexToCoord(this.props.index)  // used for debugging
+    if (__DEV__) {
+      _coord = this._indexToCoord(this.props.index)
     }
 
     // onClick={this.props.cellClicked.bind(this)}
