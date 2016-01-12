@@ -354,6 +354,8 @@ class App extends React.Component {
   initServerGames() {
     return apiGet('/api/signedin')
     .then((result) => {
+      // if it worked, we know we're at least not offline
+      this.setState({synced: 0})
       sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
       if (result.username) {
         sessionStorage.setItem('username', result.username)
@@ -401,7 +403,7 @@ class App extends React.Component {
     } else {
       synced = (
         <p className="syncstatus synced">
-          synced
+          online
         </p>
       )
     }
@@ -642,8 +644,10 @@ class Game extends React.Component {
     // a human and the computer and it's the computer's turn.
     let game = this.props.game
     if (game.opponent.ai && !game.yourturn && !game.designmode && !game.opponent.designmode && !game.gameover) {
-      getOneElement('#yours').scrollIntoView()
-      this.makeAIMove()
+      setTimeout(() => {
+        getOneElement('#yours').scrollIntoView()
+        this.makeAIMove()
+      }, 400)
     }
   }
 
