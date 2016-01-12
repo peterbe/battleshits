@@ -962,7 +962,7 @@ class Game extends React.Component {
         <hr/>
         <h5>You and your game options!</h5>
         <button onClick={this.toggleSound.bind(this)}>
-          { this.state.sound ? 'Sound off' : 'Sound on' }
+          { this.state.sound ? 'Turn sound off' : 'Turn sound on' }
         </button>
 
       </div>

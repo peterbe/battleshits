@@ -116,7 +116,7 @@ def save(request):
                     else:
                         assert game['opponent']['ai']
             game_obj.save()
-        return http.JsonResponse({'ok': True, 'id': game_obj.id})
+        return http.JsonResponse({'id': game_obj.id})
     else:
         raise NotImplementedError(data)
 
