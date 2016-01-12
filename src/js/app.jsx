@@ -253,7 +253,6 @@ let apiGet = (url) => {
 }
 
 let apiSet = (url, data) => {
-  // data.csrfmiddlewaretoken = sessionStorage.getItem('csrfmiddlewaretoken')
   if (!sessionStorage.getItem('csrfmiddlewaretoken')) {
     throw new Error('No csrfmiddlewaretoken in sessionStorage')
   }
@@ -315,7 +314,7 @@ class App extends React.Component {
       game: null,
       games: [],
       stats: {},
-      synced: 0,
+      synced: -1,
     }
   }
 
@@ -331,22 +330,29 @@ class App extends React.Component {
 
   changeGame(game) {
     this.setState({game: game})
-    apiSet('/api/save', {game: game})
-    .then((response) => {
-      if (response.id !== game.id) {
-        game.id = response.id
-      }
-      this.setState({synced: 0})
-    })
-    .catch((ex) => {
-      console.warn('Saving game failed. Update state anyway')
-      // this.setState({game: game, synced: false})
-      this.setState({synced: this.state.synced + 1})
-    })
+    if (sessionStorage.getItem('csrfmiddlewaretoken')) {
+      // we can save if we have made server contact at least once
+      apiSet('/api/save', {game: game})
+      .then((response) => {
+        if (response.id !== game.id) {
+          game.id = response.id
+        }
+        this.setState({synced: 0})
+      })
+      .catch((ex) => {
+        console.warn('Saving game failed. Update state anyway')
+        this.setState({synced: this.state.synced + 1})
+      })
+    } else {
+      this.initServerGames()
+      .catch((ex) => {
+        console.warn('Unable to initialize server games')
+      })
+    }
   }
 
-  componentWillMount() {
-    apiGet('/api/signedin')
+  initServerGames() {
+    return apiGet('/api/signedin')
     .then((result) => {
       sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
       if (result.username) {
@@ -369,13 +375,27 @@ class App extends React.Component {
     })
   }
 
+  componentWillMount() {
+    this.initServerGames()
+  }
+
+  onGameExit() {
+    this.setState({game: null})
+  }
+
   render() {
 
     let synced = null
-    if (this.state.synced) {
+    if (this.state.synced > 0) {
       synced = (
         <p className="syncstatus not-synced">
           not synced to server
+        </p>
+      )
+    } else if (this.state.synced < 0) {
+      synced = (
+        <p className="syncstatus offline">
+          offline
         </p>
       )
     } else {
@@ -394,6 +414,7 @@ class App extends React.Component {
             this.state.game ?
             <Game
               game={this.state.game}
+              onGameExit={this.onGameExit.bind(this)}
               changeGame={this.changeGame.bind(this)}/> :
             <Games
               games={this.state.games}
@@ -994,6 +1015,7 @@ class Game extends React.Component {
 
     return (
       <div>
+        <button onClick={this.props.onGameExit.bind(this)}>Exit game</button>
         <h2>Playing against <i>{game.opponent.name}</i></h2>
         {statusHead}
         <Message message={this.state.message}/>
