@@ -24,4 +24,9 @@ urlpatterns = [
         views.list_games,
         name='list'
     ),
+    url(
+        r'^profile$',
+        views.profile,
+        name='profile'
+    ),
 ]

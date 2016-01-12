@@ -412,9 +412,9 @@ class App extends React.Component {
 class Games extends React.Component {
   constructor(props) {
     super(props)
-    // this.state = {
-    //   games: [],
-    // };
+    this.state = {
+      askYourName: false,
+    }
   }
 
   componentDidMount() {
@@ -424,6 +424,16 @@ class Games extends React.Component {
   }
 
   startRandomGame(ai) {
+
+    if (!ai) {
+      // if you're not going to play against the computer we need your name
+      let yourName = sessionStorage.getItem('yourname') || null
+      if (!yourName) {
+        this.setState({askYourName: true})
+        return
+      }
+    }
+
     const _copyArrayOfObjects = (seq) => {
       return Array.from(seq, item => Object.assign({}, item))
     }
@@ -458,6 +468,21 @@ class Games extends React.Component {
       this.props.onGamesChange(games)
       // this.setState({games: games})
       this.props.onGameSelect(game)
+    }
+  }
+
+  cancelAskYourName() {
+    this.setState({askYourName: false})
+  }
+
+  onSaveYourName(e) {
+    e.preventDefault()
+    let name = this.refs.your_name.value.trim()
+    if (name.length) {
+      apiSet('/api/profile', {name: name})
+      .then((response) => {
+        this.setState({askYourName: false})
+      })
     }
   }
 
@@ -498,9 +523,18 @@ class Games extends React.Component {
         </ul>
       )
     }
-    let startNewForm = (
-      <div className="section">
-        <h3>Start a new game</h3>
+
+    let nameForm = (
+      <form onSubmit={this.onSaveYourName.bind(this)}>
+        <label htmlFor="id_your_name">You must enter your name:</label>
+        <input name="your_name" ref="your_name"/>
+        <button>Save</button>
+        <button onClick={this.cancelAskYourName.bind(this)}>Cancel</button>
+      </form>
+    )
+
+    let startButtons = (
+      <div>
         <button onClick={this.startRandomGame.bind(this, false)}
           >Play against next available random person</button>
         <br/>
@@ -510,6 +544,17 @@ class Games extends React.Component {
         <button>Invite someone to play with</button> (no f'ing Facebook!)
       </div>
     )
+
+    let startNewForm = (
+      <div className="section">
+        <h3>Start a new game</h3>
+
+        { this.state.askYourName ? nameForm : startButtons}
+
+      </div>
+    )
+
+
 
     let stats = null
     if (this.props.stats.wins || this.props.stats.losses) {
@@ -540,9 +585,9 @@ class Games extends React.Component {
             {this.props.games.length ? ongoingGames : <i>none</i>}
           </div>
 
-          {startNewForm}
+          { startNewForm }
 
-          {stats}
+          { stats }
       </div>
     )
 
@@ -769,7 +814,7 @@ class Game extends React.Component {
             game.opponent.winner = true
             // alert("You lost!")
           } else {
-            this.setState({message: `You won!\nAwesomenessauce!`})
+            this.setState({message: `You won!\nPooptastic!`})
             game.winner = true
           }
         }

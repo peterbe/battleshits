@@ -135,3 +135,13 @@ def list_games(request):
         'losses': losses.count(),
     }
     return http.JsonResponse({'games': states, 'stats': stats})
+
+
+@require_POST
+@xhr_login_required
+def profile(request):
+    data = json.loads(request.body)
+    if data.get('name'):
+        request.user.first_name = data['name']
+        request.user.save()
+    return http.JsonResponse({'ok': True})
