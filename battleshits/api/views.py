@@ -99,9 +99,11 @@ def save(request):
             game_obj = Game.objects.create(
                 player1=request.user,
                 player2=player2,
-                state=game
+                state=game,
+                ai=game['opponent']['ai'],
             )
             game_obj.state['id'] = game_obj.id
+
             game_obj.save()
         else:
             game_obj = Game.objects.get(id=game_id)
