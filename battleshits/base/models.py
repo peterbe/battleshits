@@ -22,6 +22,9 @@ class Game(models.Model):
         null=True
     )
 
+    # true if the opponent is the computer
+    ai = models.BooleanField(default=False)
+
     state = JSONField()
     gameover = models.BooleanField(default=False)
 

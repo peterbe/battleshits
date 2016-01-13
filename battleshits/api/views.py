@@ -108,7 +108,7 @@ def save(request):
             game_obj.state = game
             if game['gameover']:
                 game_obj.gameover = True
-                if game['winner']:
+                if game['you']['winner']:
                     game_obj.winner = request.user
                 elif game['opponent']['winner']:
                     if player2:

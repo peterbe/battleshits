@@ -176,69 +176,6 @@ let _randomlyPlaceShips = (ships) => {
 }
 
 let apiGet = (url) => {
-
-  // if (url==='/api/games/') {
-  //   return new Promise((resolve) => {
-  //       resolve({
-  //         games: [
-  //           //_GAME1, _GAME2, _GAME3
-  //         ]
-  //       })
-  //   });
-  // }
-
-  // if (url==='/api/games/0') {
-  //   return new Promise((resolve) => {
-  //       resolve({
-  //         game:
-  //       })
-  //   });
-  // }
-  // if (url==='/api/games/1') {
-  //   return new Promise((resolve) => {
-  //       resolve({
-  //         game:
-  //       })
-  //   });
-  // }
-  // if (url==='/api/games/3') {
-  //   return new Promise((resolve) => {
-  //       resolve({
-  //         game: {
-  //           id: 3,
-  //           yourturn: false,
-  //           designmode: true,
-  //           grid: _YOUR,
-  //           ships: SHIPS.copyWithin(0, 0),
-  //           opponent: {
-  //             grid: _OPP,
-  //             name: 'Holy Acorn',
-  //             ai: true,
-  //             designmode: true,
-  //             ships: SHIPS.copyWithin(0, 0),
-  //           }
-  //         }
-  //       })
-  //   });
-  // }
-    // this.setState({
-    //   loading: false,
-    //   yourturn: game.yourturn,
-    //   designmode: game.designmode,
-    //   id: game.id,
-    //   grid: game.grid,
-    //   ships: game.ships,
-    //   // ships: SHIPS.copyWithin(0, 0),
-    //   opponent: {
-    //     // grid: _OPP,
-    //     grid: game.opponent.grid,
-    //     name: game.opponent.name,
-    //     // ships: SHIPS.copyWithin(0, 0),
-    //     ships: game.opponent.ships
-    //   }
-    // })
-
-  // throw new Error('HACKING!' + url)
   return fetch(url, {credentials: 'same-origin'})
   .then((r) => {
     if (r.status === 200) {
@@ -277,35 +214,7 @@ let apiSet = (url, data) => {
     console.error('FETCH API POST error', ex)
     throw ex
   })
-  // if (url==='/api/games/1' && options.designed) {
-  //   return new Promise((resolve) => {
-  //     resolve({ok: true})
-  //   })
-  // }
-  // if (url==='/api/games/3' && options.designed) {
-  //   return new Promise((resolve) => {
-  //     resolve({ok: true})
-  //   })
-  // }
-  // throw new Error('HACKING!' + url)
 }
-
-// class Homepage extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     // this.state = {
-//     //   games: []
-//     // };
-//   }
-//
-//   render() {
-//     return (
-//       <div>
-//         <Link to="/games">Games</Link>
-//       </div>
-//     )
-//   }
-// }
 
 class App extends React.Component {
   constructor(props) {
@@ -464,11 +373,13 @@ class Games extends React.Component {
       let game = {
         id: -1,
         saved: false,
-        designmode: true,
+        you: {
+          designmode: true,
+          winner: false,
+          grid: Array.from(_EMPTY_GRID),
+          ships: _copyArrayOfObjects(SHIPS),
+        },
         yourturn: false,
-        winner: false,
-        grid: Array.from(_EMPTY_GRID),
-        ships: _copyArrayOfObjects(SHIPS),
         rules: {
           drops: 3,
         },
@@ -483,14 +394,55 @@ class Games extends React.Component {
           designmode: true
         }
       }
-      game.ships = _randomlyPlaceShips(game.ships)
+      game.you.ships = _randomlyPlaceShips(game.you.ships)
       game.opponent.ships = _randomlyPlaceShips(game.opponent.ships)
-      console.log('CHEATING:', game.opponent.ships)
+      if (__DEV__) {
+        console.log('CHEATING:', game.opponent.ships)
+      }
       let games = this.props.games
       games.push(game)
       this.props.onGamesChange(games)
-      // this.setState({games: games})
       this.props.onGameSelect(game)
+    } else {
+      // create a game and send it to the server
+      let game = {
+        id: -1,
+        saved: false,
+        you: {
+          name: sessionStorage.getItem('yourname'),
+          designmode: true,
+          winner: false,
+          grid: Array.from(_EMPTY_GRID),
+          ships: _copyArrayOfObjects(SHIPS),
+        },
+        yourturn: false,
+        rules: {
+          drops: 3,
+        },
+        gameover: false,
+        _drops: 0,  //
+        opponent: {
+          name: 'Computer',
+          ai: true,
+          winner: false,
+          grid: Array.from(_EMPTY_GRID),
+          ships: _copyArrayOfObjects(SHIPS),
+          designmode: true
+        }
+      }
+      game.you.ships = _randomlyPlaceShips(game.you.ships)
+      game.opponent.ships = _randomlyPlaceShips(game.opponent.ships)
+
+      apiSet('/api/start', {game: game})
+      .then((result) => {
+        // This should return a game. Either it was the one you
+        // started or a similar one, with the same rules, that someone
+        // else started.
+        let games = this.props.games
+        games.push(result.game)
+        this.props.onGamesChange(games)
+        this.props.onGameSelect(game)
+      })
     }
   }
 
@@ -519,7 +471,7 @@ class Games extends React.Component {
         <ul>
           {
             games.map((game) => {
-              let bombsDropped = game.grid.filter(cell => {
+              let bombsDropped = game.you.grid.filter(cell => {
                 return cell > 0
               }).length
               bombsDropped += game.opponent.grid.filter(cell => {
@@ -643,7 +595,7 @@ class Game extends React.Component {
     // The game component has been mounted. Perhaps the game was between
     // a human and the computer and it's the computer's turn.
     let game = this.props.game
-    if (game.opponent.ai && !game.yourturn && !game.designmode && !game.opponent.designmode && !game.gameover) {
+    if (game.opponent.ai && !game.yourturn && !game.you.designmode && !game.opponent.designmode && !game.gameover) {
       setTimeout(() => {
         getOneElement('#yours').scrollIntoView()
         this.makeAIMove()
@@ -666,11 +618,11 @@ class Game extends React.Component {
     // Now we need to figure out if any of the ships are overlapping
     // and thus mark them as such.
 
-    game.ships.forEach((ship) => {
+    game.you.ships.forEach((ship) => {
       ship.overlapping = false
     })
-    game.ships.forEach((outer) => {
-      game.ships.forEach((inner) => {
+    game.you.ships.forEach((outer) => {
+      game.you.ships.forEach((inner) => {
         if (inner.id !== outer.id) {
           // now we can compare two ships
           if (_isOverlapping(inner, outer)) {
@@ -680,7 +632,6 @@ class Game extends React.Component {
       })
     })
     this.props.changeGame(game)
-    // this.setState({ships: this.state.game.ships}) // looks weird
   }
 
   shipRotated(ship) {
@@ -705,7 +656,7 @@ class Game extends React.Component {
 
   _countOverlaps() {
     let overlaps = 0
-    this.props.game.ships.forEach((ship) => {
+    this.props.game.you.ships.forEach((ship) => {
       overlaps += ship.overlapping
     })
     return overlaps
@@ -717,7 +668,7 @@ class Game extends React.Component {
     if (overlaps) {
       alert(overlaps + ' ships are still overlapping you big fart!')
     } else {
-      game.designmode = false
+      game.you.designmode = false
       //
 
       // When the game starts, and the second grid appears, the browser
@@ -746,7 +697,7 @@ class Game extends React.Component {
     // let's make a move for the computer
     // XXX make this NOT random or next available one
     let slots = []
-    game.grid.forEach((slot, i) => {
+    game.you.grid.forEach((slot, i) => {
       if (slot === 0) {
         slots.push(i)
       }
@@ -786,8 +737,8 @@ class Game extends React.Component {
     if (opponentmove) {
       element = yoursElement
       nextElement = opponentsElement;
-      [newCellstate, ship] = this._newCellState(index, game.ships)
-      game.grid[index] = newCellstate
+      [newCellstate, ship] = this._newCellState(index, game.you.ships)
+      game.you.grid[index] = newCellstate
     } else {
       element = opponentsElement
       nextElement = yoursElement;
@@ -798,7 +749,7 @@ class Game extends React.Component {
       let bombed
       let allBombed = false
       if (opponentmove) {
-        bombed = _isBombed(game.grid, ship)
+        bombed = _isBombed(game.you.grid, ship)
         if (bombed) {
           this.setState({message: `
             ${game.opponent.name} sunk your battleshit (${ship.length})!
@@ -806,9 +757,6 @@ class Game extends React.Component {
           setTimeout(() => {
             this.setState({message: null})
           }, 4000)
-          // setTimeout(() => {
-          //   alert(`I sunk your battleshit! Ha ha!`)
-          // }, 400)
         }
       } else {
         bombed = _isBombed(game.opponent.grid, ship)
@@ -828,7 +776,7 @@ class Game extends React.Component {
       if (bombed) {
         // XXX might need to figure out if the game is over
         if (opponentmove) {
-          allBombed = _isAllBombed(game.ships)
+          allBombed = _isAllBombed(game.you.ships)
         } else {
           allBombed = _isAllBombed(game.opponent.ships)
         }
@@ -840,7 +788,7 @@ class Game extends React.Component {
             // alert("You lost!")
           } else {
             this.setState({message: `You won!\nPooptastic!`})
-            game.winner = true
+            game.you.winner = true
           }
         }
       }
@@ -885,11 +833,6 @@ class Game extends React.Component {
       }
     }
 
-    // if (turnchange) {
-    //   console.log('Turnchange, scroll to', element)
-    //   element.scrollIntoView({block: "end", behavior: "smooth"})
-    // }
-
     setTimeout(() => {
       this.props.changeGame(game)
       setTimeout(() => {
@@ -930,13 +873,9 @@ class Game extends React.Component {
     //   _drops = 1
     // }
     if (!game.yourturn) {
-      // if (game._drops && game._drops < game.rules.drops) {
         yourHeader += `
           (${game.opponent.name}'s turn, ${_drops} of ${drops})
           `
-      // } else {
-      //   yourHeader += ` (${game.opponent.name}'s turn)`
-      // }
     }
 
     let opponentHeader = `${game.opponent.name}'s grid`
@@ -949,7 +888,7 @@ class Game extends React.Component {
     }
 
     let statusHead
-    if (game.designmode) {
+    if (game.you.designmode) {
       statusHead = <h3>Status: Place your shitty ships!</h3>
     } else if (game.opponent.designmode) {
       statusHead = <h3>Status: {game.opponent.name + '\u0027'}s placing ships</h3>
@@ -962,7 +901,7 @@ class Game extends React.Component {
     }
 
     let opponent = null
-    if (!game.designmode) {
+    if (!game.you.designmode) {
       if (game.opponent.designmode) {
         opponent = <p>{game.opponent.name} is scheming and planning</p>
       } else {
@@ -989,7 +928,7 @@ class Game extends React.Component {
     }
     let doneButton = null
 
-    if (game.designmode) {
+    if (game.you.designmode) {
       let disabledDoneButton = this._countOverlaps() > 0
       doneButton = (
         <button
@@ -1003,11 +942,11 @@ class Game extends React.Component {
 
     let yours = (
       <div id="yours">
-        { game.designmode ? doneButton : <h4>{yourHeader}</h4>}
+        { game.you.designmode ? doneButton : <h4>{yourHeader}</h4>}
         <Grid
-          grid={game.grid}
-          ships={game.ships}
-          canMove={game.designmode}
+          grid={game.you.grid}
+          ships={game.you.ships}
+          canMove={game.you.designmode}
           hideShips={false}
           opponent={false}
           cellClicked={this.cellClicked.bind(this, true)}
