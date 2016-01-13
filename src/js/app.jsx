@@ -804,7 +804,7 @@ class Game extends React.Component {
       }
       setTimeout(() => {
         this.setState({message: null})
-      }, 4000)
+      }, 3000)
       game._drops -= game.rules.drops
     }
 
