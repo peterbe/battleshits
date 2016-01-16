@@ -225,6 +225,7 @@ class App extends React.Component {
       stats: {},
       synced: -1,
       waitingGames: [],
+      serverError: false,
     }
   }
 
@@ -295,6 +296,10 @@ class App extends React.Component {
           this.setState({games: [], stats: {}})
         })
       }
+    })
+    .catch((ex) => {
+      console.warn(ex)
+      this.setState({serverError: true})
     })
   }
 
@@ -379,10 +384,25 @@ class App extends React.Component {
       )
     }
 
+    let serverError = null
+    if (this.state.serverError) {
+      serverError = (
+        <div className="section server-error">
+          <h3>Hey! Fix your darn Internet!</h3>
+          <p>
+            It was not possible to connect you to the server so
+            some things might not work.
+          </p>
+        </div>
+      )
+    }
+
     return (
         <div>
           <h1>Battleshits</h1>
           <h2>You Will Never Shit in Peace</h2>
+
+          { serverError }
 
           { waitingForGames }
 
@@ -670,6 +690,15 @@ class Game extends React.Component {
       setTimeout(() => {
         getOneElement('#yours').scrollIntoView()
         this.makeAIMove()
+      }, 400)
+    } else if (!game.you.designmode && !game.opponent.designmode) {
+      // scroll to the grid whose turn it is
+      setTimeout(() => {
+        if (game.yourturn) {
+          getOneElement('#opponents').scrollIntoView()
+        } else {
+          getOneElement('#yours').scrollIntoView()
+        }
       }, 400)
     }
   }
