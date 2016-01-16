@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import uuid
@@ -107,6 +108,12 @@ def save(request):
             game_obj.save()
         else:
             game_obj = Game.objects.get(id=game_id)
+            if game_obj.player2 == request.user:
+                # If you're player2, we need to invert the state.
+                # But had player1 finished designing?
+                designmode = game_obj.state['you']['designmode']
+                game = invert_state(game)
+            # raise Exception
             game_obj.state = game
             if game['gameover']:
                 game_obj.gameover = True
@@ -129,14 +136,33 @@ def list_games(request):
         Q(player1=request.user) | Q(player2=request.user)
     )
     games = games_base_qs.filter(gameover=False).order_by('-modified')
-    states = [x.state for x in games]
+    states = []
+    waiting = []
+    for game in games:
+        if not game.player2 and not game.ai:
+            waiting.append(game.id)
+        elif game.player2 == request.user:
+            states.append(invert_state(game.state))
+        else:
+            states.append(game.state)
+
+    # if not waiting and states:
+    #     print "WAITING"
+    #     print waiting
+    #     print "STATES"
+    #     from pprint import pprint
+    #     pprint(states[0])
     wins = games_base_qs.filter(gameover=True).filter(winner=request.user)
     losses = games_base_qs.filter(gameover=True).exclude(winner=request.user)
     stats = {
         'wins': wins.count(),
         'losses': losses.count(),
     }
-    return http.JsonResponse({'games': states, 'stats': stats})
+    return http.JsonResponse({
+        'games': states,
+        'stats': stats,
+        'waiting': waiting,
+    })
 
 
 @require_POST
@@ -146,4 +172,81 @@ def profile(request):
     if data.get('name'):
         request.user.first_name = data['name']
         request.user.save()
-    return http.JsonResponse({'ok': True})
+    return http.JsonResponse({
+        'first_name': request.user.first_name,
+        'email': request.user.email,
+        'username': request.user.username,
+    })
+
+
+def invert_state(state):
+    """if you have the state of a game, it's written such that there's keys
+    called "you", "your" and "opponent". Let's create a copy of this state
+    where the "you" and "opponent" is inverted."""
+    inverted = copy.deepcopy(state)
+    inverted['yourturn'] = not inverted['yourturn']
+    opponent = state['opponent']
+    you = state['you']
+    inverted['opponent'] = you
+    inverted['you'] = opponent
+    return inverted
+
+
+@require_POST
+@xhr_login_required
+def start_game(request):
+    data = json.loads(request.body)
+    if data.get('ids'):
+        # if you have a game ID, you're waiting for that game to start
+        raise NotImplementedError
+    elif data.get('game'):
+        game = data['game']
+        if not request.user.first_name:
+            return http.HttpResponseBadRequest("you haven't set your name yet")
+        # should do some sanity checks here perhaps
+
+        # find any started games that don't have a player2
+        games = Game.objects.filter(
+            ai=False,
+            gameover=False,
+            player2__isnull=True
+        )
+        for other in games:
+            # If the person who started it hasn't "designed" it yet
+            # (aka. placed their ships) then this isn't ready yet.
+            if other.state['you']['designmode']:
+                print "Skip game that is still in design mode"
+                continue
+            # print "COMPARE"
+            # print other.state['rules']
+            # print '-' * 20
+            # print game['rules']
+            if other.state['rules'] == game['rules']:
+                # we have a match!
+                other.player2 = request.user
+                other.state['opponent']['name'] = request.user.first_name
+                other.save()
+                # should we send a notification to player1?
+                return http.JsonResponse({'game': invert_state(other.state)})
+
+        # still here :(
+        # have you created one before?
+        games = Game.objects.filter(
+            ai=False,
+            player1=request.user,
+            player2__isnull=True,
+            gameover=False,
+        )
+        for game_obj in games:
+            if game_obj.state['rules'] == game['rules']:
+                return http.JsonResponse({'game': game_obj.state})
+
+        game_obj = Game.objects.create(
+            player1=request.user,
+            state=game,
+        )
+        game_obj.state['id'] = game_obj.id
+        game_obj.save()
+        return http.JsonResponse({'game': game_obj.state})
+    else:
+        return http.HttpResponseBadRequest('neither id or game')

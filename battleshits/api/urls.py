@@ -29,4 +29,9 @@ urlpatterns = [
         views.profile,
         name='profile'
     ),
+    url(
+        r'^start$',
+        views.start_game,
+        name='start_game'
+    ),
 ]

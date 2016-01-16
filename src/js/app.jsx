@@ -224,12 +224,14 @@ class App extends React.Component {
       games: [],
       stats: {},
       synced: -1,
+      waitingGames: [],
     }
   }
 
   onGameSelect(game) {
     // XXX perhaps set a sessionStorage so that it continues this game
     // if you refresh the page
+    console.log('Game Selected, Turn?', game)
     this.setState({game: game})
   }
 
@@ -268,12 +270,22 @@ class App extends React.Component {
       sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
       if (result.username) {
         sessionStorage.setItem('username', result.username)
+        if (result.first_name && !sessionStorage.getItem('yourname')) {
+          sessionStorage.setItem('yourname', result.first_name)
+        }
         if (result.first_name) {
           localStorage.setItem('name', result.first_name)
         }
         apiGet('/api/games')
         .then((result) => {
-          this.setState({games: result.games, stats: result.stats})
+          this.setState({
+            games: result.games,
+            stats: result.stats,
+            waitingGames: result.waiting
+          })
+          if (result.waiting.length) {
+            this.waitForGames()
+          }
         })
       } else {
         apiSet('/api/login', {})
@@ -284,6 +296,38 @@ class App extends React.Component {
         })
       }
     })
+  }
+
+  waitForGames() {
+    if (this.state.waitingGames.length) {
+      apiGet('/api/games')
+      .then((result) => {
+        if (result.games.length) {
+          let games = this.state.games
+          let game = result.games[0]
+          console.log("FOUND GAME", game)
+          console.log("FOUND GAME ID", game.id)
+          games.push(game)
+          let waitingGames = new Set(this.state.waitingGames)
+          waitingGames.delete(game.id)
+          this.setState({waitingGames: Array.from(waitingGames)})
+          this.onGamesChange(games)
+          this.onGameSelect(game)
+        } else {
+          setTimeout(() => {
+            // loop
+            this.waitForGames()
+          }, 2000)
+        }
+      })
+    }
+  }
+
+  onWaitingGame(id) {
+    let waitingGames = new Set(this.state.waitingGames)
+    waitingGames.add(id)
+    this.setState({waitingGames: Array.from(waitingGames)})
+    this.waitForGames()
   }
 
   componentWillMount() {
@@ -317,19 +361,43 @@ class App extends React.Component {
       )
     }
 
+    let waitingForGames = null
+    if (this.state.waitingGames.length) {
+      waitingForGames = (
+        <div className="section waiting-for-games">
+          <p>
+            <img src="/static/images/radar.gif"/>
+            <br/>
+            Waiting for someone to play with
+          </p>
+          {
+            this.state.waitingGames.length > 1 ?
+            <p>{this.state.waitingGames} games started</p> :
+            null
+          }
+        </div>
+      )
+    }
+
     return (
         <div>
           <h1>Battleshits</h1>
           <h2>You Will Never Shit in Peace</h2>
+
+          { waitingForGames }
+
           {
             this.state.game ?
             <Game
               game={this.state.game}
               onGameExit={this.onGameExit.bind(this)}
-              changeGame={this.changeGame.bind(this)}/> :
+              changeGame={this.changeGame.bind(this)}
+              onWaitingGame={this.onWaitingGame.bind(this)}
+              onGameSelect={this.onGameSelect.bind(this)}/> :
             <Games
               games={this.state.games}
               stats={this.state.stats}
+              onWaitingGame={this.onWaitingGame.bind(this)}
               onGamesChange={this.onGamesChange.bind(this)}
               onGameSelect={this.onGameSelect.bind(this)}/>
           }
@@ -356,7 +424,6 @@ class Games extends React.Component {
   }
 
   startRandomGame(ai) {
-
     if (!ai) {
       // if you're not going to play against the computer we need your name
       let yourName = sessionStorage.getItem('yourname') || null
@@ -406,8 +473,6 @@ class Games extends React.Component {
     } else {
       // create a game and send it to the server
       let game = {
-        id: -1,
-        saved: false,
         you: {
           name: sessionStorage.getItem('yourname'),
           designmode: true,
@@ -422,8 +487,8 @@ class Games extends React.Component {
         gameover: false,
         _drops: 0,  //
         opponent: {
-          name: 'Computer',
-          ai: true,
+          name: '',
+          ai: false,
           winner: false,
           grid: Array.from(_EMPTY_GRID),
           ships: _copyArrayOfObjects(SHIPS),
@@ -438,10 +503,16 @@ class Games extends React.Component {
         // This should return a game. Either it was the one you
         // started or a similar one, with the same rules, that someone
         // else started.
-        let games = this.props.games
-        games.push(result.game)
-        this.props.onGamesChange(games)
-        this.props.onGameSelect(game)
+        if (result.id) {
+          // A new game was created, with the rules you created with.
+          this.props.onWaitingGame(result.id)
+        } else {
+          // let games = this.props.games
+          // games.push(result.game)
+          // console.log('MATCHED GAME', result.game)
+          this.props.onGameSelect(result.game)
+          // this.props.onGamesChange(games)
+        }
       })
     }
   }
@@ -455,8 +526,10 @@ class Games extends React.Component {
     let name = this.refs.your_name.value.trim()
     if (name.length) {
       apiSet('/api/profile', {name: name})
-      .then((response) => {
+      .then((result) => {
+        sessionStorage.setItem('yourname', result.first_name)
         this.setState({askYourName: false})
+        this.startRandomGame(false)
       })
     }
   }
@@ -528,8 +601,6 @@ class Games extends React.Component {
 
       </div>
     )
-
-
 
     let stats = null
     if (this.props.stats.wins || this.props.stats.losses) {
@@ -669,7 +740,6 @@ class Game extends React.Component {
       alert(overlaps + ' ships are still overlapping you big fart!')
     } else {
       game.you.designmode = false
-      //
 
       // When the game starts, and the second grid appears, the browser
       // will, for some reason, sometimes scroll down a bit. Prevent that.
@@ -684,6 +754,15 @@ class Game extends React.Component {
         }, 1000)
       } else {
         this.props.changeGame(game)
+        // But if you can't start the game until your opponent has
+        // also designed theirs.
+        if (game.opponent.designmode) {
+          this.props.onGameSelect(null)
+          if (!game.id) throw new Error("Game not saved yet")
+          this.props.onWaitingGame(game.id)
+        } else {
+          // let it start
+        }
       }
     }
   }
@@ -873,9 +952,7 @@ class Game extends React.Component {
     //   _drops = 1
     // }
     if (!game.yourturn) {
-        yourHeader += `
-          (${game.opponent.name}'s turn, ${_drops} of ${drops})
-          `
+      yourHeader += `(${game.opponent.name}'s turn, ${_drops} of ${drops})`
     }
 
     let opponentHeader = `${game.opponent.name}'s grid`
@@ -888,7 +965,9 @@ class Game extends React.Component {
     }
 
     let statusHead
-    if (game.you.designmode) {
+    if (game.gameover) {
+      statusHead = <h3>Status: Game Over</h3>
+    } else if (game.you.designmode) {
       statusHead = <h3>Status: Place your shitty ships!</h3>
     } else if (game.opponent.designmode) {
       statusHead = <h3>Status: {game.opponent.name + '\u0027'}s placing ships</h3>
