@@ -185,3 +185,16 @@ LOGIN_REDIRECT_URL = '/'
 
 FANOUT_REALM_ID = config('FANOUT_REALM_ID', default='')
 FANOUT_REALM_KEY = config('FANOUT_REALM_KEY', default='')
+
+
+SERVER_EMAIL = config('SERVER_EMAIL', default='root@localhost')
+
+
+# E.g. `Peter, mail@example.com; John, foo@bar.com`
+ADMINS = tuple(
+    [
+        tuple([e.strip() for e in x.strip().split(',')])
+        for x in config('ADMINS', default='').split(';')
+        if x.strip()
+    ]
+)
