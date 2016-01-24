@@ -265,7 +265,7 @@ def invert_state(state):
 
 @require_POST
 @xhr_login_required
-def start_game(request):
+def start(request):
     """When you start a game you have to pick the rules and design your
     ships (i.e. place them).
     If there is a game with the same rules, waiting for an opponent,

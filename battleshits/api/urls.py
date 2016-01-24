@@ -31,8 +31,8 @@ urlpatterns = [
     ),
     url(
         r'^start$',
-        views.start_game,
-        name='start_game'
+        views.start,
+        name='start'
     ),
     url(
         r'^bomb$',

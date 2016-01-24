@@ -85,12 +85,12 @@ class Tests(TestCase):
         )
 
     @mock.patch('battleshits.api.views.fanout')
-    def test_start_game(self, m_fanout):
+    def test_start(self, m_fanout):
         # When two different players create games (with the same rules),
         # one will always be slightly later than the other.
         # When a match is made, we need to inform both players with fanout.
 
-        url = reverse('api:start_game')
+        url = reverse('api:start')
         response = self.post_json(url, {})
         # not signed in
         self.assertEqual(response.status_code, 403)
@@ -270,7 +270,7 @@ class Tests(TestCase):
         user = self.login('player1')
         user.first_name = 'Peter'
         user.save()
-        url = reverse('api:start_game')
+        url = reverse('api:start')
         response = self.post_json(url, {'game': game})
         self.assertEqual(response.status_code, 200)
         game_id = json.loads(response.content)['id']
