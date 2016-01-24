@@ -243,6 +243,7 @@ class App extends React.Component {
 
   onGameExit() {
     this.setState({game: null})
+    this.loadGames()
   }
 
   onGamesChange(games) {
@@ -338,17 +339,7 @@ class App extends React.Component {
         if (result.first_name) {
           localStorage.setItem('name', result.first_name)
         }
-        apiGet('/api/games')
-        .then((result) => {
-          this.setState({
-            games: result.games,
-            stats: result.stats,
-            waitingGames: result.waiting
-          })
-          if (result.waiting.length) {
-            this.waitForGames()
-          }
-        })
+        this.loadGames()
         try {
           this.setupSocket(result.username)
         } catch(ex) {
@@ -367,6 +358,20 @@ class App extends React.Component {
     .catch((ex) => {
       console.warn(ex)
       this.setState({serverError: true})
+    })
+  }
+
+  loadGames() {
+    apiGet('/api/games')
+    .then((result) => {
+      this.setState({
+        games: result.games,
+        stats: result.stats,
+        waitingGames: result.waiting
+      })
+      if (result.waiting.length) {
+        this.waitForGames()
+      }
     })
   }
 
