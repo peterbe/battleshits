@@ -301,7 +301,14 @@ class App extends React.Component {
       console.log('GENERAL INCOMING ON', username, data)
       if (data.game) {
         if (this.state.game === null) {
-          this.setState({game: data.game})
+          // were you waiting for this game?!
+          let waitingGames = this.state.waitingGames
+          let pos = waitingGames.indexOf(data.game.id)
+          if (pos > -1) {
+            	waitingGames.splice(pos, 1);
+          }
+          this.setState({game: data.game, waitingGames: waitingGames})
+
         } else if (data.game.id === this.state.game.id) {
           this.setState({game: data.game})
           // console.log('Turn?', data.game.yourturn)
@@ -363,36 +370,36 @@ class App extends React.Component {
     })
   }
 
-  waitForGames() {
-    if (this.state.waitingGames.length) {
-      apiGet('/api/games')
-      .then((result) => {
-        if (result.games.length) {
-          let games = this.state.games
-          let game = result.games[0]
-          console.log("FOUND GAME", game)
-          console.log("FOUND GAME ID", game.id)
-          games.push(game)
-          let waitingGames = new Set(this.state.waitingGames)
-          waitingGames.delete(game.id)
-          this.setState({waitingGames: Array.from(waitingGames)})
-          this.onGamesChange(games)
-          this.onGameSelect(game)
-        } else {
-          setTimeout(() => {
-            // loop
-            this.waitForGames()
-          }, 2000)
-        }
-      })
-    }
-  }
+  // waitForGames() {
+  //   if (this.state.waitingGames.length) {
+  //     apiGet('/api/games')
+  //     .then((result) => {
+  //       if (result.games.length) {
+  //         let games = this.state.games
+  //         let game = result.games[0]
+  //         console.log("FOUND GAME", game)
+  //         console.log("FOUND GAME ID", game.id)
+  //         games.push(game)
+  //         let waitingGames = new Set(this.state.waitingGames)
+  //         waitingGames.delete(game.id)
+  //         this.setState({waitingGames: Array.from(waitingGames)})
+  //         this.onGamesChange(games)
+  //         this.onGameSelect(game)
+  //       } else {
+  //         setTimeout(() => {
+  //           // loop
+  //           this.waitForGames()
+  //         }, 2000)
+  //       }
+  //     })
+  //   }
+  // }
 
   onWaitingGame(id) {
     let waitingGames = new Set(this.state.waitingGames)
     waitingGames.add(id)
     this.setState({waitingGames: Array.from(waitingGames)})
-    this.waitForGames()
+    // this.waitForGames()
   }
 
   componentWillMount() {
@@ -582,20 +589,27 @@ class Games extends React.Component {
       game.you.ships = _randomlyPlaceShips(game.you.ships)
       game.opponent.ships = _randomlyPlaceShips(game.opponent.ships)
 
-      apiSet('/api/start', {game: game})
-      .then((result) => {
-        // This should return a game. Either it was the one you
-        // started or a similar one, with the same rules, that someone
-        // else started.
-        if (result.id) {
-          // A new game was created, with the rules you chose.
-          this.props.onWaitingGame(result.id)
-        } else if (result.game) {
-          console.log('MATCHED GAME', result.game)
-          this.props.onGameSelect(result.game)
-          // this.props.onGamesChange(games)
-        }
-      })
+      // We can't inform the server to start the game until we have
+      // designed it.
+      // let games = this.props.games
+      // games.push(game)
+      // this.props.onGamesChange(games)
+      this.props.onGameSelect(game)
+
+      // apiSet('/api/start', {game: game})
+      // .then((result) => {
+      //   // This should return a game. Either it was the one you
+      //   // started or a similar one, with the same rules, that someone
+      //   // else started.
+      //   if (result.id) {
+      //     // A new game was created, with the rules you chose.
+      //     this.props.onWaitingGame(result.id)
+      //   } else if (result.game) {
+      //     console.log('MATCHED GAME', result.game)
+      //     this.props.onGameSelect(result.game)
+      //     // this.props.onGamesChange(games)
+      //   }
+      // })
     }
   }
 
@@ -770,7 +784,9 @@ class Game extends React.Component {
   }
 
   componentWillUnmount() {
-    this.state.subscription.cancel()
+    if (this.state.subscription) {
+      this.state.subscription.cancel()
+    }
   }
 
   componentDidMount() {
@@ -800,8 +816,9 @@ class Game extends React.Component {
       }
 
       // if (this.props.newGame) {
+      if (game.id && game.id > 0) {
         this.setupSocket(game, sessionStorage.getItem('username'))
-      // }
+      }
     }
   }
 
@@ -889,16 +906,36 @@ class Game extends React.Component {
           this.makeAIMove()
         }, 1000)
       } else {
-        this.props.changeGame(game)
-        // But if you can't start the game until your opponent has
-        // also designed theirs.
-        if (game.opponent.designmode) {
-          this.props.onGameSelect(null)
-          if (!game.id) throw new Error("Game not saved yet")
-          this.props.onWaitingGame(game.id)
-        } else {
-          // let it start
-        }
+        // this.props.changeGame(game, false)
+        console.log('Send a START', game)
+        this.props.changeGame(null, false)
+        apiSet('/api/start', {game: game})
+        .then((result) => {
+          console.log("Result from start:", result);
+          if (result.id) {
+            // no match, but a reference to your created game
+            this.props.onWaitingGame(result.id)
+            this.props.changeGame(null, false)
+          } else if (result.game) {
+            this.props.changeGame(result.game, false)
+            // this.props.onGamesChange(null)
+          } else {
+            console.warn('Unrecognized result upon start', result);
+            throw new Error('Unrecognized result')
+          }
+        })
+        .catch((ex) => {
+
+        })
+        // // But if you can't start the game until your opponent has
+        // // also designed theirs.
+        // if (game.opponent.designmode) {
+        //   this.props.onGameSelect(null)
+        //   if (!game.id) throw new Error("Game not saved yet")
+        //   this.props.onWaitingGame(game.id)
+        // } else {
+        //   // let it start
+        // }
       }
     }
   }

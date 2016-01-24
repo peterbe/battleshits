@@ -26,6 +26,16 @@ fanout.realm = settings.FANOUT_REALM_ID
 fanout.key = settings.FANOUT_REALM_KEY
 
 
+class HttpResponseBadRequest(http.HttpResponseBadRequest):
+    """Overriding this because when it happens, I can't get the
+    message in either the django runserver terminal or the
+    console error in the React code."""
+    def __init__(self, msg):
+        if settings.DEBUG:
+            print msg
+        super(HttpResponseBadRequest, self).__init__(msg)
+
+
 def xhr_login_required(view_func):
     """similar to django.contrib.auth.decorators.login_required
     except instead of redirecting it returns a 403 message if not
@@ -98,13 +108,13 @@ def save(request):
         try:
             game_id = game['id']
         except KeyError:
-            return http.HttpResponseBadRequest('No game id')
+            return HttpResponseBadRequest('No game id')
     except KeyError:
-        return http.HttpResponseBadRequest('No game')
+        return HttpResponseBadRequest('No game')
     if game['you']['designmode']:
-        return http.HttpResponseBadRequest('Your game is not designed')
+        return HttpResponseBadRequest('Your game is not designed')
     if game['opponent']['designmode']:
-        return http.HttpResponseBadRequest('Opponent game is not designed')
+        return HttpResponseBadRequest('Opponent game is not designed')
 
     opponent = None
     if game_id < 0:
@@ -126,7 +136,7 @@ def save(request):
         game_obj = Game.objects.get(id=game_id)
         if not game_obj.ai:
             if game_obj.turn != request.user:
-                return http.HttpResponseBadRequest('Not your turn')
+                return HttpResponseBadRequest('Not your turn')
         if game_obj.player2 == request.user:
             opponent = game_obj.player1
             # If you're player2, expect the 'yourturn' to be the opposite
@@ -265,13 +275,13 @@ def start_game(request):
     """
     data = json.loads(request.body)
     if not data.get('game'):
-        return http.HttpResponseBadRequest('no game')
+        return HttpResponseBadRequest('no game')
     if not request.user.first_name:
-        return http.HttpResponseBadRequest("you haven't set your name yet")
+        return HttpResponseBadRequest("you haven't set your name yet")
 
     game = data['game']
     if game['you']['designmode']:
-        return http.HttpResponseBadRequest("you haven't designed it yet")
+        return HttpResponseBadRequest("you haven't designed it yet")
 
     # find any started games that don't have a player2
     games = Game.objects.filter(
