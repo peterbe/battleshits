@@ -34,4 +34,9 @@ urlpatterns = [
         views.start_game,
         name='start_game'
     ),
+    url(
+        r'^bomb$',
+        views.bombed,
+        name='bombed'
+    ),
 ]

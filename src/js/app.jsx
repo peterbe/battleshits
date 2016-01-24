@@ -181,7 +181,7 @@ let apiGet = (url) => {
     if (r.status === 200) {
       return r.json()
     }
-    throw new Error(r.status)
+    throw new Error('GET failed ' + r.status + ' (' + url + ')')
   })
   .catch((ex) => {
     console.error('FETCH API GET error', ex)
@@ -221,6 +221,7 @@ class App extends React.Component {
     super(props)
     this.state = {
       game: null,
+      // loadedGames: {},
       games: [],
       stats: {},
       synced: -1,
@@ -230,37 +231,90 @@ class App extends React.Component {
   }
 
   onGameSelect(game) {
+    // let loadedGames = this.state.loadedGames
+    // if (game) {
+    //   loadedGames[game.id] = 1 + (loadedGames[game.id] || 0)
+    // }
     // XXX perhaps set a sessionStorage so that it continues this game
     // if you refresh the page
-    console.log('Game Selected, Turn?', game)
+    // this.setState({game: game, loadedGames: loadedGames})
     this.setState({game: game})
+  }
+
+  onGameExit() {
+    this.setState({game: null})
   }
 
   onGamesChange(games) {
     // because a game has been added or removed
   }
 
-  changeGame(game) {
+  changeGame(game, save = true) {
     this.setState({game: game})
-    if (sessionStorage.getItem('csrfmiddlewaretoken')) {
-      // we can save if we have made server contact at least once
-      apiSet('/api/save', {game: game})
-      .then((response) => {
-        if (response.id !== game.id) {
-          game.id = response.id
-        }
-        this.setState({synced: 0})
-      })
-      .catch((ex) => {
-        console.warn('Saving game failed. Update state anyway')
-        this.setState({synced: this.state.synced + 1})
-      })
-    } else {
-      this.initServerGames()
-      .catch((ex) => {
-        console.warn('Unable to initialize server games')
-      })
+    if (save) {
+      if (sessionStorage.getItem('csrfmiddlewaretoken')) {
+        // we can save if we have made server contact at least once
+        apiSet('/api/save', {game: game})
+        .then((response) => {
+          if (response.id !== game.id) {
+            game.id = response.id
+          }
+          this.setState({synced: 0})
+        })
+        .catch((ex) => {
+          console.warn('Saving game failed. Update state anyway')
+          this.setState({synced: this.state.synced + 1})
+        })
+      } else {
+        this.initServerGames()
+        .catch((ex) => {
+          console.warn('Unable to initialize server games')
+        })
+      }
     }
+  }
+
+  // setupSocket(username) {
+  //   // console.log('SUBSCRIBED /'+username)
+  //   FANOUT_CLIENT.subscribe('/' + username, (data) => {
+  //     console.log('INCOMING ON', username, data)
+  //     if (data.game) {
+  //       if (this.state.game === null) {
+  //         this.setState({game: data.game})
+  //       } else if (data.game.id === this.state.game.id) {
+  //         this.setState({game: data.game})
+  //         // console.log('Turn?', data.game.yourturn)
+  //         if (data.game.yourturn) {
+  //           setTimeout(() => {
+  //             getOneElement('#opponents').scrollIntoView()
+  //           }, 1000)
+  //         }
+  //       } else {
+  //         console.warn('Socket updated a game which is not the one being played', data.game.id)
+  //       }
+  //     }
+  //   })
+  // }
+  setupSocket(username) {
+    // console.log('SUBSCRIBED /'+username)
+    FANOUT_CLIENT.subscribe('/' + username, (data) => {
+      console.log('GENERAL INCOMING ON', username, data)
+      if (data.game) {
+        if (this.state.game === null) {
+          this.setState({game: data.game})
+        } else if (data.game.id === this.state.game.id) {
+          this.setState({game: data.game})
+          // console.log('Turn?', data.game.yourturn)
+          if (data.game.yourturn) {
+            setTimeout(() => {
+              getOneElement('#opponents').scrollIntoView()
+            }, 1000)
+          }
+        } else {
+          console.warn('Socket updated a game which is not the one being played', data.game.id)
+        }
+      }
+    })
   }
 
   initServerGames() {
@@ -288,12 +342,18 @@ class App extends React.Component {
             this.waitForGames()
           }
         })
+        try {
+          this.setupSocket(result.username)
+        } catch(ex) {
+          console.error('failed to setupSocket', ex)
+        }
       } else {
         apiSet('/api/login', {})
         .then((result) => {
           sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
           sessionStorage.setItem('username', result.username)
           this.setState({games: [], stats: {}})
+          this.setupSocket(result.username)
         })
       }
     })
@@ -337,10 +397,6 @@ class App extends React.Component {
 
   componentWillMount() {
     this.initServerGames()
-  }
-
-  onGameExit() {
-    this.setState({game: null})
   }
 
   render() {
@@ -397,6 +453,13 @@ class App extends React.Component {
       )
     }
 
+    let newGame = true
+    // if (this.state.game) {
+    //   if (this.state.loadedGames[this.state.game.id] > 1) {
+    //     newGame = false
+    //   }
+    // }
+
     return (
         <div>
           <h1>Battleshits</h1>
@@ -410,6 +473,7 @@ class App extends React.Component {
             this.state.game ?
             <Game
               game={this.state.game}
+              newGame={newGame}
               onGameExit={this.onGameExit.bind(this)}
               changeGame={this.changeGame.bind(this)}
               onWaitingGame={this.onWaitingGame.bind(this)}
@@ -524,12 +588,10 @@ class Games extends React.Component {
         // started or a similar one, with the same rules, that someone
         // else started.
         if (result.id) {
-          // A new game was created, with the rules you created with.
+          // A new game was created, with the rules you chose.
           this.props.onWaitingGame(result.id)
-        } else {
-          // let games = this.props.games
-          // games.push(result.game)
-          // console.log('MATCHED GAME', result.game)
+        } else if (result.game) {
+          console.log('MATCHED GAME', result.game)
           this.props.onGameSelect(result.game)
           // this.props.onGamesChange(games)
         }
@@ -668,6 +730,7 @@ class Game extends React.Component {
       loading: true,
       message: null,
       sound: localStorage.getItem('soundoff') ? false : true,
+      subscription: null,
       // yourturn: false,
       // grid: [],  // your grid
       // ships: [],
@@ -679,6 +742,37 @@ class Game extends React.Component {
     }
   }
 
+  setupSocket(game, username) {
+    // console.log('SUBSCRIBED /'+username)
+    let channel = '/game-' + game.id + '-' + username
+    console.log('Create subscription on:', channel)
+    let subscription = FANOUT_CLIENT.subscribe(channel, (data) => {
+      console.log('INCOMING GAME ON', channel, data)
+      console.log('INDEX', data.index, 'YOURS', data.yours)
+      this.bombSlot(data.index, data.yours, false)
+      // if (data.game) {
+      //   if (this.state.game === null) {
+      //     this.setState({game: data.game})
+      //   } else if (data.game.id === this.state.game.id) {
+      //     this.setState({game: data.game})
+      //     // console.log('Turn?', data.game.yourturn)
+      //     if (data.game.yourturn) {
+      //       setTimeout(() => {
+      //         getOneElement('#opponents').scrollIntoView()
+      //       }, 1000)
+      //     }
+      //   } else {
+      //     console.warn('Socket updated a game which is not the one being played', data.game.id)
+      //   }
+      // }
+    })
+    this.setState({subscription: subscription})
+  }
+
+  componentWillUnmount() {
+    this.state.subscription.cancel()
+  }
+
   componentDidMount() {
     // XXX replace this with service worker or manifest or something
     Sounds.preLoadSounds()
@@ -686,30 +780,43 @@ class Game extends React.Component {
     // The game component has been mounted. Perhaps the game was between
     // a human and the computer and it's the computer's turn.
     let game = this.props.game
-    if (game.opponent.ai && !game.yourturn && !game.you.designmode && !game.opponent.designmode && !game.gameover) {
-      setTimeout(() => {
-        getOneElement('#yours').scrollIntoView()
-        this.makeAIMove()
-      }, 400)
-    } else if (!game.you.designmode && !game.opponent.designmode) {
-      // scroll to the grid whose turn it is
-      setTimeout(() => {
-        if (game.yourturn) {
-          getOneElement('#opponents').scrollIntoView()
-        } else {
+    if (game.opponent.ai) {
+      if (!game.yourturn && !game.you.designmode && !game.opponent.designmode && !game.gameover) {
+        setTimeout(() => {
           getOneElement('#yours').scrollIntoView()
-        }
-      }, 400)
+          this.makeAIMove()
+        }, 400)
+      }
+    } else {
+      if (!game.you.designmode && !game.opponent.designmode) {
+        // scroll to the grid whose turn it is
+        setTimeout(() => {
+          if (game.yourturn) {
+            getOneElement('#opponents').scrollIntoView()
+          } else {
+            getOneElement('#yours').scrollIntoView()
+          }
+        }, 400)
+      }
+
+      // if (this.props.newGame) {
+        this.setupSocket(game, sessionStorage.getItem('username'))
+      // }
     }
   }
 
   cellClicked(yours, index) {
     // you clicked, so if it's not your turn ignore
-    if (!this.props.game.yourturn || yours || this.props.game.gameover) {
+    let game = this.props.game
+    if (!game.yourturn || yours || game.gameover) {
       console.log('ignore click')
       return
     }
     this.bombSlot(index, yours)
+    if (!game.opponent.ai) {
+      apiSet('api/bomb', {id: game.id, index: index, yours: yours})
+    }
+
   }
 
   shipMoved(ship) {
@@ -731,7 +838,7 @@ class Game extends React.Component {
         }
       })
     })
-    this.props.changeGame(game)
+    this.props.changeGame(game, false)
   }
 
   shipRotated(ship) {
@@ -832,7 +939,7 @@ class Game extends React.Component {
     return [1, null] // missed
   }
 
-  bombSlot(index, opponentmove) {
+  bombSlot(index, opponentmove, save = true) {
     let game = this.props.game
     let yourturn
     let yoursElement = getOneElement('#yours')
@@ -941,8 +1048,12 @@ class Game extends React.Component {
       }
     }
 
+    if (!turnchange) {
+      save = false
+    }
+
     setTimeout(() => {
-      this.props.changeGame(game)
+      this.props.changeGame(game, save)
       setTimeout(() => {
         if (turnchange) {
           nextElement.scrollIntoView({block: "end", behavior: "smooth"})

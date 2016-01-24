@@ -24,6 +24,11 @@ class Game(models.Model):
 
     # true if the opponent is the computer
     ai = models.BooleanField(default=False)
+    turn = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name='turn',
+        null=True
+    )
 
     state = JSONField()
     gameover = models.BooleanField(default=False)

@@ -181,3 +181,7 @@ SITE_ID = 1
 
 
 LOGIN_REDIRECT_URL = '/'
+
+
+FANOUT_REALM_ID = config('FANOUT_REALM_ID', default='')
+FANOUT_REALM_KEY = config('FANOUT_REALM_KEY', default='')
