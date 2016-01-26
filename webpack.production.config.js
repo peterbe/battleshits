@@ -4,8 +4,8 @@ var path = require('path');
 var node_modules_dir = path.resolve(__dirname, 'node_modules');
 
 var definePlugin = new webpack.DefinePlugin({
-  __DEV__: false,
-  __API_HOST__: '',
+  __DEV__: JSON.stringify(false),
+  __API_HOST__: JSON.stringify(null),
 });
 
 module.exports = {

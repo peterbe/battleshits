@@ -8,8 +8,6 @@ import { getOneElement } from './components/utils.js'
 import Message from './components/message.jsx';
 
 
-console.log('__API_HOST__', __API_HOST__)
-console.log('credentials:', __API_HOST__ && 'include' || 'same-origin');
 const SHIPS = [
   {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
   {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
