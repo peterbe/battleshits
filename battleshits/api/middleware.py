@@ -1,6 +1,7 @@
 import json
 
 from django import http
+from django.conf import settings
 from django.middleware.csrf import CsrfViewMiddleware
 
 
@@ -32,3 +33,25 @@ class JsonBodyCsrfViewMiddleware(CsrfViewMiddleware):
         return super(JsonBodyCsrfViewMiddleware, self).process_view(
             request, view_func, view_args, view_kwargs
         )
+
+
+class CORSExceptionMiddleware(object):
+
+    def process_response(self, request, response):
+        if not settings.DEBUG:
+            return response
+
+        # print "RESPONSE"
+        # print repr(response)
+        # print dir(response)
+        if response.has_header('content-type'):
+            if response['content-type'] == 'application/json':
+                # let's hack it!
+                # let's make it as insecure as possible
+                # Don't ever let this be on in production!!
+                response['Access-Control-Allow-Credentials'] = 'true'
+                response['Access-Control-Allow-Origin'] = '*'
+                response['Access-Control-Allow-Methods'] = (
+                    'POST,GET,OPTIONS,PUT,DELETE'
+                )
+        return response

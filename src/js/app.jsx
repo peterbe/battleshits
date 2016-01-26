@@ -8,6 +8,7 @@ import { getOneElement } from './components/utils.js'
 import Message from './components/message.jsx';
 
 
+console.log('__API_HOST__', __API_HOST__)
 const SHIPS = [
   {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
   {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
@@ -176,6 +177,9 @@ let _randomlyPlaceShips = (ships) => {
 }
 
 let apiGet = (url) => {
+  if (__API_HOST__) {
+    url = __API_HOST__ + url
+  }
   return fetch(url, {credentials: 'same-origin'})
   .then((r) => {
     if (r.status === 200) {
@@ -190,6 +194,9 @@ let apiGet = (url) => {
 }
 
 let apiSet = (url, data) => {
+  if (__API_HOST__) {
+    url = __API_HOST__ + url
+  }
   if (!sessionStorage.getItem('csrfmiddlewaretoken')) {
     throw new Error('No csrfmiddlewaretoken in sessionStorage')
   }

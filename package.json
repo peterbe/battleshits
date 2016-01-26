@@ -7,7 +7,7 @@
   },
   "license": "MPL-2.0",
   "scripts": {
-    "start": "webpack-dev-server --hot --progress --colors --host 0.0.0.0",
+    "start": "API_HOST=//localhost:8000 webpack-dev-server --hot --progress --colors --host 0.0.0.0",
     "build": "webpack --progress --colors",
     "deploy": "NODE_ENV=production webpack -p --config webpack.production.config.js"
   },

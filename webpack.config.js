@@ -2,6 +2,7 @@ var webpack = require('webpack');
 
 var definePlugin = new webpack.DefinePlugin({
   __DEV__: JSON.stringify(JSON.parse(process.env.BUILD_DEV || 'true')),
+  __API_HOST__: JSON.stringify(process.env.API_HOST || ''),
 });
 
 module.exports = {

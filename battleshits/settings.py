@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.sites',
 
+    # Third-party
+    'corsheaders',
 ]
 
 for app in config('EXTRA_APPS', default='', cast=Csv()):
@@ -57,6 +59,7 @@ for app in config('EXTRA_APPS', default='', cast=Csv()):
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'battleshits.api.middleware.JsonBodyCsrfViewMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
@@ -65,6 +68,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'csp.middleware.CSPMiddleware',
+
 )
 
 ROOT_URLCONF = 'battleshits.urls'
@@ -198,3 +202,7 @@ ADMINS = tuple(
         if x.strip()
     ]
 )
+
+CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', False, cast=bool)
+CORS_URLS_REGEX = config('CORS_URLS_REGEX', r'^/api/.*$')
+CORS_ORIGIN_WHITELIST = config('CORS_ORIGIN_WHITELIST', default='', cast=Csv())
