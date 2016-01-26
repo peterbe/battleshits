@@ -204,5 +204,6 @@ ADMINS = tuple(
 )
 
 CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', False, cast=bool)
+CORS_ORIGIN_ALLOW_ALL = config('CORS_ORIGIN_ALLOW_ALL', False, cast=bool)
 CORS_URLS_REGEX = config('CORS_URLS_REGEX', r'^/api/.*$')
 CORS_ORIGIN_WHITELIST = config('CORS_ORIGIN_WHITELIST', default='', cast=Csv())

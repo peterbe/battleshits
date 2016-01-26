@@ -74,10 +74,8 @@ def random_username():
     return uuid.uuid4().hex[:30]
 
 
-# @require_POST
+@require_POST
 def login(request):
-    if request.method == 'OPTIONS':
-        return http.HttpResponse('OK')
     assert request.method == 'POST', request.method
     assert not request.user.is_authenticated()
     user = get_user_model().objects.create(

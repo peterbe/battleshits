@@ -9,6 +9,7 @@ import Message from './components/message.jsx';
 
 
 console.log('__API_HOST__', __API_HOST__)
+console.log('credentials:', __API_HOST__ && 'include' || 'same-origin');
 const SHIPS = [
   {id: '2',   length: 2, x: 0, y: 0, rotation: 0, overlapping: false},
   {id: '3-1', length: 3, x: 0, y: 1, rotation: 0, overlapping: false},
@@ -180,7 +181,10 @@ let apiGet = (url) => {
   if (__API_HOST__) {
     url = __API_HOST__ + url
   }
-  return fetch(url, {credentials: 'same-origin'})
+  return fetch(url, {
+    // credentials: 'same-origin'
+    credentials: __API_HOST__ && 'include' || 'same-origin',
+  })
   .then((r) => {
     if (r.status === 200) {
       return r.json()
@@ -202,7 +206,8 @@ let apiSet = (url, data) => {
   }
   return fetch(url, {
     method: 'post',
-    credentials: 'same-origin',
+    // credentials: 'same-origin',
+    credentials: __API_HOST__ && 'include' || 'same-origin',
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
