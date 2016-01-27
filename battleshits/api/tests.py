@@ -370,3 +370,95 @@ class Tests(TestCase):
         game_state = last_published[1]['game']
         assert game_state['yourturn']
         self.assertEqual(game_state['you']['grid'], [0, 0, 2])
+
+    def test_player1_wins(self):
+        """let's pretend player1 wins"""
+        game = {
+            'you': {
+                'name': 'Player1',
+                'designmode': False,
+                'ships': [
+                    {'player1': 'stuff'},
+                ],
+                'grid': [0, 0, 0],
+                'winner': True,
+            },
+            'opponent': {
+                'name': 'Player2',
+                'designmode': False,
+                'ships': [
+                    {'not': 'important'},
+                ],
+                'grid': [2, 2, 2],
+                'winner': False,
+            },
+            'ai': False,
+            'yourturn': True,
+            'rules': {
+                'drops': 1,
+            },
+            'gameover': True,
+        }
+        player2 = self.login('Player2')
+        # note that this becomes the user logged in
+        player1 = self.login('Player1')
+        game_obj = Game.objects.create(
+            player1=player1,
+            player2=player2,
+            state=game,
+            turn=player1,
+        )
+        game['id'] = game_obj.id
+        url = reverse('api:save')
+        response = self.post_json(url, {'game': game})
+        self.assertEqual(response.status_code, 200)
+
+        game_obj = Game.objects.get(id=game_obj.id)
+        self.assertEqual(game_obj.winner, player1)
+        self.assertTrue(game_obj.gameover)
+
+    def test_player2_wins(self):
+        """let's pretend player2 wins"""
+        game = {
+            # Remember, this is from player2's perspective
+            'you': {
+                'name': 'Player2',
+                'designmode': False,
+                'ships': [
+                    {'player2': 'stuff'},
+                ],
+                'grid': [0, 0, 0],
+                'winner': True,
+            },
+            'opponent': {
+                'name': 'Player1',
+                'designmode': False,
+                'ships': [
+                    {'not': 'important'},
+                ],
+                'grid': [2, 2, 2],
+                'winner': False,
+            },
+            'ai': False,
+            'yourturn': False,
+            'rules': {
+                'drops': 1,
+            },
+            'gameover': True,
+        }
+        player1 = self.login('Player1')
+        player2 = self.login('Player2')
+        game_obj = Game.objects.create(
+            player1=player1,
+            player2=player2,
+            state=game,
+            turn=player2,
+        )
+        game['id'] = game_obj.id
+        url = reverse('api:save')
+        response = self.post_json(url, {'game': game})
+        self.assertEqual(response.status_code, 200)
+
+        game_obj = Game.objects.get(id=game_obj.id)
+        self.assertEqual(game_obj.winner, player2)
+        self.assertTrue(game_obj.gameover)

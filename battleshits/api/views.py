@@ -143,9 +143,7 @@ def save(request):
             # If you're player2, expect the 'yourturn' to be the opposite
             # If you're player2, we need to invert the state.
             # But had player1 finished designing?
-            # designmode = game_obj.state['you']['designmode'] #XXX
             game = invert_state(game)
-            # print "player2 is request.user", game['yourturn']
             if game['yourturn']:
                 game_obj.turn = game_obj.player1
         elif game_obj.player2:
@@ -159,15 +157,16 @@ def save(request):
             if game['you']['winner']:
                 game_obj.winner = request.user
             elif game['opponent']['winner']:
-                if player2:
-                    game_obj.winner = player2
+                if opponent:
+                    if game_obj.player2 == request.user:
+                        # player2 said the opponent won,
+                        # considering that the state was reveresed,
+                        # it actually means player2 won.
+                        game_obj.winner = request.user
+                    else:
+                        game_obj.winner = opponent
                 else:
                     assert game['opponent']['ai']
-        # print "yourturn", game['yourturn']
-        # # if game['yourturn']:  # remember, this got inverted
-        #
-        #
-        #     game_obj.turn = opponent
         game_obj.save()
 
         # Only send a websocket, to the opponent, if the opponent is not

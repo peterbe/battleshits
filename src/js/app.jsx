@@ -410,11 +410,15 @@ class App extends React.Component {
   //   }
   // }
 
-  onWaitingGame(id) {
-    let waitingGames = new Set(this.state.waitingGames)
-    waitingGames.add(id)
-    this.setState({waitingGames: Array.from(waitingGames)})
-    // this.waitForGames()
+  onWaitingGame(id, clear = false) {
+    if (clear) {
+      this.setState({waitingGames: []})
+    } else {
+      let waitingGames = new Set(this.state.waitingGames)
+      waitingGames.add(id)
+      this.setState({waitingGames: Array.from(waitingGames)})
+      // this.waitForGames()
+    }
   }
 
   componentWillMount() {
@@ -604,6 +608,8 @@ class Games extends React.Component {
       game.you.ships = _randomlyPlaceShips(game.you.ships)
       game.opponent.ships = _randomlyPlaceShips(game.opponent.ships)
 
+      // If we were waiting for games, let's not do that whilst designing
+      this.props.onWaitingGame(null, true)  // clears the list
       // We can't inform the server to start the game until we have
       // designed it.
       // let games = this.props.games
@@ -846,7 +852,7 @@ class Game extends React.Component {
     }
     this.bombSlot(index, yours)
     if (!game.opponent.ai) {
-      apiSet('api/bomb', {id: game.id, index: index, yours: yours})
+      apiSet('/api/bomb', {id: game.id, index: index, yours: yours})
     }
 
   }
@@ -921,8 +927,6 @@ class Game extends React.Component {
           this.makeAIMove()
         }, 1000)
       } else {
-        // this.props.changeGame(game, false)
-        console.log('Send a START', game)
         this.props.changeGame(null, false)
         apiSet('/api/start', {game: game})
         .then((result) => {
@@ -1100,7 +1104,7 @@ class Game extends React.Component {
       }
     }
 
-    if (!turnchange) {
+    if (!turnchange && !game.gameover) {
       save = false
     }
 
