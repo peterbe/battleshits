@@ -343,11 +343,10 @@ class App extends React.Component {
       sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
       if (result.username) {
         sessionStorage.setItem('username', result.username)
-        if (result.first_name && !sessionStorage.getItem('yourname')) {
-          sessionStorage.setItem('yourname', result.first_name)
-        }
         if (result.first_name) {
-          localStorage.setItem('name', result.first_name)
+          sessionStorage.setItem('yourname', result.first_name)
+        } else if (sessionStorage.getItem('yourname')) {
+          this.syncSavedNamed(sessionStorage.getItem('yourname'))
         }
         this.loadGames()
         try {
@@ -360,6 +359,9 @@ class App extends React.Component {
         .then((result) => {
           sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
           sessionStorage.setItem('username', result.username)
+          if (sessionStorage.getItem('yourname')) {
+            this.syncSavedNamed(sessionStorage.getItem('yourname'))
+          }
           this.setState({games: [], stats: {}})
           this.setupSocket(result.username)
         })
@@ -368,6 +370,13 @@ class App extends React.Component {
     .catch((ex) => {
       console.warn(ex)
       this.setState({serverError: true})
+    })
+  }
+
+  syncSavedNamed(name) {
+    apiSet('/api/profile', {name: name})
+    .then((result) => {
+      sessionStorage.setItem('yourname', result.first_name)
     })
   }
 

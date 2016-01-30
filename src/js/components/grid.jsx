@@ -16,14 +16,16 @@ export default class Grid extends React.Component {
   }
 
   updateDimensions() {
+    console.log('Running updateDimensions()')
     if ($('.grid tr').width()) {
       this.setState({width: $('.grid tr').width()})
     }
   }
 
-  componentWillMount() {
-    this.updateDimensions()
-  }
+  // componentWillMount() {
+  //   console.log('Will mount')
+  //   this.updateDimensions()
+  // }
 
   componentDidMount() {
     window.addEventListener("resize", this.updateDimensions.bind(this))
