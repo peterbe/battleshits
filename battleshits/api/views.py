@@ -180,23 +180,6 @@ def save(request):
                 fanout.publish(opponent.username, {
                     'game': game_obj.state,
                 })
-        # # Only send a websocket message if the game has been saved
-        # # before and you're not playing against the computer.
-        # if opponent:
-        #     # channel = 'game-{}'.format(game_obj.id)
-        #     # fanout.publish(channel, {
-        #     #     'index': 23,
-        #     #     'yours': True,
-        #     # })
-        #     if opponent == game_obj.player2:
-        #         fanout.publish(opponent.username, {
-        #             'game': invert_state(game_obj.state),
-        #
-        #         })
-        #     else:
-        #         fanout.publish(opponent.username, {
-        #             'game': game_obj.state,
-        #         })
 
     return http.JsonResponse({'id': game_obj.id})
 
@@ -217,12 +200,6 @@ def list_games(request):
         else:
             states.append(game.state)
 
-    # if not waiting and states:
-    #     print "WAITING"
-    #     print waiting
-    #     print "STATES"
-    #     from pprint import pprint
-    #     pprint(states[0])
     wins = games_base_qs.filter(gameover=True).filter(winner=request.user)
     losses = games_base_qs.filter(gameover=True).exclude(winner=request.user)
     stats = {
