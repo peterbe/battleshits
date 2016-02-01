@@ -15,7 +15,7 @@
     "jquery": "2.1.4",
     "react": "0.14.0",
     "react-dom": "0.14.0",
-    "whatwg-fetch": "0.10.0"
+    "whatwg-fetch": "0.11.0"
   },
   "devDependencies": {
     "babel-core": "5.8.34",
