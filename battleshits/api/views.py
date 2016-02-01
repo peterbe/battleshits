@@ -268,6 +268,19 @@ def start(request):
     ).exclude(
         player1=request.user,
     )
+    my_ongoing_games = Game.objects.filter(
+        Q(player1=request.user) | Q(player2=request.user)
+    ).filter(
+        ai=False,
+        gameover=False,
+    )
+    my_ongoing_opponents = []
+    for ongoing_game in my_ongoing_games:
+        my_ongoing_opponents.append(ongoing_game.player1_id)
+        my_ongoing_opponents.append(ongoing_game.player2_id)
+
+    if my_ongoing_opponents:
+        games = games.exclude(player1_id__in=my_ongoing_opponents)
     for other in games:
         # all saved games should be designed
         assert not other.state['you']['designmode'], 'not designed'
@@ -296,9 +309,12 @@ def start(request):
         player2__isnull=True,
         gameover=False,
         ai=False,
+    # ).exclude(
+    #     player2=request.user,
     )
     for game_obj in games:
         if game_obj.state['rules'] == game['rules']:
+            print "Found one with the same rules"
             return http.JsonResponse({'id': game_obj.id})
 
     # really still here, then you haven't created a game before

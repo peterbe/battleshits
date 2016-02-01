@@ -233,6 +233,103 @@ class Tests(TestCase):
             {'game': game_obj.state}
         )
 
+    def test_start_avoid_same_current_player(self):
+        """Suppose User1 and User2 are in a battle, but both of them
+        want to start a second new game. They should not match each
+        other whilst they have an open game."""
+
+        user2 = self.login('user2')
+        user2.first_name = 'User2'
+        user2.save()
+        user1 = self.login('user1')
+        user1.first_name = 'User1'
+        user1.save()
+        game = {
+            'you': {
+                'name': 'User1',
+                'designmode': False,
+                'ships': [
+                    {'player1': 'stuff'},
+                ],
+                'grid': [],
+            },
+            'opponent': {
+                'designmode': False,
+                'name': 'User2',
+                'ships': [
+                    {'not': 'important'},
+                ],
+                'grid': [],
+            },
+            'ai': False,
+            'yourturn': False,
+            'rules': {
+                'drops': 10,
+            },
+            'gameover': False
+        }
+        game_obj = Game.objects.create(
+            player1=user1,
+            player2=user2,
+            state=game,
+        )
+
+        # let's say user1 starts a new game
+        url = reverse('api:start')
+        game = {
+            'you': {
+                'name': 'User1',
+                'designmode': False,
+                'ships': [
+                    {'player1': 'stuff'},
+                ],
+                'grid': [],
+            },
+            'opponent': {
+                'designmode': True,
+                'ships': [
+                    {'not': 'important'},
+                ],
+                'grid': [],
+            },
+            'ai': False,
+            'yourturn': False,
+            'rules': {
+                'drops': 10,
+            },
+            'gameover': False
+        }
+        response = self.post_json(url, {'game': game})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Game.objects.all().count(),
+            2
+        )
+        self.assertEqual(
+            Game.objects.filter(player1=user1).count(),
+            2
+        )
+        self.assertEqual(
+            Game.objects.filter(player1=user1, player2__isnull=True).count(),
+            1
+        )
+        # log back in as user2 and also start a game
+        self.login(user2)
+        response = self.post_json(url, {'game': game})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Game.objects.all().count(),
+            3
+        )
+        self.assertEqual(
+            Game.objects.filter(player1=user2).count(),
+            1
+        )
+        self.assertEqual(
+            Game.objects.filter(player1=user2, player2__isnull=True).count(),
+            1
+        )
+
     @mock.patch('battleshits.api.views.fanout')
     def test_save_game(self, m_fanout):
 
