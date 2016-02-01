@@ -661,42 +661,53 @@ class Games extends React.Component {
   }
 
   render() {
-    let ongoingGames = null;
+
+    let ongoingGames = null
     if (this.props.games.length) {
-      let games = this.props.games.filter(game => {
-        return !game.gameover
-      })
+      let ongoingGamesYourTurn = null
+      let ongoingGamesTheirTurn = null
+      let yourturns = []
+      let theirturns = []
+      // could just a filter primitive but then we'd need to loop twice
+      for (let game of this.props.games) {
+        if (game.yourturn) {
+          yourturns.push(game)
+        } else {
+          theirturns.push(game)
+        }
+      }
+      if (yourturns.length) {
+        ongoingGamesYourTurn = (
+          <div>
+            <h3>Ongoing games, your turn:</h3>
+            <ListOngoingGames
+              games={yourturns}
+              onGameSelect={this.props.onGameSelect}
+              />
+          </div>
+        )
+      }
+      if (theirturns.length) {
+        ongoingGamesTheirTurn = (
+          <div>
+            <h3>Ongoing games, waiting:</h3>
+            <ListOngoingGames
+              games={theirturns}
+              onGameSelect={this.props.onGameSelect}
+              />
+          </div>
+        )
+      }
       ongoingGames = (
-        <ul>
-          {
-            games.map((game) => {
-              let bombsDropped = game.you.grid.filter(cell => {
-                return cell > 0
-              }).length
-              bombsDropped += game.opponent.grid.filter(cell => {
-                return cell > 0
-              }).length
-              return (
-                <li key={game.id}>
-                  <button onClick={this.props.onGameSelect.bind(this, game)}>
-                    {
-                      game.yourturn ?
-                      `Your turn against ${game.opponent.name}` :
-                      `${game.opponent.name}'s turn`
-                    }
-                    {
-                      game.opponent.ai ?
-                      ' (computer)' : null
-                    }
-                    {` ${bombsDropped} bombs dropped`}
-                  </button>
-                </li>
-              )
-            })
-          }
-        </ul>
+        <div className="section">
+          { ongoingGamesYourTurn }
+          { ongoingGamesTheirTurn }
+        </div>
       )
     }
+
+
+
 
     let nameForm = (
       <form onSubmit={this.onSaveYourName.bind(this)}>
@@ -714,10 +725,11 @@ class Games extends React.Component {
         <br/>
         <button onClick={this.startRandomGame.bind(this, true)}
           >Play against the computer</button>
-        <br/>
-        <button>Invite someone to play with</button> (no f'ing Facebook!)
+
       </div>
     )
+    /* <br/>
+    <button>Invite someone to play with</button> (no f'ing Facebook!) */
 
     let startNewForm = (
       <div className="section">
@@ -752,17 +764,45 @@ class Games extends React.Component {
     return (
       <div>
         <h2>Games</h2>
-          <div className="section">
-            <h3>Ongoing games you have</h3>
-            {this.props.games.length ? ongoingGames : <i>none</i>}
-          </div>
+          { ongoingGames }
 
           { startNewForm }
 
           { stats }
       </div>
     )
+  }
+}
 
+class ListOngoingGames extends React.Component {
+  render() {
+    return (
+      <div>
+      {
+        this.props.games.map((game) => {
+          let bombsDropped = game.you.grid.filter(cell => {
+            return cell > 0
+          }).length
+          bombsDropped += game.opponent.grid.filter(cell => {
+            return cell > 0
+          }).length
+          return <button key={game.id}
+            onClick={this.props.onGameSelect.bind(this, game)}>
+            {
+              game.yourturn ?
+              `Your turn against ${game.opponent.name}` :
+              `${game.opponent.name}'s turn`
+            }
+            {
+              game.opponent.ai ?
+              ' (computer)' : null
+            }
+            {` ${bombsDropped} bombs dropped`}
+          </button>
+        })
+      }
+      </div>
+    )
   }
 }
 
