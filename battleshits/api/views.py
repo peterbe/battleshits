@@ -26,14 +26,14 @@ fanout.realm = settings.FANOUT_REALM_ID
 fanout.key = settings.FANOUT_REALM_KEY
 
 
-class HttpResponseBadRequest(http.HttpResponseBadRequest):
+class VerboseHttpResponseBadRequest(http.HttpResponseBadRequest):
     """Overriding this because when it happens, I can't get the
     message in either the django runserver terminal or the
     console error in the React code."""
     def __init__(self, msg):
         if settings.DEBUG:
             print msg
-        super(HttpResponseBadRequest, self).__init__(msg)
+        super(VerboseHttpResponseBadRequest, self).__init__(msg)
 
 
 def xhr_login_required(view_func):
@@ -109,13 +109,13 @@ def save(request):
         try:
             game_id = game['id']
         except KeyError:
-            return HttpResponseBadRequest('No game id')
+            return VerboseHttpResponseBadRequest('No game id')
     except KeyError:
-        return HttpResponseBadRequest('No game')
+        return VerboseHttpResponseBadRequest('No game')
     if game['you']['designmode']:
-        return HttpResponseBadRequest('Your game is not designed')
+        return VerboseHttpResponseBadRequest('Your game is not designed')
     if game['opponent']['designmode']:
-        return HttpResponseBadRequest('Opponent game is not designed')
+        return VerboseHttpResponseBadRequest('Opponent game is not designed')
 
     opponent = None
     if game_id < 0:
@@ -135,9 +135,11 @@ def save(request):
         game_obj.save()
     else:
         game_obj = Game.objects.get(id=game_id)
+        if game_obj.abandoned:
+            return VerboseHttpResponseBadRequest('Game is abandoned')
         if not game_obj.ai:
             if game_obj.turn != request.user:
-                return HttpResponseBadRequest('Not your turn')
+                return VerboseHttpResponseBadRequest('Not your turn')
         if game_obj.player2 == request.user:
             opponent = game_obj.player1
             # If you're player2, expect the 'yourturn' to be the opposite
@@ -189,7 +191,10 @@ def list_games(request):
     games_base_qs = Game.objects.filter(
         Q(player1=request.user) | Q(player2=request.user)
     )
-    games = games_base_qs.filter(gameover=False).order_by('-modified')
+    games = games_base_qs.filter(
+        gameover=False,
+        abandoned=False,
+    ).order_by('-modified')
     states = []
     waiting = []
     for game in games:
@@ -252,18 +257,19 @@ def start(request):
     """
     data = json.loads(request.body)
     if not data.get('game'):
-        return HttpResponseBadRequest('no game')
+        return VerboseHttpResponseBadRequest('no game')
     if not request.user.first_name:
-        return HttpResponseBadRequest("you haven't set your name yet")
+        return VerboseHttpResponseBadRequest("you haven't set your name yet")
 
     game = data['game']
     if game['you']['designmode']:
-        return HttpResponseBadRequest("you haven't designed it yet")
+        return VerboseHttpResponseBadRequest("you haven't designed it yet")
 
     # find any started games that don't have a player2
     games = Game.objects.filter(
         ai=False,
         gameover=False,
+        abandoned=False,
         player2__isnull=True,
     ).exclude(
         player1=request.user,
@@ -309,8 +315,7 @@ def start(request):
         player2__isnull=True,
         gameover=False,
         ai=False,
-    # ).exclude(
-    #     player2=request.user,
+        abandoned=False,
     )
     for game_obj in games:
         if game_obj.state['rules'] == game['rules']:
@@ -340,18 +345,40 @@ def bombed(request):
         id=game_id
     )
 
-    # print "GAME"
-    # print repr(game_obj)
     if request.user == game_obj.player1:
         opponent = game_obj.player2
     else:
         opponent = game_obj.player1
-    # print "User", (request.user.username, request.user.first_name)
-    # print "INDEX", index
-    # print "YOURS", yours
     channel = 'game-{}-{}'.format(game_obj.id, opponent.username)
     fanout.publish(channel, {
         'index': index,
         'yours': not yours,
     })
+    return http.JsonResponse({'ok': True})
+
+
+
+@require_POST
+@xhr_login_required
+def abandon(request):
+    data = json.loads(request.body)
+    try:
+        game = data['game']
+        try:
+            game_id = game['id']
+        except KeyError:
+            return VerboseHttpResponseBadRequest('No game id')
+    except KeyError:
+        return VerboseHttpResponseBadRequest('No game')
+    game_obj = Game.objects.get(id=game_id)
+    if (
+        not (
+            game_obj.player1 == request.user or
+            game_obj.player2 == request.user
+        )
+    ):
+        return http.HttpResponseForbidden('Not your game to abandon')
+
+    game_obj.abandoned = True
+    game_obj.save()
     return http.JsonResponse({'ok': True})

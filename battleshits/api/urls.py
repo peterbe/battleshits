@@ -39,4 +39,9 @@ urlpatterns = [
         views.bombed,
         name='bombed'
     ),
+    url(
+        r'^abandon$',
+        views.abandon,
+        name='abandon'
+    ),
 ]

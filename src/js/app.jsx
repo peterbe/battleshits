@@ -388,9 +388,9 @@ class App extends React.Component {
         stats: result.stats,
         waitingGames: result.waiting
       })
-      if (result.waiting.length) {
-        this.waitForGames()
-      }
+      // if (result.waiting.length) {
+      //   this.waitForGames()
+      // }
     })
   }
 
@@ -434,6 +434,19 @@ class App extends React.Component {
     this.initServerGames()
   }
 
+  abandonGame() {
+    let filteredGames =
+    this.setState({
+      game: null,
+      games: this.state.games.filter(g => g.id !== this.state.game.id)
+    })
+    apiSet('/api/abandon', {game: this.state.game})
+    .then(this.loadGames)
+    .catch((ex) => {
+      alert('Sorry, it seems that game could not be abandoned')
+    })
+  }
+
   render() {
 
     let synced = null
@@ -458,7 +471,7 @@ class App extends React.Component {
     }
 
     let waitingForGames = null
-    if (this.state.waitingGames.length) {
+    if (this.state.waitingGames.length && !this.state.game) {
       waitingForGames = (
         <div className="section waiting-for-games">
           <p>
@@ -512,7 +525,8 @@ class App extends React.Component {
               onGameExit={this.onGameExit.bind(this)}
               changeGame={this.changeGame.bind(this)}
               onWaitingGame={this.onWaitingGame.bind(this)}
-              onGameSelect={this.onGameSelect.bind(this)}/> :
+              onGameSelect={this.onGameSelect.bind(this)}
+              onAdandonGame={this.abandonGame.bind(this)}/> :
             <Games
               games={this.state.games}
               stats={this.state.stats}
@@ -797,7 +811,7 @@ class ListOngoingGames extends React.Component {
               game.opponent.ai ?
               ' (computer)' : null
             }
-            {` ${bombsDropped} bombs dropped`}
+            {` (${bombsDropped} bombs dropped)`}
           </button>
         })
       }
@@ -815,6 +829,7 @@ class Game extends React.Component {
       message: null,
       sound: localStorage.getItem('soundoff') ? false : true,
       subscription: null,
+      confirmAbandon: false,
       // yourturn: false,
       // grid: [],  // your grid
       // ships: [],
@@ -831,8 +846,8 @@ class Game extends React.Component {
     let channel = '/game-' + game.id + '-' + username
     console.log('Create subscription on:', channel)
     let subscription = FANOUT_CLIENT.subscribe(channel, (data) => {
-      console.log('INCOMING GAME ON', channel, data)
-      console.log('INDEX', data.index, 'YOURS', data.yours)
+      // console.log('INCOMING GAME ON', channel, data)
+      // console.log('INDEX', data.index, 'YOURS', data.yours)
       this.bombSlot(data.index, data.yours, false)
       // if (data.game) {
       //   if (this.state.game === null) {
@@ -855,6 +870,7 @@ class Game extends React.Component {
 
   componentWillUnmount() {
     if (this.state.subscription) {
+      console.log('Cancel subscription on', this.state.subscription)
       this.state.subscription.cancel()
     }
   }
@@ -1181,6 +1197,10 @@ class Game extends React.Component {
     this.setState({sound: !this.state.sound})
   }
 
+  toggleAbandonGameConfirm() {
+    this.setState({confirmAbandon: !this.state.confirmAbandon})
+  }
+
   render() {
     let game = this.props.game
     let grids = null;
@@ -1280,6 +1300,19 @@ class Game extends React.Component {
       </div>
     )
 
+    let abandonment = (
+      <button onClick={this.toggleAbandonGameConfirm.bind(this)}>Abandon Game</button>
+    )
+    if (this.state.confirmAbandon) {
+      abandonment = (
+        <div>
+          <p>This will delete the game as if it never happened</p>
+          <button onClick={this.props.onAdandonGame.bind(this)}>Just do it already!</button>
+          <button onClick={this.toggleAbandonGameConfirm.bind(this)}>Actually, cancel</button>
+        </div>
+      )
+    }
+
     return (
       <div>
         <button onClick={this.props.onGameExit.bind(this)}>Exit game</button>
@@ -1293,6 +1326,9 @@ class Game extends React.Component {
           { opponent }
 
         </div>
+        <hr/>
+          { abandonment }
+
         <hr/>
         <h5>You and your game options!</h5>
         <button onClick={this.toggleSound.bind(this)}>

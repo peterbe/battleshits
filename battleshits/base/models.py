@@ -32,6 +32,7 @@ class Game(models.Model):
 
     state = JSONField()
     gameover = models.BooleanField(default=False)
+    abandoned = models.BooleanField(default=False)
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
