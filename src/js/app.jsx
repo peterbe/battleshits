@@ -176,18 +176,27 @@ let _randomlyPlaceShips = (ships) => {
 }
 
 let apiGet = (url) => {
+  if (url.charAt(0) !== '/') {
+    throw new Error('URLs must start with /')
+  }
   if (__API_HOST__) {
     url = __API_HOST__ + url
   }
   return fetch(url, {
-    // credentials: 'same-origin'
     credentials: __API_HOST__ && 'include' || 'same-origin',
   })
   .then((r) => {
-    if (r.status === 200) {
+    if (r.ok) {
       return r.json()
+    } else {
+      return r.json()
+      .then((msg) => {
+        throw new Error(
+          'GET failed ' + r.status + '("' + msg.error + '") (' + url + ')'
+        )
+      })
     }
-    throw new Error('GET failed ' + r.status + ' (' + url + ')')
+
   })
   .catch((ex) => {
     console.error('FETCH API GET error', ex)

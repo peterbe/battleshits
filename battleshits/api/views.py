@@ -33,7 +33,10 @@ class VerboseHttpResponseBadRequest(http.HttpResponseBadRequest):
     def __init__(self, msg):
         if settings.DEBUG:
             print msg
-        super(VerboseHttpResponseBadRequest, self).__init__(msg)
+        super(VerboseHttpResponseBadRequest, self).__init__(
+            json.dumps({'error': msg}),
+            content_type='application/json'
+        )
 
 
 def xhr_login_required(view_func):
@@ -54,7 +57,6 @@ def xhr_login_required(view_func):
 
 
 def signedin(request):
-    return VerboseHttpResponseBadRequest("OH CRAP")
     if request.user.is_authenticated():
         data = {
             'username': request.user.username,
