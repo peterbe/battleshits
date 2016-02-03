@@ -54,6 +54,7 @@ def xhr_login_required(view_func):
 
 
 def signedin(request):
+    return VerboseHttpResponseBadRequest("OH CRAP")
     if request.user.is_authenticated():
         data = {
             'username': request.user.username,
