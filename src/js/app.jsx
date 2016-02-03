@@ -368,7 +368,16 @@ class App extends React.Component {
       }
       if (window.trackJs) {
         trackJs.configure({userId: result.username})
+      } else if (window.Rollbar) {
+        Rollbar.configure({
+          payload: {
+            person: {
+              username: result.username,
+            }
+          }
+        })
       }
+
     })
     .catch((ex) => {
       console.warn(ex)
