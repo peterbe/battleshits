@@ -366,6 +366,9 @@ class App extends React.Component {
           this.setupSocket(result.username)
         })
       }
+      if (window.trackJs) {
+        trackJs.configure({userId: result.username})
+      }
     })
     .catch((ex) => {
       console.warn(ex)
