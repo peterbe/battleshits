@@ -249,6 +249,13 @@ class App extends React.Component {
     }
   }
 
+  // componentDidMount() {
+  //   setTimeout(() => {
+  //     // XXX replace this with service worker or manifest or something
+  //     Sounds.preLoadSounds()
+  //   }, 1000)
+  //
+  // }
   onGameSelect(game) {
     // let loadedGames = this.state.loadedGames
     // if (game) {
@@ -897,9 +904,6 @@ class Game extends React.Component {
   }
 
   componentDidMount() {
-    // XXX replace this with service worker or manifest or something
-    Sounds.preLoadSounds()
-
     // The game component has been mounted. Perhaps the game was between
     // a human and the computer and it's the computer's turn.
     let game = this.props.game

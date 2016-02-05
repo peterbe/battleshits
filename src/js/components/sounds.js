@@ -68,8 +68,10 @@ class Sounds {
   play(type) {
     if (this.enabled) {
       if (GROUPS[type].length === 1) {
+        // console.log('PLAY', this._getAudioElement(type));
         this._getAudioElement(type).play()
       } else {
+        // console.log('PLAY', this._getRandomAudioElement(type));
         this._getRandomAudioElement(type).play()
       }
     }
@@ -78,7 +80,9 @@ class Sounds {
   _getRandomAudioElement(type) {
     let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
     if (nodes.length < 2) {
-      throw new Error(`Not enough sounds for '${type}'`)
+      this.preLoadSounds()
+      nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
+      // throw new Error(`Not enough sounds for '${type}'`)
     }
     let get = () => {
       return nodes[Math.floor(Math.random() * nodes.length)]
@@ -95,7 +99,9 @@ class Sounds {
   _getAudioElement(type) {
     let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
     if (nodes.length < 1) {
-      throw new Error(`No sound for '${type}'`)
+      this.preLoadSounds()
+      nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
+      // throw new Error(`No sound for '${type}'`)
     }
     return nodes[0]
   }
