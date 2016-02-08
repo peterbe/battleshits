@@ -36,3 +36,11 @@ class Game(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
+
+
+class Message(models.Model):
+    game = models.ForeignKey(Game)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    read = models.BooleanField(default=False)
+    message = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)

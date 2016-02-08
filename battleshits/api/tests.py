@@ -7,10 +7,33 @@ from django.test import TestCase
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
-from battleshits.base.models import Game
+from battleshits.base.models import Game, Message
+
+import fanout
+# just to be sure it never works
+fanout.realm = 'COMPLETE'
+fanout.key = 'GIBBERISH'
+
+# patched = mock.patch('battleshits.api.views.fanout')
+
+
 
 
 class Tests(TestCase):
+
+    def setUp(self):
+        super(Tests, self).setUp()
+        self.fanout_patcher = mock.patch('battleshits.api.views.fanout')
+        self.fanout = self.fanout_patcher.start()
+
+        self._fanout_published = []
+        def mocked_publish(*args):
+            self._fanout_published.append(args)
+        self.fanout.publish.side_effect = mocked_publish
+
+    def tearDown(self):
+        super(Tests, self).tearDown()
+        self.fanout_patcher.stop()
 
     def post_json(self, path, data=None, **extra):
         data = data or {}
@@ -193,7 +216,10 @@ class Tests(TestCase):
         response = self.post_json(url, {'game': game2})
         # because you haven't designed it yet
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, "you haven't designed it yet")
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': "you haven't designed it yet"}
+        )
 
         game2['you']['designmode'] = False
         response = self.post_json(url, {'game': game2})
@@ -417,23 +443,32 @@ class Tests(TestCase):
         url = reverse('api:save')
         response = self.post_json(url, {})
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, 'No game')
+        self.assertEqual(json.loads(response.content), {'error': 'No game'})
         response = self.post_json(url, {'game': game})
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, 'No game id')
+        self.assertEqual(json.loads(response.content), {'error': 'No game id'})
         game['id'] = game_state['id']
         response = self.post_json(url, {'game': game})
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, 'Opponent game is not designed')
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'Opponent game is not designed'}
+        )
         game['opponent']['designmode'] = False
         response = self.post_json(url, {'game': game})
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, 'Not your turn')
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'Not your turn'}
+        )
         game['you']['yourturn'] = True
         # can't fool it like that
         response = self.post_json(url, {'game': game})
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, 'Not your turn')
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'Not your turn'}
+        )
 
         # the one who can save it is player2
         self.login(user2)
@@ -559,3 +594,189 @@ class Tests(TestCase):
         game_obj = Game.objects.get(id=game_obj.id)
         self.assertEqual(game_obj.winner, player2)
         self.assertTrue(game_obj.gameover)
+
+    def test_receive_messages(self):
+        game = {
+            # Remember, this is from player2's perspective
+            'you': {
+                'name': 'Player2',
+                'designmode': False,
+                'ships': [
+                    {'player2': 'stuff'},
+                ],
+                'grid': [0, 0, 0],
+                'winner': True,
+            },
+            'opponent': {
+                'name': 'Player1',
+                'designmode': False,
+                'ships': [
+                    {'not': 'important'},
+                ],
+                'grid': [2, 2, 2],
+                'winner': False,
+            },
+            'ai': False,
+            'yourturn': False,
+            'rules': {
+                'drops': 1,
+            },
+            'gameover': True,
+        }
+        player1 = self.login('Player1')
+        player1.first_name = 'P 1'
+        player1.save()
+        player2 = self.login('Player2')
+        player2.first_name = 'P 2'
+        player2.save()
+        game_obj = Game.objects.create(
+            player1=player1,
+            player2=player2,
+            state=game,
+            turn=player2,
+        )
+
+        self.login('otherplayer')
+        url = reverse('api:messages')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'No game id'}
+        )
+        response = self.client.get(url, {'id': 999999})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'Page not found /api/messages?id=999999'}
+        )
+        response = self.client.get(url, {'id': game_obj.id})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'Not your game'}
+        )
+
+        self.login(player1)
+        response = self.client.get(url, {'id': game_obj.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            json.loads(response.content),
+            {'messages': []}
+        )
+
+        # create a message
+        msg1 = Message.objects.create(
+            game=game_obj,
+            user=player1,
+            message="Player1's message"
+        )
+        msg2 = Message.objects.create(
+            game=game_obj,
+            user=player2,
+            message="Player2's message"
+        )
+        response = self.client.get(url, {'id': game_obj.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            json.loads(response.content),
+            {'messages': [
+                {'id': msg1.id, 'message': "Player1's message", 'you': True},
+                {'id': msg2.id, 'message': "Player2's message", 'name': 'P 2'},
+            ]}
+        )
+        # reload and check that they got marked as read
+        msg1 = Message.objects.get(id=msg1.id)
+        msg2 = Message.objects.get(id=msg2.id)
+        self.assertEqual(msg1.read, False)
+        self.assertEqual(msg2.read, True)
+
+    def test_send_messages(self):
+        game = {
+            # Remember, this is from player2's perspective
+            'you': {
+                'name': 'Player2',
+                'designmode': False,
+                'ships': [
+                    {'player2': 'stuff'},
+                ],
+                'grid': [0, 0, 0],
+                'winner': True,
+            },
+            'opponent': {
+                'name': 'Player1',
+                'designmode': False,
+                'ships': [
+                    {'not': 'important'},
+                ],
+                'grid': [2, 2, 2],
+                'winner': False,
+            },
+            'ai': False,
+            'yourturn': False,
+            'rules': {
+                'drops': 1,
+            },
+            'gameover': True,
+        }
+        player1 = self.login('Player1')
+        player1.first_name = 'P 1'
+        player1.save()
+        player2 = self.login('Player2')
+        player2.first_name = 'P 2'
+        player2.save()
+        game_obj = Game.objects.create(
+            player1=player1,
+            player2=player2,
+            state=game,
+            turn=player2,
+        )
+        url = reverse('api:messages')
+        response = self.post_json(url, {})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'No game id'}
+        )
+        response = self.post_json(url, {'id': '999999'})
+        self.assertEqual(response.status_code, 404)
+        response = self.post_json(url, {'id': game_obj.id})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'Empty message'}
+        )
+        response = self.post_json(url, {'id': game_obj.id, 'message': 'Hi!'})
+        self.assertEqual(response.status_code, 200)
+        msg, = Message.objects.all()
+        assert msg.user == player2
+        self.assertEqual(
+            json.loads(response.content),
+            {
+                'messages': [
+                    {'id': msg.id, 'message': 'Hi!', 'you': True},
+                ]
+            }
+        )
+        message = {
+            'game_id': game_obj.id,
+            'message': u'Hi!',
+            'id': msg.id,
+            'name': player2.first_name,
+        }
+
+        user_channel = player1.username
+        self.assertTrue(
+            (user_channel, {'message': message}) in self._fanout_published
+        )
+        game_channel = 'game-{}-{}'.format(game_obj.id, player1.username)
+        self.assertTrue(
+            (game_channel, {'message': message}) in self._fanout_published
+        )
+        assert len(self._fanout_published) == 2
+
+        # post again, no new message
+        response = self.post_json(url, {'id': game_obj.id, 'message': 'Hi!'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Message.objects.all().count(), 1)
+        assert len(self._fanout_published) == 2  # still

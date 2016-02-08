@@ -6,6 +6,7 @@ import Grid from './components/grid.jsx'
 import Sounds from './components/sounds.js'
 import { getOneElement } from './components/utils.js'
 import Message from './components/message.jsx';
+import Chat from './components/chat.jsx';
 
 
 const SHIPS = [
@@ -246,6 +247,7 @@ class App extends React.Component {
       synced: -1,
       waitingGames: [],
       serverError: false,
+      newMessages: [],
     }
   }
 
@@ -301,6 +303,22 @@ class App extends React.Component {
     }
   }
 
+  gotoGameOnMessage(message) {
+    console.log('MESSAGE', message);
+
+    let newMessages = this.state.newMessages
+    // the ones to keep
+    newMessages = newMessages.filter((newMessage) => {
+      return newMessage.game_id !== message.game_id
+    })
+    this.setState({newMessages: newMessages})
+    for (let game of this.state.games) {
+      if (game.id === message.game_id) {
+        return this.changeGame(game, false)
+      }
+    }
+  }
+
   // setupSocket(username) {
   //   // console.log('SUBSCRIBED /'+username)
   //   FANOUT_CLIENT.subscribe('/' + username, (data) => {
@@ -332,7 +350,7 @@ class App extends React.Component {
           let waitingGames = this.state.waitingGames
           let pos = waitingGames.indexOf(data.game.id)
           if (pos > -1) {
-            	waitingGames.splice(pos, 1);
+            waitingGames.splice(pos, 1);
           }
           this.setState({game: data.game, waitingGames: waitingGames})
 
@@ -347,6 +365,20 @@ class App extends React.Component {
         } else {
           console.warn('Socket updated a game which is not the one being played', data.game.id)
         }
+      } else if (data.message) {
+        // console.log('REALLY should do something about there being a new message coming in', data.message);
+        Sounds.play('alert')
+        if (this.state.game && this.state.game.id && this.state.game.id === data.message.game_id) {
+          // console.log('Currently playing the game')
+        } else {
+          // Sounds.play('alert')
+          let newMessages = this.state.newMessages
+          newMessages.push(data.message)
+          this.setState({newMessages: newMessages})
+        }
+        // let newMessages = this.state.newMessages
+        // newMessages.push(data.message)
+        // this.setState({newMessages: newMessages})
       }
     })
   }
@@ -411,6 +443,7 @@ class App extends React.Component {
   loadGames() {
     apiGet('/api/games')
     .then((result) => {
+      // if (!this) throw new Error('no this?!')
       this.setState({
         games: result.games,
         stats: result.stats,
@@ -463,13 +496,12 @@ class App extends React.Component {
   }
 
   abandonGame() {
-    let filteredGames =
     this.setState({
       game: null,
       games: this.state.games.filter(g => g.id !== this.state.game.id)
     })
     apiSet('/api/abandon', {game: this.state.game})
-    .then(this.loadGames)
+    .then(this.loadGames.bind(this))
     .catch((ex) => {
       alert('Sorry, it seems that game could not be abandoned')
     })
@@ -529,6 +561,26 @@ class App extends React.Component {
       )
     }
 
+    let newMessages = null
+    if (this.state.newMessages.length) {
+      newMessages = (
+        <div className="section new-messages">
+          <p>You have <b>{this.state.newMessages.length}</b> messages.</p>
+          {
+            this.state.newMessages.map((message, i) => {
+              return (
+                <div key={'newmsg' + message.id}>
+                  <span>{message.name}</span>
+                  <blockquote>{message.message}</blockquote>
+                  <button onClick={this.gotoGameOnMessage.bind(this, message)}>Go to</button>
+                </div>
+              )
+            })
+          }
+        </div>
+      )
+    }
+
     let newGame = true
     // if (this.state.game) {
     //   if (this.state.loadedGames[this.state.game.id] > 1) {
@@ -540,6 +592,8 @@ class App extends React.Component {
         <div>
           <h1>Battleshits</h1>
           <h2>You Will Never Shit in Peace</h2>
+
+          { newMessages }
 
           { serverError }
 
@@ -858,6 +912,7 @@ class Game extends React.Component {
       sound: localStorage.getItem('soundoff') ? false : true,
       subscription: null,
       confirmAbandon: false,
+      messages: [],
       // yourturn: false,
       // grid: [],  // your grid
       // ships: [],
@@ -876,7 +931,16 @@ class Game extends React.Component {
     let subscription = FANOUT_CLIENT.subscribe(channel, (data) => {
       // console.log('INCOMING GAME ON', channel, data)
       // console.log('INDEX', data.index, 'YOURS', data.yours)
-      this.bombSlot(data.index, data.yours, false)
+      if (data.message) {
+        // console.log('New incoming message!', data.message);
+        let messages = this.state.messages
+        messages.push(data.message)
+        this.setState({messages: messages})
+        this.scrollChatToBottom()
+        Sounds.play('alert')
+      } else {
+        this.bombSlot(data.index, data.yours, false)
+      }
       // if (data.game) {
       //   if (this.state.game === null) {
       //     this.setState({game: data.game})
@@ -931,6 +995,17 @@ class Game extends React.Component {
         this.setupSocket(game, sessionStorage.getItem('username'))
       }
     }
+
+    if (game.id && game.id > 0) {
+      apiGet('/api/messages?id=' + game.id)
+      .then((response) => {
+        this.setState({messages: response.messages})
+      })
+      .catch((ex) => {
+        console.error('Failed to load messages', ex)
+      })
+    }
+
   }
 
   cellClicked(yours, index) {
@@ -1226,6 +1301,27 @@ class Game extends React.Component {
     this.setState({confirmAbandon: !this.state.confirmAbandon})
   }
 
+  onNewMessage(message) {
+    let messages = this.state.messages
+    messages.push({
+      id: -messages.length,
+      you: true,
+      message: message
+    })
+    this.setState({messages: messages})
+    this.scrollChatToBottom()
+
+    return apiSet('/api/messages', {id: this.props.game.id, message: message})
+    .then((response) => {
+      this.setState({messages: response.messages})
+    })
+  }
+
+  scrollChatToBottom() {
+    let container = document.querySelector('.chat .messages')
+    container.scrollTop = container.scrollHeight
+  }
+
   render() {
     let game = this.props.game
     let grids = null;
@@ -1325,15 +1421,30 @@ class Game extends React.Component {
       </div>
     )
 
-    let abandonment = (
-      <button onClick={this.toggleAbandonGameConfirm.bind(this)}>Abandon Game</button>
-    )
-    if (this.state.confirmAbandon) {
+    let abandonment = null
+    if (game.id && game.id > 0) {
       abandonment = (
-        <div>
-          <p>This will delete the game as if it never happened</p>
-          <button onClick={this.props.onAdandonGame.bind(this)}>Just do it already!</button>
-          <button onClick={this.toggleAbandonGameConfirm.bind(this)}>Actually, cancel</button>
+        <button onClick={this.toggleAbandonGameConfirm.bind(this)}>Abandon Game</button>
+      )
+      if (this.state.confirmAbandon) {
+        abandonment = (
+          <div>
+            <p>This will delete the game as if it never happened</p>
+            <button onClick={this.props.onAdandonGame.bind(this)}>Just do it already!</button>
+            <button onClick={this.toggleAbandonGameConfirm.bind(this)}>Actually, cancel</button>
+          </div>
+        )
+      }
+    }
+
+    let chat = null
+    if (!this.props.game.opponent.ai) {
+      chat = (
+        <div className="chat">
+          <Chat
+            messages={this.state.messages}
+            onNewMessage={this.onNewMessage.bind(this)}
+            />
         </div>
       )
     }
@@ -1346,11 +1457,13 @@ class Game extends React.Component {
         <Message message={this.state.message}/>
         <div className="grids">
 
-          { yours }
-
           { opponent }
 
+          { yours }
+
         </div>
+
+        { chat }
         <hr/>
           { abandonment }
 

@@ -44,4 +44,9 @@ urlpatterns = [
         views.abandon,
         name='abandon'
     ),
+    url(
+        r'^messages$',
+        views.messages,
+        name='messages'
+    ),
 ]

@@ -13,10 +13,11 @@ from django.forms.models import model_to_dict
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import auth
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.conf import settings
 
-from battleshits.base.models import Game
+from battleshits.base.models import Game, Message
 
 
 logger = logging.getLogger('battleshits.api')
@@ -360,7 +361,6 @@ def bombed(request):
     return http.JsonResponse({'ok': True})
 
 
-
 @require_POST
 @xhr_login_required
 def abandon(request):
@@ -373,7 +373,7 @@ def abandon(request):
             return VerboseHttpResponseBadRequest('No game id')
     except KeyError:
         return VerboseHttpResponseBadRequest('No game')
-    game_obj = Game.objects.get(id=game_id)
+    game_obj = get_object_or_404(Game, id=game_id)
     if (
         not (
             game_obj.player1 == request.user or
@@ -385,3 +385,84 @@ def abandon(request):
     game_obj.abandoned = True
     game_obj.save()
     return http.JsonResponse({'ok': True})
+
+
+@xhr_login_required
+def messages(request):
+    you = request.user
+
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        if not data.get('id'):
+            return VerboseHttpResponseBadRequest('No game id')
+        game_id = data['id']
+        game_obj = get_object_or_404(Game, id=game_id)
+        if not (game_obj.player1 == you or game_obj.player2 == you):
+            return VerboseHttpResponseBadRequest('Not your game')
+
+        message = data.get('message', '').strip()
+        if not message:
+            return VerboseHttpResponseBadRequest('Empty message')
+
+        # To avoid allowing repeats, do nothing if the last message
+        # in this game was from this user was the same message
+        previous = Message.objects.filter(game=game_obj).order_by('-created')
+        repeat = False
+        for message_obj in previous[:1]:
+            if (
+                message_obj.user == request.user and
+                message_obj.message == message
+            ):
+                repeat = True
+
+        if not repeat:
+            message_obj = Message.objects.create(
+                game=game_obj,
+                user=request.user,
+                message=message
+            )
+            # we're going to want to inform the opponent
+            if you == game_obj.player1:
+                opponent = game_obj.player2
+            else:
+                opponent = game_obj.player1
+            channel = 'game-{}-{}'.format(game_obj.id, opponent.username)
+            msg = {
+                'id': message_obj.id,
+                'message': message_obj.message,
+                'name': you.first_name,
+                'game_id': game_obj.id,
+            }
+            fanout.publish(channel, {
+                'message': msg,
+            })
+            # if that opponent is not watching the game right now,
+            # update that too
+            fanout.publish(opponent.username, {
+                'message': msg,
+            })
+    else:
+        if not request.GET.get('id'):
+            return VerboseHttpResponseBadRequest('No game id')
+        game_obj = get_object_or_404(Game, id=request.GET['id'])
+        if not (game_obj.player1 == you or game_obj.player2 == you):
+            return VerboseHttpResponseBadRequest('Not your game')
+
+    items = []
+    messages_ = Message.objects.filter(game=game_obj).order_by('created')
+    for msg in messages_:
+        item = {
+            'id': msg.id,
+            'message': msg.message,
+        }
+        if msg.user == you:
+            item['you'] = True
+        else:
+            if not msg.read:
+                msg.read = True
+                msg.save()
+            item['name'] = msg.user.first_name
+        items.append(item)
+    return http.JsonResponse({
+        'messages': items,
+    })

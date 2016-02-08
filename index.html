@@ -142,6 +142,39 @@
   border: 1px solid darkred;
 }
 
+.chat .messages {
+  max-height: 250px;
+  overflow-y: auto;
+}
+.chat .messages div {
+  border-bottom: 1px solid #efefef;
+}
+.chat .messages div p {
+  margin: 8px 0;
+}
+
+.chat div.them {
+
+}
+.chat div.them p {
+}
+.chat div.them span {
+  float: left;
+  font-weight: bold;
+  padding-right: 10px;
+
+}
+.chat div.you {
+  text-align: right;
+}
+.chat div.you p {
+}
+.chat div.you span {
+  float: right;
+  font-weight: bold;
+  padding-left: 10px;
+}
+
 @media (min-width: 600px) {
   body {
     margin: 10px;
@@ -362,8 +395,8 @@
   </div>
 
 <script src="/static/js/draggabilly.pkgd.min.js"></script>
-<!-- <script src="//2a4be070.fanoutcdn.com/bayeux/static/faye-browser-min.js"></script> -->
-<script src="//2a4be070.fanoutcdn.com/bayeux/static/faye-browser.js"></script>
+<script src="//2a4be070.fanoutcdn.com/bayeux/static/faye-browser-min.js"></script>
+<!-- <script src="//2a4be070.fanoutcdn.com/bayeux/static/faye-browser.js"></script> -->
 <script>var FANOUT_CLIENT = new Faye.Client('//2a4be070.fanoutcdn.com/bayeux');</script>
 <script src="bundle.js"></script>
 </body>

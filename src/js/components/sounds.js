@@ -22,6 +22,10 @@ const CLICKSOUNDS = [
   'static/sounds/click.mp3',
 ]
 
+const ALERTSOUNDS = [
+  'static/sounds/alert.mp3',
+]
+
 const YESSOUNDS = [
   'static/sounds/yesss.mp3',
 ]
@@ -32,6 +36,7 @@ const GROUPS = {
   'explosion': EXPLOSIONSOUNDS,
   'click': CLICKSOUNDS,
   'yes': YESSOUNDS,
+  'alert': ALERTSOUNDS,
 }
 
 class Sounds {
@@ -77,11 +82,15 @@ class Sounds {
     }
   }
 
-  _getRandomAudioElement(type) {
+  _getRandomAudioElement(type, reattempted = false) {
     let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
     if (nodes.length < 2) {
       this.preLoadSounds()
-      nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
+      if (!reattempted) {
+        return this._getRandomAudioElement(type, true)
+      }
+      // nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
+
       // throw new Error(`Not enough sounds for '${type}'`)
     }
     let get = () => {
@@ -96,11 +105,14 @@ class Sounds {
     return node
   }
 
-  _getAudioElement(type) {
+  _getAudioElement(type, reattempted = false) {
     let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
     if (nodes.length < 1) {
       this.preLoadSounds()
-      nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
+      if (!reattempted) {
+        return this._getAudioElement(type, true)
+      }
+      // nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
       // throw new Error(`No sound for '${type}'`)
     }
     return nodes[0]
