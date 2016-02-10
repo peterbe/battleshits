@@ -222,6 +222,22 @@ def list_games(request):
     })
 
 
+@xhr_login_required
+def game(request):
+    if not request.GET.get('id'):
+        return VerboseHttpResponseBadRequest('No game id')
+    you = request.user
+    game_obj = get_object_or_404(Game, id=request.GET['id'])
+    if not (game_obj.player1 == you or game_obj.player2 == you):
+        return VerboseHttpResponseBadRequest('Not your game')
+    game = game_obj.state
+    if you == game_obj.player2:
+        game = invert_state(game)
+    return http.JsonResponse({
+        'game': game
+    })
+
+
 @require_POST
 @xhr_login_required
 def profile(request):
@@ -283,11 +299,13 @@ def start(request):
     ).filter(
         ai=False,
         gameover=False,
+        abandoned=False,
     )
     my_ongoing_opponents = []
     for ongoing_game in my_ongoing_games:
         my_ongoing_opponents.append(ongoing_game.player1_id)
-        my_ongoing_opponents.append(ongoing_game.player2_id)
+        if ongoing_game.player2_id:
+            my_ongoing_opponents.append(ongoing_game.player2_id)
 
     if my_ongoing_opponents:
         games = games.exclude(player1_id__in=my_ongoing_opponents)

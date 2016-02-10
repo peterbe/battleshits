@@ -25,6 +25,11 @@ urlpatterns = [
         name='list'
     ),
     url(
+        r'^game$',
+        views.game,
+        name='game'
+    ),
+    url(
         r'^profile$',
         views.profile,
         name='profile'

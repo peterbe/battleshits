@@ -265,8 +265,16 @@ class App extends React.Component {
     // }
     // XXX perhaps set a sessionStorage so that it continues this game
     // if you refresh the page
-    // this.setState({game: game, loadedGames: loadedGames})
     this.setState({game: game})
+
+    // Not sure if this is needed
+    // if (game.id && game.id > 0) {
+    //   apiGet('/api/game?id=' + game.id)
+    //   .then((result) => {
+    //     console.log('COMPARE', result.game, game)
+    //   })
+    // }
+
   }
 
   onGameExit() {
@@ -304,8 +312,6 @@ class App extends React.Component {
   }
 
   gotoGameOnMessage(message) {
-    console.log('MESSAGE', message);
-
     let newMessages = this.state.newMessages
     // the ones to keep
     newMessages = newMessages.filter((newMessage) => {
@@ -801,9 +807,6 @@ class Games extends React.Component {
         </div>
       )
     }
-
-
-
 
     let nameForm = (
       <form onSubmit={this.onSaveYourName.bind(this)}>
