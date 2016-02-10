@@ -808,7 +808,7 @@ class Games extends React.Component {
     let nameForm = (
       <form onSubmit={this.onSaveYourName.bind(this)}>
         <label htmlFor="id_your_name">You must enter your name:</label>
-        <input name="your_name" ref="your_name"/>
+        <input type="text" name="your_name" ref="your_name"/>
         <button>Save</button>
         <button onClick={this.cancelAskYourName.bind(this)}>Cancel</button>
       </form>
