@@ -192,6 +192,7 @@ def save(request):
 
 @xhr_login_required
 def list_games(request):
+    minimum = request.GET.get('minimum')
     games_base_qs = Game.objects.filter(
         Q(player1=request.user) | Q(player2=request.user)
     )
@@ -199,6 +200,8 @@ def list_games(request):
         gameover=False,
         abandoned=False,
     ).order_by('-modified')
+    if minimum:
+        games = games.filter(turn=request.user)
     states = []
     waiting = []
     for game in games:
@@ -209,12 +212,18 @@ def list_games(request):
         else:
             states.append(game.state)
 
+    if minimum:
+        return http.JsonResponse({
+            'games': states,
+        })
+        
     wins = games_base_qs.filter(gameover=True).filter(winner=request.user)
     losses = games_base_qs.filter(gameover=True).exclude(winner=request.user)
     stats = {
         'wins': wins.count(),
         'losses': losses.count(),
     }
+
     return http.JsonResponse({
         'games': states,
         'stats': stats,

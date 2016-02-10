@@ -447,44 +447,22 @@ class App extends React.Component {
   }
 
   loadGames() {
-    apiGet('/api/games')
+    apiGet('/api/games?minimum=true')
     .then((result) => {
       // if (!this) throw new Error('no this?!')
       this.setState({
         games: result.games,
-        stats: result.stats,
-        waitingGames: result.waiting
       })
-      // if (result.waiting.length) {
-      //   this.waitForGames()
-      // }
+      apiGet('/api/games')
+      .then((result) => {
+        this.setState({
+          games: result.games,
+          stats: result.stats,
+          waitingGames: result.waiting
+        })
+      })
     })
   }
-
-  // waitForGames() {
-  //   if (this.state.waitingGames.length) {
-  //     apiGet('/api/games')
-  //     .then((result) => {
-  //       if (result.games.length) {
-  //         let games = this.state.games
-  //         let game = result.games[0]
-  //         console.log("FOUND GAME", game)
-  //         console.log("FOUND GAME ID", game.id)
-  //         games.push(game)
-  //         let waitingGames = new Set(this.state.waitingGames)
-  //         waitingGames.delete(game.id)
-  //         this.setState({waitingGames: Array.from(waitingGames)})
-  //         this.onGamesChange(games)
-  //         this.onGameSelect(game)
-  //       } else {
-  //         setTimeout(() => {
-  //           // loop
-  //           this.waitForGames()
-  //         }, 2000)
-  //       }
-  //     })
-  //   }
-  // }
 
   onWaitingGame(id, clear = false) {
     if (clear) {
@@ -639,9 +617,6 @@ class Games extends React.Component {
   }
 
   componentDidMount() {
-    // this.setState({games: this.props.games})
-    // apiGet('/api/games')
-    // .then((result) => this.setState({games: result.games}))
   }
 
   startRandomGame(ai) {
