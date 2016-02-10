@@ -995,7 +995,7 @@ class Game extends React.Component {
     }
     this.bombSlot(index, yours)
     if (!game.opponent.ai) {
-      apiSet('/api/bomb', {id: game.id, index: index, yours: yours})
+      apiSet('/api/bomb', {id: game.id, index: index})
     }
 
   }

@@ -216,7 +216,7 @@ def list_games(request):
         return http.JsonResponse({
             'games': states,
         })
-        
+
     wins = games_base_qs.filter(gameover=True).filter(winner=request.user)
     losses = games_base_qs.filter(gameover=True).exclude(winner=request.user)
     stats = {
@@ -367,18 +367,22 @@ def start(request):
 @xhr_login_required
 def bombed(request):
     data = json.loads(request.body)
+    # print request.user.first_name
+    # print data
+    # print
     game_id = data['id']
     index = data['index']
-    yours = data['yours']
-    game_obj = Game.objects.filter(
-        Q(player1=request.user) | Q(player2=request.user)
-    ).get(
-        id=game_id
-    )
-
+    # yours = data['yours']
+    # game_obj = Game.objects.filter(
+    #     Q(player1=request.user) | Q(player2=request.user)
+    # ).get(
+    #     id=game_id
+    # )
+    game_obj = Game.objects.get(id=game_id)
     if request.user == game_obj.player1:
         opponent = game_obj.player2
     else:
+        assert request.user == game_obj.player2
         opponent = game_obj.player1
     channel = 'game-{}-{}'.format(game_obj.id, opponent.username)
     fanout.publish(channel, {
