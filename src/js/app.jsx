@@ -1374,18 +1374,30 @@ class Game extends React.Component {
     if (game.you.designmode) {
       let disabledDoneButton = this._countOverlaps() > 0
       doneButton = (
-        <button
-            className="done-button"
-            onClick={this.onDoneButtonClick.bind(this)}
-            disabled={disabledDoneButton}>
-          I have placed my shitty ships
-        </button>
+        <div>
+          <p style={{textAlign: 'center'}}>
+            When you're done...<br/>
+            <button
+                className="done-button"
+                onClick={this.onDoneButtonClick.bind(this)}
+                disabled={disabledDoneButton}>
+              I have placed my shitty ships
+            </button>
+          </p>
+          <p>
+            <br/>
+            Rules are...
+            <ul>
+              <li>Number of drops per turn: <b>{game.rules.drops}</b></li>
+            </ul>
+          </p>
+        </div>
       )
     }
 
     let yours = (
       <div id="yours">
-        { game.you.designmode ? doneButton : <h4>{yourHeader}</h4>}
+        { !game.you.designmode ? <h4>{yourHeader}</h4> : null}
         <Grid
           grid={game.you.grid}
           ships={game.you.ships}
@@ -1396,6 +1408,7 @@ class Game extends React.Component {
           onMove={this.shipMoved.bind(this)}
           onRotate={this.shipRotated.bind(this)}
           />
+        { game.you.designmode ? doneButton : null }
       </div>
     )
 
@@ -1416,22 +1429,30 @@ class Game extends React.Component {
     }
 
     let chat = null
-    if (!this.props.game.opponent.ai) {
+    if (!this.props.game.opponent.ai && this.props.game.id) {
       chat = (
         <div className="chat">
           <Chat
             messages={this.state.messages}
             onNewMessage={this.onNewMessage.bind(this)}
             />
+          <hr/>
         </div>
       )
+    }
+
+    let playingAgainst = null
+    if (game.opponent.name) {
+      playingAgainst = <h2>Playing against <i>{game.opponent.name}</i></h2>
     }
 
     return (
       <div>
         <button onClick={this.props.onGameExit.bind(this)}>Exit game</button>
-        <h2>Playing against <i>{game.opponent.name}</i></h2>
-        {statusHead}
+
+        { playingAgainst }
+
+        { statusHead }
         <Message message={this.state.message}/>
         <div className="grids">
 
@@ -1441,9 +1462,10 @@ class Game extends React.Component {
 
         </div>
 
+
         { chat }
-        <hr/>
-          { abandonment }
+
+        { abandonment }
 
         <hr/>
         <h5>You and your game options!</h5>
