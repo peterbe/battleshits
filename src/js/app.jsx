@@ -236,6 +236,7 @@ let apiSet = (url, data) => {
   })
 }
 
+
 class App extends React.Component {
   constructor(props) {
     super(props)
@@ -248,8 +249,29 @@ class App extends React.Component {
       waitingGames: [],
       serverError: false,
       newMessages: [],
+      gridWidth: null,
     }
   }
+
+
+  updateDimensions() {
+    // console.log('Running updateDimensions() in App component')
+    if ($('.grid tr').length && $('.grid tr').width()) {
+      // console.log('NEW WIDTH', $('.grid tr').width())
+      this.setState({gridWidth: $('.grid tr').width()})
+    }
+  }
+
+  componentDidMount() {
+    // console.log('App component did mount');
+    window.addEventListener("resize", this.updateDimensions.bind(this))
+  }
+
+  // componentWillUnmount() {
+  //   console.log('App component will unmount');
+  //   window.removeEventListener("resize", this.updateDimensions.bind(this))
+  // }
+
 
   // componentDidMount() {
   //   setTimeout(() => {
@@ -587,6 +609,7 @@ class App extends React.Component {
             this.state.game ?
             <Game
               game={this.state.game}
+              gridWidth={this.state.gridWidth}
               newGame={newGame}
               onGameExit={this.onGameExit.bind(this)}
               changeGame={this.changeGame.bind(this)}
@@ -891,14 +914,6 @@ class Game extends React.Component {
       subscription: null,
       confirmAbandon: false,
       messages: [],
-      // yourturn: false,
-      // grid: [],  // your grid
-      // ships: [],
-      // opponent: {
-      //   name: null,
-      //   grid: [],
-      //   ships: [],
-      // },
     }
   }
 
@@ -1343,6 +1358,7 @@ class Game extends React.Component {
       }
     }
 
+    console.log('gridWidth', this.props.gridWidth)
     let opponent = null
     if (!game.you.designmode) {
       if (game.opponent.designmode) {

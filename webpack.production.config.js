@@ -15,14 +15,19 @@ module.exports = {
     filename: 'bundle.js'
   },
   module: {
-    loaders: [{
-      test: /\.jsx?$/,
-
-      // There is not need to run the loader through
-      // vendors
-      exclude: [node_modules_dir],
-      loader: 'babel'
-    }]
+    loaders: [
+      {
+        test: /\.jsx?$/,
+        // There is not need to run the loader through
+        // vendors
+        // exclude: [node_modules_dir],
+        exclude: /node_modules/,
+        loader: 'babel',
+        query: {
+          presets: ['es2015', 'react']
+        }
+      },
+    ]
   },
   plugins: [
     definePlugin,

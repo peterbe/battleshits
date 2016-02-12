@@ -373,6 +373,7 @@ def bombed(request):
     game_id = data['id']
     index = data['index']
     # yours = data['yours']
+    # yours =False
     # game_obj = Game.objects.filter(
     #     Q(player1=request.user) | Q(player2=request.user)
     # ).get(
@@ -387,7 +388,7 @@ def bombed(request):
     channel = 'game-{}-{}'.format(game_obj.id, opponent.username)
     fanout.publish(channel, {
         'index': index,
-        'yours': not yours,
+        'yours': True,
     })
     return http.JsonResponse({'ok': True})
 

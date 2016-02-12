@@ -10,32 +10,19 @@ export default class Grid extends React.Component {
     super()
     this.state = {
       width: $(window).width()  // premliminary
-      // width: $('.grid tr').width()
 
     }
   }
-
+  //
   updateDimensions() {
-    console.log('Running updateDimensions()', this)
-    if ($('.grid tr').width()) {
+    if ($('.grid tr').length && $('.grid tr').width()) {
       this.setState({width: $('.grid tr').width()})
     }
   }
 
-  // componentWillMount() {
-  //   console.log('Will mount')
-  //   this.updateDimensions()
-  // }
-
   componentDidMount() {
-    window.addEventListener("resize", this.updateDimensions.bind(this))
     this.updateDimensions()
   }
-
-  componentWillUnmount() {
-    window.removeEventListener("resize", this.updateDimensions.bind(this))
-  }
-
 
   render() {
     let grid = this.props.grid;
