@@ -7,6 +7,8 @@ import Sounds from './components/sounds.js'
 import { getOneElement } from './components/utils.js'
 import Message from './components/message.jsx';
 import Chat from './components/chat.jsx';
+import "babel-polyfill";
+
 
 
 const SHIPS = [
