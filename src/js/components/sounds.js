@@ -13,30 +13,33 @@ const EXPLOSIONSOUNDS = [
   'static/sounds/explosion1.mp3',
 ]
 
-const MISCSOUNDS = [
-  'static/sounds/Toilet_Flushing-KevanGC-917782919.mp3',
-  'static/sounds/Bunker_Buster_Missle-Mike_Koenig-1405344373.mp3',
-]
+// const MISCSOUNDS = [
+//   'static/sounds/Toilet_Flushing-KevanGC-917782919.mp3',
+//   'static/sounds/Bunker_Buster_Missle-Mike_Koenig-1405344373.mp3',
+// ]
 
-const CLICKSOUNDS = [
-  'static/sounds/click.mp3',
-]
+// const APPLAUSESOUND = 'static/sounds/Audience_Applause-Matthiew11-1206899159.mp3'
 
-const ALERTSOUNDS = [
-  'static/sounds/alert.mp3',
-]
+const CLICKSOUND = 'static/sounds/click.mp3'
 
-const YESSOUNDS = [
-  'static/sounds/yesss.mp3',
-]
+const ALERTSOUND = 'static/sounds/alert.mp3'
+
+const YESSOUND = 'static/sounds/yesss.mp3'
+
+const FLUSHSOUND = 'static/sounds/Toilet_Flushing-KevanGC-917782919.mp3'
+
+const BOOINGSOUND = 'static/sounds/booing.mp3'
 
 
 const GROUPS = {
   'fart': FARTSOUNDS,
   'explosion': EXPLOSIONSOUNDS,
-  'click': CLICKSOUNDS,
-  'yes': YESSOUNDS,
-  'alert': ALERTSOUNDS,
+  'click': CLICKSOUND,
+  'yes': YESSOUND,
+  'alert': ALERTSOUND,
+  // 'applause': APPLAUSESOUND,
+  'flush': FLUSHSOUND,
+  'booing': BOOINGSOUND,
 }
 
 class Sounds {
@@ -46,10 +49,14 @@ class Sounds {
     this.enabled = true
   }
 
-  preLoadSounds() {
+  preLoadSounds(type = null) {
     if (this.enabled) {
       for (let type of Object.keys(GROUPS)) {
         let group = GROUPS[type]
+
+        if (typeof group === 'string') {
+          group = [group]
+        }
         for (var src of group) {
           let element = document.createElement('audio')
           element.type = 'audio/mpeg'
@@ -85,7 +92,7 @@ class Sounds {
   _getRandomAudioElement(type, reattempted = false) {
     let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
     if (nodes.length < 2) {
-      this.preLoadSounds()
+      this.preLoadSounds(type)
       if (!reattempted) {
         return this._getRandomAudioElement(type, true)
       }
@@ -108,7 +115,7 @@ class Sounds {
   _getAudioElement(type, reattempted = false) {
     let nodes = document.querySelectorAll(`audio[data-type="${type}"]`)
     if (nodes.length < 1) {
-      this.preLoadSounds()
+      this.preLoadSounds(type)
       if (!reattempted) {
         return this._getAudioElement(type, true)
       }

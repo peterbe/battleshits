@@ -932,7 +932,7 @@ class Game extends React.Component {
         this.scrollChatToBottom()
         Sounds.play('alert')
       } else {
-        this.bombSlot(data.index, data.yours, false)
+        this.bombSlot(data.index, data.yours, false, data.cell)
       }
       // if (data.game) {
       //   if (this.state.game === null) {
@@ -1010,7 +1010,11 @@ class Game extends React.Component {
     }
     this.bombSlot(index, yours)
     if (!game.opponent.ai) {
-      apiSet('/api/bomb', {id: game.id, index: index})
+      apiSet('/api/bomb', {
+        id: game.id,
+        index: index,
+        cell: game.opponent.grid[index]
+      })
     }
 
   }
@@ -1136,7 +1140,7 @@ class Game extends React.Component {
     this.bombSlot(i, true)
   }
 
-  _newCellState(index, ships) {
+  _newCellState(index, ships, chance) {
     let x = index % 10
     let y = Math.floor(index / 10)
     let xy = x + ',' + y
@@ -1146,32 +1150,36 @@ class Game extends React.Component {
         return [2, ship] // explosion
       }
     }
-    if (Math.random() > 0.9) {
+    if (chance && Math.random() > 0.92) {
       return [3, null] // missed but toilet paper
     }
 
     return [1, null] // missed
   }
 
-  bombSlot(index, opponentmove, save = true) {
+  bombSlot(index, opponentmove, save = true, newCellstate = null) {
     let game = this.props.game
     let yourturn
     let yoursElement = getOneElement('#yours')
     let opponentsElement = getOneElement('#opponents')
     let element
     let nextElement
-    let newCellstate
+    // let newCellstate
     let ship
 
     if (opponentmove) {
       element = yoursElement
       nextElement = opponentsElement;
-      [newCellstate, ship] = this._newCellState(index, game.you.ships)
+      if (newCellstate === 3) {
+        ship = null
+      } else {
+        [newCellstate, ship] = this._newCellState(index, game.you.ships, false)
+      }
       game.you.grid[index] = newCellstate
     } else {
       element = opponentsElement
       nextElement = yoursElement;
-      [newCellstate, ship] = this._newCellState(index, game.opponent.ships)
+      [newCellstate, ship] = this._newCellState(index, game.opponent.ships, true)
       game.opponent.grid[index] = newCellstate
     }
     if (newCellstate === 2) {
@@ -1214,10 +1222,11 @@ class Game extends React.Component {
           if (opponentmove) {
             this.setState({message: `You lost!\n(aka. you suck)`})
             game.opponent.winner = true
-            // alert("You lost!")
+            Sounds.play('booing')
           } else {
             this.setState({message: `You won!\nPooptastic!`})
             game.you.winner = true
+            Sounds.play('flush')
           }
         }
       }
@@ -1330,12 +1339,12 @@ class Game extends React.Component {
     //   drops += -1 * _drops
     //   _drops = 1
     // }
-    if (!game.yourturn) {
+    if (!game.yourturn && !game.gameover) {
       yourHeader += `(${game.opponent.name}'s turn, ${_drops} of ${drops})`
     }
 
     let opponentHeader = `${game.opponent.name}'s grid`
-    if (game.yourturn) {
+    if (game.yourturn && !game.gameover) {
       // if (game._drops && game._drops < game.rules.drops) {
         opponentHeader += ` (Your turn, ${_drops} of ${drops})`
       // } else {
@@ -1358,7 +1367,6 @@ class Game extends React.Component {
       }
     }
 
-    console.log('gridWidth', this.props.gridWidth)
     let opponent = null
     if (!game.you.designmode) {
       if (game.opponent.designmode) {
@@ -1401,12 +1409,12 @@ class Game extends React.Component {
             </button>
           </p>
           <p>
-            <br/>
             Rules are...
-            <ul>
-              <li>Number of drops per turn: <b>{game.rules.drops}</b></li>
-            </ul>
           </p>
+          <ul>
+            <li>Number of drops per turn: <b>{game.rules.drops}</b></li>
+          </ul>
+
         </div>
       )
     }

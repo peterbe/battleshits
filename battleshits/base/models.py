@@ -44,3 +44,11 @@ class Message(models.Model):
     read = models.BooleanField(default=False)
     message = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
+
+
+class Bomb(models.Model):
+    game = models.ForeignKey(Game)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True)
+    index = models.PositiveIntegerField()
+    new_cell_state = models.PositiveIntegerField(default=1)
+    created = models.DateTimeField(auto_now_add=True)

@@ -17,7 +17,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.conf import settings
 
-from battleshits.base.models import Game, Message
+from battleshits.base.models import Game, Message, Bomb
 
 
 logger = logging.getLogger('battleshits.api')
@@ -372,6 +372,7 @@ def bombed(request):
     # print
     game_id = data['id']
     index = data['index']
+    cell = data['cell']
     # yours = data['yours']
     # yours =False
     # game_obj = Game.objects.filter(
@@ -385,10 +386,17 @@ def bombed(request):
     else:
         assert request.user == game_obj.player2
         opponent = game_obj.player1
+    Bomb.objects.create(
+        game=game_obj,
+        user=request.user,
+        index=index,
+        new_cell_state=cell,
+    )
     channel = 'game-{}-{}'.format(game_obj.id, opponent.username)
     fanout.publish(channel, {
         'index': index,
         'yours': True,
+        'cell': cell,
     })
     return http.JsonResponse({'ok': True})
 
