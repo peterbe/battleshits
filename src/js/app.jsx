@@ -249,6 +249,7 @@ class App extends React.Component {
       stats: {},
       synced: -1,
       waitingGames: [],
+      othersWaitingGames: 0,
       serverError: false,
       newMessages: [],
       gridWidth: null,
@@ -482,7 +483,8 @@ class App extends React.Component {
         this.setState({
           games: result.games,
           stats: result.stats,
-          waitingGames: result.waiting
+          waitingGames: result.waiting,
+          othersWaitingGames: result.others_waiting,
         })
       })
     })
@@ -539,21 +541,37 @@ class App extends React.Component {
     }
 
     let waitingForGames = null
-    if (this.state.waitingGames.length && !this.state.game) {
-      waitingForGames = (
-        <div className="section waiting-for-games">
-          <p>
-            <img src="/static/images/radar.gif"/>
-            <br/>
-            Waiting for someone to play with
-          </p>
-          {
-            this.state.waitingGames.length > 1 ?
-            <p>{this.state.waitingGames} games started</p> :
-            null
-          }
-        </div>
-      )
+    if (!this.state.game) {
+      if (this.state.waitingGames.length) {
+        waitingForGames = (
+          <div className="section waiting-for-games">
+            <p>
+              <img src="/static/images/radar.gif"/>
+              <br/>
+              Waiting for someone to play with
+            </p>
+            {
+              this.state.waitingGames.length > 1 ?
+              <p>{this.state.waitingGames} games started</p> :
+              null
+            }
+          </div>
+        )
+      } else if (this.state.othersWaitingGames) {
+        waitingForGames = (
+          <div className="section others-waiting-for-games">
+            <p>
+              This is currently <b>{
+                  this.state.othersWaitingGames === 1 ?
+                  '1 other' :
+                  `${this.state.othersWaitingGames} others`
+                }</b> waiting to play against somebody.<br/>
+              Go ahead! Start a new game!
+            </p>
+          </div>
+        )
+
+      }
     }
 
     let serverError = null

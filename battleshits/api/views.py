@@ -224,10 +224,25 @@ def list_games(request):
         'losses': losses.count(),
     }
 
+    # we also want a count of the number of people waiting to play
+    others_waiting = Game.objects.filter(
+        abandoned=False,
+        gameover=False,
+        ai=False
+    ).exclude(
+        Q(player1=request.user) | Q(player2=request.user)
+    ).extra(
+        where=[
+            '(player1_id IS NULL AND player2_id IS NOT NULL) OR '
+            '(player1_id IS NOT NULL AND player2_id IS NULL)'
+        ]
+    )
+
     return http.JsonResponse({
         'games': states,
         'stats': stats,
         'waiting': waiting,
+        'others_waiting': others_waiting.count(),
     })
 
 
