@@ -974,7 +974,9 @@ class Game extends React.Component {
         }, 400)
       }
     } else {
-      if (!game.you.designmode && !game.opponent.designmode) {
+      if (game.you.designmode) {
+        getOneElement('#yours').scrollIntoView()
+      } else if (!game.opponent.designmode) {
         // scroll to the grid whose turn it is
         setTimeout(() => {
           if (game.yourturn) {
@@ -1094,7 +1096,6 @@ class Game extends React.Component {
         this.props.changeGame(null, false)
         apiSet('/api/start', {game: game})
         .then((result) => {
-          console.log("Result from start:", result);
           if (result.id) {
             // no match, but a reference to your created game
             this.props.onWaitingGame(result.id)
@@ -1108,7 +1109,8 @@ class Game extends React.Component {
           }
         })
         .catch((ex) => {
-
+          console.error('Unable to start game :(', ex)
+          throw ex
         })
         // // But if you can't start the game until your opponent has
         // // also designed theirs.
@@ -1330,19 +1332,24 @@ class Game extends React.Component {
     let game = this.props.game
     let grids = null;
 
-    let yourHeader = "Your grid"
+    let yourHeader = null
     let drops = game.rules.drops
     let _drops = game._drops
-    // while (_drops < 0) {
-    //   drops++
-    //   _drops++
-    // }
-    // if (_drops < 0) {
-    //   drops += -1 * _drops
-    //   _drops = 1
-    // }
-    if (!game.yourturn && !game.gameover) {
-      yourHeader += `(${game.opponent.name}'s turn, ${_drops} of ${drops})`
+    if (game.you.designmode) {
+      yourHeader = "Design where to put your shits"
+    } else {
+      yourHeader = "Your grid"
+      // while (_drops < 0) {
+      //   drops++
+      //   _drops++
+      // }
+      // if (_drops < 0) {
+      //   drops += -1 * _drops
+      //   _drops = 1
+      // }
+      if (!game.yourturn && !game.gameover) {
+        yourHeader += `(${game.opponent.name}'s turn, ${_drops} of ${drops})`
+      }
     }
 
     let opponentHeader = `${game.opponent.name}'s grid`
@@ -1358,7 +1365,7 @@ class Game extends React.Component {
     if (game.gameover) {
       statusHead = <h3>Status: Game Over</h3>
     } else if (game.you.designmode) {
-      statusHead = <h3>Status: Place your shitty ships!</h3>
+      statusHead = null //<h3>Status: Place your shitty ships!</h3>
     } else if (game.opponent.designmode) {
       statusHead = <h3>Status: {game.opponent.name + '\u0027'}s placing ships</h3>
     } else {
@@ -1420,10 +1427,10 @@ class Game extends React.Component {
         </div>
       )
     }
-
+    // { !game.you.designmode ? <h4>{yourHeader}</h4> : null}
     let yours = (
       <div id="yours">
-        { !game.you.designmode ? <h4>{yourHeader}</h4> : null}
+        <h4>{ yourHeader }</h4>
         <Grid
           grid={game.you.grid}
           ships={game.you.ships}
@@ -1434,7 +1441,7 @@ class Game extends React.Component {
           onMove={this.shipMoved.bind(this)}
           onRotate={this.shipRotated.bind(this)}
           />
-        { game.you.designmode ? doneButton : null }
+        { doneButton }
       </div>
     )
 
