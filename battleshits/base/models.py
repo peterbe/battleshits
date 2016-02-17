@@ -52,3 +52,10 @@ class Bomb(models.Model):
     index = models.PositiveIntegerField()
     new_cell_state = models.PositiveIntegerField(default=1)
     created = models.DateTimeField(auto_now_add=True)
+
+
+class LogInCode(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    code = models.CharField(max_length=100)
+    used = models.BooleanField(default=False)
+    created = models.DateTimeField(auto_now_add=True)

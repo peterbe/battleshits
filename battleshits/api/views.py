@@ -2,6 +2,7 @@ import copy
 import json
 import logging
 import uuid
+import random
 
 import fanout
 
@@ -17,7 +18,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.conf import settings
 
-from battleshits.base.models import Game, Message, Bomb
+from battleshits.base.models import Game, Message, Bomb, LogInCode
 
 
 logger = logging.getLogger('battleshits.api')
@@ -57,6 +58,22 @@ def xhr_login_required(view_func):
     return inner
 
 
+def _random(length, pool):
+    s = []
+    while len(s) < length:
+        random.shuffle(pool)
+        s.append(pool[0])
+    return ''.join(s)
+
+
+def random_letters(length):
+    return _random(length, list('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
+
+
+def random_numbers(length):
+    return _random(length, list('0123456789'))
+
+
 def signedin(request):
     if request.user.is_authenticated():
         data = {
@@ -65,6 +82,18 @@ def signedin(request):
             'first_name': request.user.first_name,
             'last_name': request.user.last_name,
         }
+        codes = LogInCode.objects.filter(
+            user=request.user,
+            used=False,
+        )
+        for logincode in codes:
+            break
+        else:
+            logincode = LogInCode.objects.create(
+                user=request.user,
+                code=random_letters(1) + random_numbers(4)
+            )
+        data['logincode'] = logincode.code
     else:
         data = {
             'username': None,
@@ -81,6 +110,29 @@ def random_username():
 @require_POST
 def login(request):
     assert request.method == 'POST', request.method
+    data = json.loads(request.body)
+    if data.get('code_or_email'):
+        code_or_email = data['code_or_email']
+        codes = LogInCode.objects.filter(
+            code__iexact=code_or_email,
+            used=False,
+        )
+        for code in codes:
+            user = code.user
+            user.backend = settings.AUTHENTICATION_BACKENDS[0]
+            request.user = user
+            auth.login(request, user)
+            code.used = True
+            code.save()
+            return signedin(request)
+
+        if '@' in code_or_email:
+            raise NotImplementedError(code_or_email)
+
+        return http.JsonResponse({
+            'error': 'Code not recognized :('
+        })
+
     assert not request.user.is_authenticated()
     user = get_user_model().objects.create(
         username=random_username(),

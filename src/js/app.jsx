@@ -253,6 +253,7 @@ class App extends React.Component {
       serverError: false,
       newMessages: [],
       gridWidth: null,
+      // loginCode: null,
     }
   }
 
@@ -422,6 +423,7 @@ class App extends React.Component {
       sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
       if (result.username) {
         sessionStorage.setItem('username', result.username)
+        sessionStorage.setItem('logincode', result.logincode)
         if (result.first_name) {
           sessionStorage.setItem('yourname', result.first_name)
         } else if (sessionStorage.getItem('yourname')) {
@@ -438,6 +440,7 @@ class App extends React.Component {
         .then((result) => {
           sessionStorage.setItem('csrfmiddlewaretoken', result.csrf_token)
           sessionStorage.setItem('username', result.username)
+          sessionStorage.setItem('logincode', result.logincode)
           if (sessionStorage.getItem('yourname')) {
             this.syncSavedNamed(sessionStorage.getItem('yourname'))
           }
@@ -614,6 +617,8 @@ class App extends React.Component {
     //   }
     // }
 
+    let loginCode = sessionStorage.getItem('logincode')
+
     return (
         <div>
           <h1>Battleshits</h1>
@@ -639,6 +644,7 @@ class App extends React.Component {
             <Games
               games={this.state.games}
               stats={this.state.stats}
+              loginCode={loginCode}
               onWaitingGame={this.onWaitingGame.bind(this)}
               onGamesChange={this.onGamesChange.bind(this)}
               onGameSelect={this.onGameSelect.bind(this)}/>
@@ -656,6 +662,9 @@ class Games extends React.Component {
     super(props)
     this.state = {
       askYourName: false,
+      changeYourName: false,
+      startLogin: false,
+      loginError: null,
     }
   }
 
@@ -780,6 +789,50 @@ class Games extends React.Component {
     }
   }
 
+  onChangeYourName(e) {
+    e.preventDefault()
+    let name = this.refs.change_your_name.value.trim()
+    if (name.length) {
+      apiSet('/api/profile', {name: name})
+      .then((result) => {
+        sessionStorage.setItem('yourname', result.first_name)
+        this.setState({changeYourName: false})
+      })
+    }
+  }
+
+  logIn(e) {
+    e.preventDefault()
+    let code_or_email = this.refs.code_or_email.value.trim()
+    if (code_or_email.length) {
+      apiSet('/api/login', {code_or_email: code_or_email})
+      .then((result) => {
+        if (result.first_name) {
+          sessionStorage.setItem('yourname', result.first_name)
+          this.setState({startLogin: false})
+        } else {
+          this.setState({loginError: result.error})
+        }
+      })
+    }
+  }
+
+  cancelChangeYourName() {
+    this.setState({changeYourName: false})
+  }
+
+  changeYourName() {
+    this.setState({changeYourName: true})
+  }
+
+  startLogin() {
+    this.setState({startLogin: true})
+  }
+
+  cancelStartLogin() {
+    this.setState({startLogin: false})
+  }
+
   render() {
 
     let ongoingGames = null
@@ -878,6 +931,71 @@ class Games extends React.Component {
       )
     }
 
+    let yourName = sessionStorage.getItem('yourname') || null
+
+    let userDetails = null
+    if (yourName) {
+      if (this.state.changeYourName) {
+        userDetails = (
+          <div className="section">
+            <form onSubmit={this.onChangeYourName.bind(this)}>
+              <label htmlFor="id_change_your_name">Name:</label>
+              <input type="text" name="change_your_name" ref="change_your_name"/>
+              <button>Save</button>
+              <button onClick={this.cancelChangeYourName.bind(this)}>Cancel</button>
+            </form>
+          </div>
+        )
+      } else {
+        userDetails = (
+          <div className="section">
+            <p>
+              You're signed in as <b>{ yourName }</b>.
+            </p>
+            <button type="button" onClick={this.changeYourName.bind(this)}>
+              Change your name
+            </button>
+            <p>
+              If you ever lose your phone; write down and remember your
+              secret log in code: <code>{ this.props.loginCode }</code>.
+            </p>
+          </div>
+        )
+      }
+
+    } else {
+      if (this.state.startLogin) {
+        userDetails = (
+          <div className="section">
+            { this.state.loginError ?
+              <h4 style={{color: "red"}}>{ this.state.loginError }</h4> : null
+            }
+            <form onSubmit={this.logIn.bind(this)}>
+              <label htmlFor="id_code_or_email">Code or Email:</label>
+              <input type="text" name="code_or_email" ref="code_or_email"/>
+              <button>Get back in!</button>
+              <button onClick={this.cancelStartLogin.bind(this)}>Cancel</button>
+              <p>
+                When you first started you should have received a code. <br/>
+                If you can't remember your code, enter your email. <br/>
+              If you never entered your email; <b>you're screwed</b>.
+              </p>
+            </form>
+
+          </div>
+        )
+      } else {
+        userDetails = (
+          <div className="section">
+            <button type="button" onClick={this.startLogin.bind(this)}>
+              Log back in
+            </button>
+          </div>
+        )
+      }
+
+    }
+
     return (
       <div>
         <h2>Games</h2>
@@ -886,6 +1004,8 @@ class Games extends React.Component {
           { startNewForm }
 
           { stats }
+
+          { userDetails }
       </div>
     )
   }
