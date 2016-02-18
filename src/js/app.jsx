@@ -520,6 +520,10 @@ class App extends React.Component {
     })
   }
 
+  reload() {
+    this.initServerGames()
+  }
+
   render() {
 
     let synced = null
@@ -645,6 +649,7 @@ class App extends React.Component {
               games={this.state.games}
               stats={this.state.stats}
               loginCode={loginCode}
+              reload={this.reload.bind(this)}
               onWaitingGame={this.onWaitingGame.bind(this)}
               onGamesChange={this.onGamesChange.bind(this)}
               onGameSelect={this.onGameSelect.bind(this)}/>
@@ -809,7 +814,9 @@ class Games extends React.Component {
       .then((result) => {
         if (result.first_name) {
           sessionStorage.setItem('yourname', result.first_name)
+          sessionStorage.setItem('logincode', result.logincode)
           this.setState({startLogin: false})
+          this.props.reload()
         } else {
           this.setState({loginError: result.error})
         }
