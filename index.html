@@ -19,7 +19,8 @@
   rel="stylesheet"
   type="text/css"> -->
 
-
+  <!-- <link rel="stylesheet" href="/node_modules/bulma/css/bulma.min.css"> -->
+  <link rel="stylesheet" href="/node_modules/bulma/css/bulma.css">
   <style type="text/css">
   body {
     margin: 0;
@@ -44,27 +45,22 @@
     vertical-align: middle;
   }
 
-  div.section {
+  /*div.section {
     margin: 10px;
     padding: 10px;
     border-top:1px solid #ccc;
+  }*/
+
+  /* When listing multiple buttons */
+  p.one-button {
+    margin-bottom: 4px;
   }
 
-  /* missed */
-  xxtd.M {
-    /*background-image: url('static/images/poop.png');*/
-    background-image: url('/static/images/explosion-miss.png');
-    background-size: 22px;
-  }
-  /* bombed */
-  xxtd.B {
-    background-image: url('/static/images/explosion.png');
-    background-size: 22px;
-  }
-  /* ship */
-  xxtd.S {
-    background-image: url('/static/images/poop.png');
-    background-size: 22px;
+  /* Specifically for the h5 tags on top of the grids */
+  #yours h5.grid-header,
+  #opponents h5.grid-header {
+    margin-top: 25px;
+    margin-bottom: 4px;
   }
 
   .message {
@@ -113,33 +109,6 @@
   .grids h4 {
     margin-bottom: 5px;
   }
-  /*.ship.ship5 {
-    background-position: -4px -51px;
-    width: 244px;
-    height: 48px;
-  }
-  .ship.ship4 {
-    background-position: -258px -51px;
-    width: 187px;
-    height: 48px;
-  }
-  .ship.ship3-1 {
-    background-position: -459px -50px;
-    width: 135px;
-    height: 48px;
-  }
-  .ship.ship3-2 {
-    background-position: -610px -50px;
-    width: 131px;
-    height: 48px;
-  }
-  .ship.ship2 {
-    background-position: -758px -51px;
-    width: 81px;
-    height: 48px;
-  }*/
-  /*img.yoursship { border:1px solid green}
-  img.opponentship { border:1px solid red}*/
 
 .section.waiting-for-games p {
   text-align: center;
@@ -150,7 +119,7 @@
 }
 
 .chat .messages {
-  max-height: 250px;
+  max-height: 180px;
   overflow-y: auto;
 }
 .chat .messages div {

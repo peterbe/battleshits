@@ -247,6 +247,8 @@ def list_games(request):
     minimum = request.GET.get('minimum')
     games_base_qs = Game.objects.filter(
         Q(player1=request.user) | Q(player2=request.user)
+    ).filter(
+        abandoned=False
     )
     games = games_base_qs.filter(
         gameover=False,
@@ -269,9 +271,11 @@ def list_games(request):
             'games': states,
         })
 
+    ongoing = games_base_qs.filter(gameover=False)
     wins = games_base_qs.filter(gameover=True).filter(winner=request.user)
     losses = games_base_qs.filter(gameover=True).exclude(winner=request.user)
     stats = {
+        'ongoing': ongoing.count(),
         'wins': wins.count(),
         'losses': losses.count(),
     }

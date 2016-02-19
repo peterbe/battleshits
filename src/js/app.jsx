@@ -551,31 +551,31 @@ class App extends React.Component {
     if (!this.state.game) {
       if (this.state.waitingGames.length) {
         waitingForGames = (
-          <div className="section waiting-for-games">
-            <p>
+          <section className="section waiting-for-games">
+            <p className="is-text-centered">
               <img src="/static/images/radar.gif"/>
               <br/>
               Waiting for someone to play with
             </p>
             {
               this.state.waitingGames.length > 1 ?
-              <p>{this.state.waitingGames} games started</p> :
+              <p className="is-text-centered">{this.state.waitingGames} games started</p> :
               null
             }
-          </div>
+          </section>
         )
       } else if (this.state.othersWaitingGames) {
         waitingForGames = (
-          <div className="section others-waiting-for-games">
-            <p>
-              This is currently <b>{
+          <section className="section others-waiting-for-games">
+            <p className="is-text-centered">
+              This is currently <strong>{
                   this.state.othersWaitingGames === 1 ?
                   '1 other' :
                   `${this.state.othersWaitingGames} others`
-                }</b> waiting to play against somebody.<br/>
+                }</strong> waiting to play against somebody.<br/>
               Go ahead! Start a new game!
             </p>
-          </div>
+          </section>
         )
 
       }
@@ -584,33 +584,36 @@ class App extends React.Component {
     let serverError = null
     if (this.state.serverError) {
       serverError = (
-        <div className="section server-error">
-          <h3>Hey! Fix your darn Internet!</h3>
+        <section className="section server-error">
+          <h3 class="title is-3">Hey! Fix your darn Internet!</h3>
           <p>
             It was not possible to connect you to the server so
             some things might not work.
           </p>
-        </div>
+        </section>
       )
     }
 
     let newMessages = null
     if (this.state.newMessages.length) {
       newMessages = (
-        <div className="section new-messages">
-          <p>You have <b>{this.state.newMessages.length}</b> messages.</p>
+        <section className="section new-messages">
+          <p>You have <strong>{this.state.newMessages.length}</strong> messages.</p>
           {
             this.state.newMessages.map((message, i) => {
               return (
                 <div key={'newmsg' + message.id}>
                   <span>{message.name}</span>
                   <blockquote>{message.message}</blockquote>
-                  <button onClick={this.gotoGameOnMessage.bind(this, message)}>Go to</button>
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={this.gotoGameOnMessage.bind(this, message)}>Go to</button>
                 </div>
               )
             })
           }
-        </div>
+        </section>
       )
     }
 
@@ -625,8 +628,8 @@ class App extends React.Component {
 
     return (
         <div>
-          <h1>Battleshits</h1>
-          <h2>You Will Never Shit in Peace</h2>
+          <h1 className="title is-1 is-text-centered">Battleshits</h1>
+          <h2 className="title is-2 is-text-centered">You Will Never Shit in Peace</h2>
 
           { newMessages }
 
@@ -842,10 +845,10 @@ class Games extends React.Component {
 
   render() {
 
-    let ongoingGames = null
+    // let ongoingGames = null
+    let ongoingGamesYourTurn = null
+    let ongoingGamesTheirTurn = null
     if (this.props.games.length) {
-      let ongoingGamesYourTurn = null
-      let ongoingGamesTheirTurn = null
       let yourturns = []
       let theirturns = []
       // could just a filter primitive but then we'd need to loop twice
@@ -858,83 +861,107 @@ class Games extends React.Component {
       }
       if (yourturns.length) {
         ongoingGamesYourTurn = (
-          <div>
-            <h3>Ongoing games, your turn:</h3>
+          <section className="section">
+            <h4 className="title is-4">Ongoing games, your turn:</h4>
             <ListOngoingGames
               games={yourturns}
               onGameSelect={this.props.onGameSelect}
               />
-          </div>
+          </section>
         )
       }
       if (theirturns.length) {
         ongoingGamesTheirTurn = (
-          <div>
-            <h3>Ongoing games, waiting:</h3>
+          <section className="section">
+            <h4 className="title is-4">Ongoing games, waiting:</h4>
             <ListOngoingGames
               games={theirturns}
               onGameSelect={this.props.onGameSelect}
               />
-          </div>
+          </section>
         )
       }
-      ongoingGames = (
-        <div className="section">
-          { ongoingGamesYourTurn }
-          { ongoingGamesTheirTurn }
-        </div>
-      )
+      // ongoingGames = (
+      //   <section className="section">
+      //     { ongoingGamesYourTurn }
+      //     { ongoingGamesTheirTurn }
+      //   </section>
+      // )
     }
 
     let nameForm = (
       <form onSubmit={this.onSaveYourName.bind(this)}>
-        <label htmlFor="id_your_name">You must enter your name:</label>
-        <input type="text" name="your_name" ref="your_name"/>
-        <button>Save</button>
-        <button onClick={this.cancelAskYourName.bind(this)}>Cancel</button>
+        <p className="control is-grouped">
+        {/*<label htmlFor="id_your_name">You must enter your name:</label>*/}
+        <input
+          type="text"
+          className="input"
+          name="your_name"
+          ref="your_name"
+          placeholder="Enter your name..."
+          />
+        <button
+          type="submit"
+          className="button is-primary"
+          >Save</button>
+        <button
+          type="button"
+          className="button"
+          onClick={this.cancelAskYourName.bind(this)}>Cancel</button>
+        </p>
       </form>
     )
 
     let startButtons = (
       <div>
-        <button onClick={this.startRandomGame.bind(this, false)}
-          >Play against next available random person</button>
-        <br/>
-        <button onClick={this.startRandomGame.bind(this, true)}
-          >Play against the computer</button>
-
+        <p className="one-button">
+          <button
+            className="button is-primary is-fullwidth"
+            onClick={this.startRandomGame.bind(this, false)}
+            >Play against next available random person</button>
+        </p>
+        <p className="one-button">
+          <button
+            className="button is-primary is-fullwidth"
+            onClick={this.startRandomGame.bind(this, true)}
+            >Play against the computer</button>
+        </p>
       </div>
     )
     /* <br/>
     <button>Invite someone to play with</button> (no f'ing Facebook!) */
 
     let startNewForm = (
-      <div className="section">
-        <h3>Start a new game</h3>
+      <section className="section">
+        <h3 className="title">Start a new game</h3>
 
         { this.state.askYourName ? nameForm : startButtons}
 
-      </div>
+      </section>
     )
 
     let stats = null
     if (this.props.stats.wins || this.props.stats.losses) {
       stats = (
-        <div className="section">
-          <h3>Stats</h3>
-          <table>
-            <tbody>
+        <section className="section">
+          <h3 className="title">Stats</h3>
+          <table className="table">
+            <thead>
               <tr>
+                <th>Ongoing</th>
                 <th>Wins</th>
                 <th>Losses</th>
               </tr>
+            </thead>
+            <tbody>
               <tr>
+                <td>{this.props.stats.ongoing}</td>
                 <td>{this.props.stats.wins}</td>
                 <td>{this.props.stats.losses}</td>
               </tr>
             </tbody>
           </table>
-        </div>
+        </section>
       )
     }
 
@@ -944,60 +971,84 @@ class Games extends React.Component {
     if (yourName) {
       if (this.state.changeYourName) {
         userDetails = (
-          <div className="section">
+          <section className="section">
             <form onSubmit={this.onChangeYourName.bind(this)}>
-              <label htmlFor="id_change_your_name">Name:</label>
-              <input type="text" name="change_your_name" ref="change_your_name"/>
-              <button>Save</button>
-              <button onClick={this.cancelChangeYourName.bind(this)}>Cancel</button>
+              <p className="control is-grouped">
+                <input
+                  type="text"
+                  className="input"
+                  name="change_your_name"
+                  ref="change_your_name"
+                  placeholder={yourName}/>
+                <button className="button is-primary">Save</button>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={this.cancelChangeYourName.bind(this)}>Cancel</button>
+              </p>
             </form>
-          </div>
+          </section>
         )
       } else {
         userDetails = (
-          <div className="section">
+          <section className="section">
             <p>
-              You're signed in as <b>{ yourName }</b>.
+              You're signed in as <strong>{ yourName }</strong>.
             </p>
-            <button type="button" onClick={this.changeYourName.bind(this)}>
+            <button
+              className="button"
+              type="button" onClick={this.changeYourName.bind(this)}>
               Change your name
             </button>
             <p>
               If you ever lose your phone; write down and remember your
               secret log in code: <code>{ this.props.loginCode }</code>.
             </p>
-          </div>
+          </section>
         )
       }
 
     } else {
       if (this.state.startLogin) {
         userDetails = (
-          <div className="section">
+          <section className="section">
             { this.state.loginError ?
               <h4 style={{color: "red"}}>{ this.state.loginError }</h4> : null
             }
             <form onSubmit={this.logIn.bind(this)}>
-              <label htmlFor="id_code_or_email">Code or Email:</label>
-              <input type="text" name="code_or_email" ref="code_or_email"/>
-              <button>Get back in!</button>
-              <button onClick={this.cancelStartLogin.bind(this)}>Cancel</button>
+              <p className="control is-grouped">
+                  <input
+                    type="text"
+                    className="input"
+                    name="code_or_email"
+                    ref="code_or_email"
+                    placeholder="Name or Email"/>
+                  <button
+                    type="submit"
+                    className="button is-primary">Get back in!</button>
+                  <button
+                    type="button"
+                    className="button"
+                    onClick={this.cancelStartLogin.bind(this)}>Cancel</button>
+              </p>
               <p>
                 When you first started you should have received a code. <br/>
                 If you can't remember your code, enter your email. <br/>
               If you never entered your email; <b>you're screwed</b>.
               </p>
             </form>
-
-          </div>
+          </section>
         )
       } else {
         userDetails = (
-          <div className="section">
-            <button type="button" onClick={this.startLogin.bind(this)}>
+          <section className="section">
+            <button
+              className="button is-primary"
+              type="button"
+              onClick={this.startLogin.bind(this)}>
               Log back in
             </button>
-          </div>
+          </section>
         )
       }
 
@@ -1005,8 +1056,11 @@ class Games extends React.Component {
 
     return (
       <div>
-        <h2>Games</h2>
-          { ongoingGames }
+        {/*<h2 className="title">Games</h2>*/}
+
+          { ongoingGamesYourTurn }
+
+          { ongoingGamesTheirTurn }
 
           { startNewForm }
 
@@ -1030,19 +1084,20 @@ class ListOngoingGames extends React.Component {
           bombsDropped += game.opponent.grid.filter(cell => {
             return cell > 0
           }).length
-          return <button key={game.id}
-            onClick={this.props.onGameSelect.bind(this, game)}>
-            {
-              game.yourturn ?
-              `Your turn against ${game.opponent.name}` :
-              `${game.opponent.name}'s turn`
-            }
-            {
-              game.opponent.ai ?
-              ' (computer)' : null
-            }
-            {` (${bombsDropped} bombs dropped)`}
-          </button>
+          return (
+            <p className="one-button" key={game.id}>
+              <button
+                className="button is-primary is-fullwidth"
+                onClick={this.props.onGameSelect.bind(this, game)}>
+                {
+                  game.yourturn ?
+                  `Your turn against ${game.opponent.name}` :
+                  `${game.opponent.name}'s turn`
+                }
+                {` (${bombsDropped} bombs dropped)`}
+              </button>
+            </p>
+          )
         })
       }
       </div>
@@ -1471,6 +1526,10 @@ class Game extends React.Component {
   scrollChatToBottom() {
     let container = document.querySelector('.chat .messages')
     container.scrollTop = container.scrollHeight
+    setTimeout(() => {
+      // do it again a little bit later to really make sure it's down.
+      container.scrollTop = container.scrollHeight
+    }, 300)
   }
 
   render() {
@@ -1508,16 +1567,16 @@ class Game extends React.Component {
 
     let statusHead
     if (game.gameover) {
-      statusHead = <h3>Status: Game Over</h3>
+      statusHead = <h3 className="title">Status: Game Over</h3>
     } else if (game.you.designmode) {
       statusHead = null //<h3>Status: Place your shitty ships!</h3>
     } else if (game.opponent.designmode) {
-      statusHead = <h3>Status: {game.opponent.name + '\u0027'}s placing ships</h3>
+      statusHead = <h3 className="title">Status: {game.opponent.name + '\u0027'}s placing ships</h3>
     } else {
       if (game.yourturn) {
-        statusHead = <h3>Status: Your turn</h3>
+        statusHead = <h3 className="title">Status: Your turn</h3>
       } else {
-        statusHead = <h3>Status: {game.opponent.name + '\u0027'}s turn</h3>
+        statusHead = <h3 className="title">Status: {game.opponent.name + '\u0027'}s turn</h3>
       }
     }
 
@@ -1528,9 +1587,9 @@ class Game extends React.Component {
       } else {
         opponent = (
           <div id="opponents">
-            <h4>
+            <h5 className="title is-5 grid-header">
               {opponentHeader}
-            </h4>
+            </h5>
             <Grid
               grid={game.opponent.grid}
               ships={game.opponent.ships}
@@ -1552,11 +1611,11 @@ class Game extends React.Component {
     if (game.you.designmode) {
       let disabledDoneButton = this._countOverlaps() > 0
       doneButton = (
-        <div>
-          <p style={{textAlign: 'center'}}>
+        <section className="section" style={{paddingTop: 10}}>
+          <p className="is-text-centered">
             When you're done...<br/>
             <button
-                className="done-button"
+                className="button done-button is-medium is-fullwidth is-success"
                 onClick={this.onDoneButtonClick.bind(this)}
                 disabled={disabledDoneButton}>
               I have placed my shitty ships
@@ -1568,14 +1627,13 @@ class Game extends React.Component {
           <ul>
             <li>Number of drops per turn: <b>{game.rules.drops}</b></li>
           </ul>
-
-        </div>
+        </section>
       )
     }
     // { !game.you.designmode ? <h4>{yourHeader}</h4> : null}
     let yours = (
       <div id="yours">
-        <h4>{ yourHeader }</h4>
+        <h5 className="title is-5 grid-header">{ yourHeader }</h5>
         <Grid
           grid={game.you.grid}
           ships={game.you.ships}
@@ -1593,14 +1651,22 @@ class Game extends React.Component {
     let abandonment = null
     if (game.id && game.id > 0) {
       abandonment = (
-        <button onClick={this.toggleAbandonGameConfirm.bind(this)}>Abandon Game</button>
+        <p>
+        <button
+          className="button"
+          onClick={this.toggleAbandonGameConfirm.bind(this)}>Abandon Game</button>
+        </p>
       )
       if (this.state.confirmAbandon) {
         abandonment = (
           <div>
             <p>This will delete the game as if it never happened</p>
-            <button onClick={this.props.onAdandonGame.bind(this)}>Just do it already!</button>
-            <button onClick={this.toggleAbandonGameConfirm.bind(this)}>Actually, cancel</button>
+            <button
+              className="button is-primary"
+              onClick={this.props.onAdandonGame.bind(this)}>Just do it already!</button>
+            <button
+              className="button"
+              onClick={this.toggleAbandonGameConfirm.bind(this)}>Actually, cancel</button>
           </div>
         )
       }
@@ -1609,24 +1675,27 @@ class Game extends React.Component {
     let chat = null
     if (!this.props.game.opponent.ai && this.props.game.id) {
       chat = (
-        <div className="chat">
+        <section className="section chat" style={{paddingTop: 10}}>
           <Chat
             messages={this.state.messages}
             onNewMessage={this.onNewMessage.bind(this)}
             />
-          <hr/>
-        </div>
+        </section>
       )
     }
 
     let playingAgainst = null
     if (game.opponent.name) {
-      playingAgainst = <h2>Playing against <i>{game.opponent.name}</i></h2>
+      playingAgainst = (
+        <h2 className="title">Playing against <i>{game.opponent.name}</i></h2>
+      )
     }
 
     return (
       <div>
-        <button onClick={this.props.onGameExit.bind(this)}>Exit game</button>
+        <button
+          className="button is-primary is-fullwidth"
+          onClick={this.props.onGameExit.bind(this)}>Exit game</button>
 
         { playingAgainst }
 
@@ -1640,16 +1709,21 @@ class Game extends React.Component {
 
         </div>
 
-
         { chat }
 
-        { abandonment }
+        <section className="section">
+          <h5 className="title is-5">You and your game options!</h5>
+          <p>
+            <button
+              className="button"
+              onClick={this.toggleSound.bind(this)}>
+              { this.state.sound ? 'Turn sound off' : 'Turn sound on' }
+            </button>
+          </p>
 
-        <hr/>
-        <h5>You and your game options!</h5>
-        <button onClick={this.toggleSound.bind(this)}>
-          { this.state.sound ? 'Turn sound off' : 'Turn sound on' }
-        </button>
+          { abandonment }
+
+        </section>
 
       </div>
     )
