@@ -1,6 +1,7 @@
 import re
 import json
 import logging
+from pprint import pprint
 
 from django import http
 from django.views.defaults import page_not_found
@@ -14,16 +15,8 @@ from .models import Game
 logger = logging.getLogger('battleshits.base')
 
 
-@csrf_exempt
 def home(request):
-    payload = request.body
-    try:
-        body = json.loads(payload)
-    except ValueError:
-        return http.HttpResponseBadRequest("Not a valid JSON payload")
-
-    print repr(settings.AUTH_USER_MODEL)
-    return http.HttpResponse("OK\n", status=201)
+    return http.HttpResponse('Nothing to see here\n')
 
 
 def handler404(request, *args, **kwargs):
@@ -36,3 +29,20 @@ def handler404(request, *args, **kwargs):
             status=404
         )
     return page_not_found(request, *args, **kwargs)
+
+
+@csrf_exempt
+def postmarkwebhook(request):
+    print "REQUEST METHOD:", request.method
+    payload = request.body
+    try:
+        body = json.loads(payload)
+        print "PAYLOAD"
+        pprint(body)
+    except ValueError:
+        print "Payload was not JSON"
+    data = request.method == 'POST' and request.POST or request.GET
+    for key, value in data.items():
+        if value:
+            print key.ljust(20), repr(value)
+    return http.HttpResponse('OK')

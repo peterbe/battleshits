@@ -9,7 +9,7 @@ handler404 = 'battleshits.base.views.handler404'
 
 
 urlpatterns = [
-    # url(r'^$', include(battleshits.base.urls, namespace='base')),
+    url(r'', include(battleshits.base.urls, namespace='base')),
     # url(r'^admin/', include(admin.site.urls)),
     url(r'^api/', include(battleshits.api.urls, namespace='api')),
 ]
