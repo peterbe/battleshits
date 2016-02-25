@@ -585,7 +585,7 @@ class App extends React.Component {
     if (this.state.serverError) {
       serverError = (
         <section className="section server-error">
-          <h3 class="title is-3">Hey! Fix your darn Internet!</h3>
+          <h4 className="title is-4">Hey! Fix your darn Internet!</h4>
           <p>
             It was not possible to connect you to the server so
             some things might not work.
@@ -598,17 +598,21 @@ class App extends React.Component {
     if (this.state.newMessages.length) {
       newMessages = (
         <section className="section new-messages">
-          <p>You have <strong>{this.state.newMessages.length}</strong> messages.</p>
+          <h4 className="title is-4">
+            You have <strong>{this.state.newMessages.length}</strong> {
+              this.state.newMessages.length === 1 ? 'message' : 'messages'
+            }.
+          </h4>
           {
             this.state.newMessages.map((message, i) => {
               return (
-                <div key={'newmsg' + message.id}>
-                  <span>{message.name}</span>
+                <div key={'newmsg' + message.id} className="content">
+                  <h5 className="title is-5">From: {message.name}</h5>
                   <blockquote>{message.message}</blockquote>
                   <button
-                    className="button"
+                    className="button is-primary"
                     type="button"
-                    onClick={this.gotoGameOnMessage.bind(this, message)}>Go to</button>
+                    onClick={this.gotoGameOnMessage.bind(this, message)}>Go to game</button>
                 </div>
               )
             })
