@@ -629,7 +629,7 @@ class App extends React.Component {
     return (
         <div>
           <h1 className="title is-1 is-text-centered">Battleshits</h1>
-          <h2 className="title is-2 is-text-centered">You Will Never Shit in Peace</h2>
+          <h3 className="title is-3 is-text-centered">You Will Never Shit in Peace</h3>
 
           { newMessages }
 
@@ -1684,20 +1684,11 @@ class Game extends React.Component {
       )
     }
 
-    let playingAgainst = null
-    if (game.opponent.name) {
-      playingAgainst = (
-        <h2 className="title">Playing against <i>{game.opponent.name}</i></h2>
-      )
-    }
-
     return (
       <div>
         <button
           className="button is-primary is-fullwidth"
           onClick={this.props.onGameExit.bind(this)}>Exit game</button>
-
-        { playingAgainst }
 
         { statusHead }
         <Message message={this.state.message}/>
