@@ -1390,6 +1390,9 @@ class Game extends React.Component {
       [newCellstate, ship] = this._newCellState(index, game.opponent.ships, true)
       game.opponent.grid[index] = newCellstate
     }
+
+    let closeMessage = null
+
     if (newCellstate === 2) {
       let bombed
       let allBombed = false
@@ -1399,9 +1402,9 @@ class Game extends React.Component {
           this.setState({message: `
             ${game.opponent.name} sunk your battleshit (${ship.length})!
           `})
-          setTimeout(() => {
+          closeMessage = setTimeout(() => {
             this.setState({message: null})
-          }, 4000)
+          }, 5000)
         }
       } else {
         bombed = _isBombed(game.opponent.grid, ship)
@@ -1409,9 +1412,9 @@ class Game extends React.Component {
           this.setState({message: `
             I sunk your battleshit (${ship.length})!\nHa ha!`
           })
-          setTimeout(() => {
+          closeMessage = setTimeout(() => {
             this.setState({message: null})
-          }, 4000)
+          }, 5000)
           // setTimeout(() => {
           //   alert(`You sunk my battleshit you jerk!`)
           // }, 400)
@@ -1432,7 +1435,10 @@ class Game extends React.Component {
             game.opponent.winner = true
             Sounds.play('booing')
           } else {
-            this.setState({message: `You won!\nPooptastic!`})
+            if (closeMessage) {
+              clearTimeout(closeMessage)
+            }
+            this.setState({message: `Congratulations!\nYou are Lord of the Toilet!`})
             game.you.winner = true
             Sounds.play('flush')
           }
@@ -1466,7 +1472,7 @@ class Game extends React.Component {
       game._drops = 0
     }
 
-    if (this.state.sound) {
+    if (this.state.sound && !game.gameover) {
       // play a sound about the bomb attempt
       if (newCellstate === 3) {
         // toilet
@@ -1485,16 +1491,18 @@ class Game extends React.Component {
 
     setTimeout(() => {
       this.props.changeGame(game, save)
-      setTimeout(() => {
-        if (turnchange) {
-          nextElement.scrollIntoView({block: "end", behavior: "smooth"})
-        }
-        if (!game.yourturn && game.opponent.ai && !game.gameover) {
-          setTimeout(() => {
-            this.makeAIMove()
-          }, 800)
-        }
-      }, 800)
+      if (!game.gameover) {
+        setTimeout(() => {
+          if (turnchange) {
+            nextElement.scrollIntoView({block: "end", behavior: "smooth"})
+          }
+          if (!game.yourturn && game.opponent.ai && !game.gameover) {
+            setTimeout(() => {
+              this.makeAIMove()
+            }, 800)
+          }
+        }, 800)
+      }
     }, 400)
   }
 
