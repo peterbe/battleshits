@@ -59,3 +59,15 @@ class LogInCode(models.Model):
     code = models.CharField(max_length=100)
     used = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
+
+
+class Invitation(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL)
+    code = models.CharField(max_length=100)
+    users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='users'
+    )
+    rules = JSONField()
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
