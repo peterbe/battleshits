@@ -675,6 +675,7 @@ class Games extends React.Component {
     this.state = {
       askYourName: false,
       changeYourName: false,
+      changeYourEmail: false,
       startLogin: false,
       loginError: null,
     }
@@ -835,8 +836,40 @@ class Games extends React.Component {
     this.setState({changeYourName: false})
   }
 
+  cancelChangeYourEmail() {
+    this.setState({changeYourEmail: false})
+  }
+
   changeYourName() {
     this.setState({changeYourName: true})
+  }
+
+  changeYourEmail() {
+    this.setState({changeYourEmail: true})
+  }
+
+  onChangeYourEmail(e) {
+    e.preventDefault()
+    let email = this.refs.change_your_email.value.trim()
+    if (email.length) {
+      apiSet('/api/profile', {email: email})
+      .then((result) => {
+        if (result.error) {
+          alert(result.error)
+        } else {
+          sessionStorage.setItem('youremail', result.email)
+          this.setState({changeYourEmail: false})
+          apiSet('/api/mailme')
+          .then((result) => {
+            if (result.error) {
+              alert(result.error)
+            } else {
+              alert('Check your inbox')
+            }
+          })
+        }
+      })
+    }
   }
 
   startLogin() {
@@ -973,7 +1006,29 @@ class Games extends React.Component {
 
     let userDetails = null
     if (yourName) {
-      if (this.state.changeYourName) {
+      let yourEmail = sessionStorage.getItem('youremail') || null
+      if (this.state.changeYourEmail) {
+        userDetails = (
+          <section className="section">
+            <form onSubmit={this.onChangeYourEmail.bind(this)}>
+              <p className="control is-grouped">
+                <input
+                  type="email"
+                  className="input"
+                  name="change_your_email"
+                  ref="change_your_email"
+                  defaultValue={yourEmail || ''}
+                  placeholder={yourEmail || 'Your email...'}/>
+                <button className="button is-primary">Save</button>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={this.cancelChangeYourEmail.bind(this)}>Cancel</button>
+              </p>
+            </form>
+          </section>
+        )
+      } else if (this.state.changeYourName) {
         userDetails = (
           <section className="section">
             <form onSubmit={this.onChangeYourName.bind(this)}>
@@ -1008,6 +1063,11 @@ class Games extends React.Component {
               If you ever lose your phone; write down and remember your
               secret log in code: <code>{ this.props.loginCode }</code>.
             </p>
+            <button
+              className="button"
+              type="button" onClick={this.changeYourEmail.bind(this)}>
+              Email that to me
+            </button>
           </section>
         )
       }
@@ -1026,7 +1086,7 @@ class Games extends React.Component {
                     className="input"
                     name="code_or_email"
                     ref="code_or_email"
-                    placeholder="Name or Email"/>
+                    placeholder="Code or Email"/>
                   <button
                     type="submit"
                     className="button is-primary">Get back in!</button>

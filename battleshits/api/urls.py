@@ -35,6 +35,11 @@ urlpatterns = [
         name='profile'
     ),
     url(
+        r'^mailme$',
+        views.mailme,
+        name='mailme'
+    ),
+    url(
         r'^start$',
         views.start,
         name='start'

@@ -17,6 +17,9 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.conf import settings
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 
 from battleshits.base.models import Game, Message, Bomb, LogInCode
 
@@ -112,7 +115,7 @@ def login(request):
     assert request.method == 'POST', request.method
     data = json.loads(request.body)
     if data.get('code_or_email'):
-        code_or_email = data['code_or_email']
+        code_or_email = data['code_or_email'].strip()
         codes = LogInCode.objects.filter(
             code__iexact=code_or_email,
             used=False,
@@ -127,7 +130,24 @@ def login(request):
             return signedin(request)
 
         if '@' in code_or_email:
-            raise NotImplementedError(code_or_email)
+            if not valid_email(code_or_email):
+                return http.JsonResponse({
+                    'error': 'Email not valid'
+                })
+
+        if '@' in code_or_email:
+            users = get_user_model().objects.filter(
+                email__iexact=code_or_email
+            )
+            for user in users.order_by('-last_login'):
+                user.backend = settings.AUTHENTICATION_BACKENDS[0]
+                request.user = user
+                auth.login(request, user)
+                return signedin(request)
+
+            return http.JsonResponse({
+                'error': 'Code not recognized :('
+            })
 
         return http.JsonResponse({
             'error': 'Code not recognized :('
@@ -318,17 +338,81 @@ def game(request):
     })
 
 
+def valid_email(email):
+    try:
+        validate_email(email)
+        return True
+    except ValidationError:
+        return False
+
+
 @require_POST
 @xhr_login_required
 def profile(request):
     data = json.loads(request.body)
-    if data.get('name'):
+    if data.get('name', '').strip():
         request.user.first_name = data['name']
         request.user.save()
+    if data.get('email', '').strip():
+        email = data['email'].strip()
+        if valid_email(email):
+            request.user.email = email
+            request.user.save()
+        else:
+            return http.JsonResponse({
+                'error': 'Email not valid "{}"'.format(email)
+            })
+
     return http.JsonResponse({
         'first_name': request.user.first_name,
         'email': request.user.email,
         'username': request.user.username,
+    })
+
+
+@require_POST
+@xhr_login_required
+def mailme(request):
+    if not request.user.email:
+        return VerboseHttpResponseBadRequest('No email')
+
+    email = request.user.email
+    codes = LogInCode.objects.filter(
+        user=request.user,
+        used=False,
+    )
+    for logincode in codes:
+        break
+    else:
+        logincode = LogInCode.objects.create(
+            user=request.user,
+            code=random_letters(1) + random_numbers(4)
+        )
+    msg = """
+Hi {first_name},
+
+Next time you want to play Battleshits and for some reason you've forgotten
+your login; use this code: {code}
+
+--
+Battleshits
+https://btlsh.it
+    """.format(
+        first_name=request.user.first_name,
+        code=logincode.code,
+    )
+    if not send_mail(
+        'Welcome to Battleshits',
+        msg.strip(),
+        "Battlshits <{}>".format(settings.SERVER_EMAIL),
+        [email]
+    ):
+        return http.JsonResponse({
+            'error': 'Could not send email to "{}"'.format(email)
+        })
+
+    return http.JsonResponse({
+        'ok': True
     })
 
 
