@@ -162,7 +162,6 @@ def login(request):
     user.backend = settings.AUTHENTICATION_BACKENDS[0]
     request.user = user
     auth.login(request, user)
-    # data = json.loads(request.body)
     return signedin(request)
 
 
@@ -177,9 +176,6 @@ def csrfmiddlewaretoken(request):
 @xhr_login_required
 def save(request):
     data = json.loads(request.body)
-    # print "DATA"
-    # from pprint import pprint
-    # pprint(data)
     try:
         game = data['game']
         try:
