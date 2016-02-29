@@ -110,6 +110,7 @@ def signedin(request):
         }
     t = csrf(request)
     data['csrf_token'] = str(t['csrf_token'])
+    print request.session.get('invitations')
     if request.session.get('invitations'):
         user_ids = request.session['invitations']
         invitations = []
@@ -777,7 +778,7 @@ def sendinvitation(request):
             RequestSite(request).domain
         )
     )
-    url = absolute_base_url + '/i-{}'.format(invitation.code)
+    url = absolute_base_url + '/#i={}'.format(invitation.code)
     msg = """
 Hi!
 

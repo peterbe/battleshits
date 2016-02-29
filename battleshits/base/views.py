@@ -47,12 +47,3 @@ def postmarkwebhook(request):
         if value:
             print key.ljust(20), repr(value)
     return http.HttpResponse('OK')
-
-
-def invitation(request, code):
-    invitation = get_object_or_404(Invitation, code__iexact=code)
-    try:
-        request.session['invitations'].append(invitation.user.id)
-    except KeyError:
-        request.session['invitations'] = [invitation.user.id]
-    return redirect('/')

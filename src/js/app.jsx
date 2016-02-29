@@ -253,7 +253,6 @@ class App extends React.Component {
       serverError: false,
       newMessages: [],
       gridWidth: null,
-      startInvitation: false,
       pendingInvitations: [],
       // loginCode: null,
     }
@@ -527,14 +526,11 @@ class App extends React.Component {
       } else if (this.state.othersWaitingGames) {
         waitingForGames = (
           <section className="section others-waiting-for-games">
-            <p className="is-text-centered">
-              This is currently <strong>{
-                  this.state.othersWaitingGames === 1 ?
-                  '1 other' :
-                  `${this.state.othersWaitingGames} others`
-                }</strong> waiting to play against somebody.<br/>
+            <h5 className="title is-5 is-text-centered">
+              This is currently <strong>{ this.state.othersWaitingGames} other
+              player</strong> waiting to play against somebody.<br/>
               Go ahead! Start a new game!
-            </p>
+            </h5>
           </section>
         )
 
@@ -1136,6 +1132,15 @@ class Invite extends React.Component {
   componentDidMount() {
     this.setState({pendingInvitations: this.props.pendingInvitations})
 
+    let found = document.location.hash.match(/#i=([a-z][0-9]+)/i)
+    if (found) {  // i.e. no
+      let code = found[1]
+      this._findInvitation(code)
+      .then(() => {
+        document.location.hash = ''
+      })
+    }
+
     apiSet('/api/invite')
     .then((result) => {
       this.setState({invitationCode: result.code})
@@ -1169,39 +1174,43 @@ class Invite extends React.Component {
     }
   }
 
+  _findInvitation(code) {
+    return apiSet('/api/invitation', {code: code})
+    .then((result) => {
+      if (result.error) {
+        alert(result.error)
+        this.setState({sending: false})
+      } else {
+        this.refs.code.value = ''
+        var codes = this.state.pendingInvitations
+        // to avoid that dupes, check for repeats
+        let found = codes.filter((inv) => {
+          return inv.id === result.invitation.id
+        });
+        if (!found.length) {
+          codes.unshift(result.invitation)
+          setTimeout(() => {
+            alert(`Invitation from ${result.invitation.first_name} found!`)
+          }, 200)
+        } else {
+          alert("You already had this invitation.")
+        }
+        this.setState({sending: false, pendingInvitations: codes})
+      }
+    })
+    .catch((ex) => {
+      console.error(ex)
+      alert("Sorry couldn't find invitation(s).")
+      this.setState({sending: false})
+    })
+  }
+
   findInvitation(e) {
     e.preventDefault()
     var code = this.refs.code.value.trim()
     if (code.length) {
       this.setState({sending: true})
-      apiSet('/api/invitation', {code: code})
-      .then((result) => {
-        if (result.error) {
-          alert(result.error)
-          this.setState({sending: false})
-        } else {
-          this.refs.code.value = ''
-          var codes = this.state.pendingInvitations
-          // to avoid that dupes, check for repeats
-          let found = codes.filter((inv) => {
-            return inv.id === result.invitation.id
-          });
-          if (!found.length) {
-            codes.unshift(result.invitation)
-            setTimeout(() => {
-              alert(`Invitation from ${result.invitation.first_name} found!`)
-            }, 200)
-          } else {
-            alert("You already had this invitation.")
-          }
-          this.setState({sending: false, pendingInvitations: codes})
-        }
-      })
-      .catch((ex) => {
-        console.error(ex)
-        alert("Sorry couldn't find invitation(s).")
-        this.setState({sending: false})
-      })
+      return this._findInvitation(code)
     }
   }
 
@@ -1216,7 +1225,7 @@ class Invite extends React.Component {
             this.state.pendingInvitations.map((invite) => {
               let name
               if (invite.email && invite.first_name) {
-                name = `${invite.first_name} (${invite.emails})`
+                name = `${invite.first_name} (${invite.email})`
               } else if (invite.email) {
                 name = invite.email
               } else {
@@ -1233,13 +1242,6 @@ class Invite extends React.Component {
               )
             })
           }
-
-          <p className="is-text-centered" style={{marginTop: 20}}>
-            <button
-              type="button"
-              className="button"
-              onClick={this.props.cancelStartInvitation.bind(this)}>Close</button>
-          </p>
         </section>
       )
     }
@@ -1263,7 +1265,7 @@ class Invite extends React.Component {
     let yourForm = null
     if (this.state.invitationCode) {
       let absoluteURL = document.location.protocol + '//' + document.location.host
-      absoluteURL += '/i-' + this.state.invitationCode
+      absoluteURL += '/#i=' + this.state.invitationCode
 
       yourCode = (
         <section className="section">
@@ -1281,12 +1283,6 @@ class Invite extends React.Component {
             <code style={{fontSize: '1.2em'}}>
               <a href={absoluteURL}>{absoluteURL}</a>
             </code>
-          </p>
-          <p className="is-text-centered" style={{marginTop: 20}}>
-            <button
-              type="button"
-              className="button"
-              onClick={this.props.cancelStartInvitation.bind(this)}>Close</button>
           </p>
         </section>
       )
@@ -1327,8 +1323,20 @@ class Invite extends React.Component {
       </section>
     )
 
+    let closeSection = (
+      <section className="section">
+        <p className="is-text-centered">
+          <button
+            type="button"
+            className="button is-primary is-fullwidth"
+            onClick={this.props.cancelStartInvitation.bind(this)}>Close</button>
+        </p>
+      </section>
+    )
     return (
       <div>
+        { closeSection }
+
         { invitations }
 
         { findInvitation }
@@ -1336,6 +1344,8 @@ class Invite extends React.Component {
         { yourLink }
         { sent }
         { yourForm }
+
+        { closeSection }
 
       </div>
 
