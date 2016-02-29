@@ -20,8 +20,15 @@ from django.conf import settings
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.contrib.sites.requests import RequestSite
 
-from battleshits.base.models import Game, Message, Bomb, LogInCode
+from battleshits.base.models import (
+    Game,
+    Message,
+    Bomb,
+    LogInCode,
+    Invitation,
+)
 
 
 logger = logging.getLogger('battleshits.api')
@@ -103,6 +110,16 @@ def signedin(request):
         }
     t = csrf(request)
     data['csrf_token'] = str(t['csrf_token'])
+    if request.session.get('invitations'):
+        user_ids = request.session['invitations']
+        invitations = []
+        for user in get_user_model().objects.filter(id__in=user_ids):
+            invitations.append({
+                'id': user.id,
+                'first_name': user.first_name,
+                'email': user.email,
+            })
+        data['invitations'] = invitations
     return http.JsonResponse(data)
 
 
@@ -441,9 +458,29 @@ def start(request):
     if not request.user.first_name:
         return VerboseHttpResponseBadRequest("you haven't set your name yet")
 
+    invite = data.get('invite')
+
     game = data['game']
     if game['you']['designmode']:
         return VerboseHttpResponseBadRequest("you haven't designed it yet")
+
+    # If the game already has an opponent, and an id, use that, we should
+    # be good to go.
+    if game.get('id') and game['opponent']['name']:
+        game_obj = Game.objects.get(id=game['id'])
+        # print game_obj.player1.first_name
+        # print game_obj.player2.first_name
+
+        # from pprint import pprint
+        assert not game['you']['designmode']
+        assert not game['opponent']['designmode']
+        # print game['you']['name']
+        # print game['opponent']['name']
+        # game = invert_state(game)
+        game_obj.state = invert_state(game)
+        game_obj.save()
+        # pprint(game)
+        return http.JsonResponse({'game': invert_state(game_obj.state)})
 
     # find any started games that don't have a player2
     games = Game.objects.filter(
@@ -469,6 +506,10 @@ def start(request):
 
     if my_ongoing_opponents:
         games = games.exclude(player1_id__in=my_ongoing_opponents)
+
+    if invite:
+        games = games.filter(player1__id=invite['id'])
+
     for other in games:
         # all saved games should be designed
         assert not other.state['you']['designmode'], 'not designed'
@@ -499,6 +540,10 @@ def start(request):
         ai=False,
         abandoned=False,
     )
+
+    if invite:
+        games = games.filter(player2__id=invite['id'])
+
     for game_obj in games:
         if game_obj.state['rules'] == game['rules']:
             print "Found one with the same rules"
@@ -509,6 +554,10 @@ def start(request):
         player1=request.user,
         state=game,
     )
+    if invite:
+        game_obj.player2 = get_user_model().objects.get(id=invite['id'])
+        game_obj.turn = game_obj.player2
+        game_obj.state['opponent']['name'] = game_obj.player2.first_name
     game_obj.state['id'] = game_obj.id
     game_obj.save()
     return http.JsonResponse({'id': game_obj.id})
@@ -656,4 +705,105 @@ def messages(request):
         items.append(item)
     return http.JsonResponse({
         'messages': items,
+    })
+
+
+@require_POST
+@xhr_login_required
+def invite(request):
+    invitation = None
+    for each in Invitation.objects.filter(user=request.user):
+        invitation = each
+    if invitation is None:
+        invitation = Invitation.objects.create(
+            user=request.user,
+            code=random_letters(1) + random_numbers(5),
+        )
+    return http.JsonResponse({
+        'code': invitation.code,
+    })
+
+@require_POST
+@xhr_login_required
+def invitation(request):
+    data = json.loads(request.body)
+    code = data['code']
+    invitations = Invitation.objects.filter(code__iexact=code)
+    if not invitations.exists():
+        return http.JsonResponse({
+            'error': 'Code not find invitation "{}"'.format(
+                code
+            ),
+        })
+
+    for invitation in invitations:
+        user_ids = request.session.get('invitations', [])
+        if invitation.user.id not in user_ids:
+            user_ids.append(invitation.user.id)
+            request.session['invitations'] = user_ids
+        return http.JsonResponse({
+            'invitation': {
+                'email': invitation.user.email,
+                'first_name': invitation.user.first_name,
+                'id': invitation.user.id,
+            }
+        })
+
+
+@require_POST
+@xhr_login_required
+def sendinvitation(request):
+    data = json.loads(request.body)
+    email = data['email']
+    if not valid_email(email):
+        return http.JsonResponse({
+            'error': 'Not a valid email addresses."{}"'.format(
+                email
+            ),
+        })
+
+    invitation = None
+    for each in Invitation.objects.filter(user=request.user):
+        invitation = each
+    if invitation is None:
+        invitation = Invitation.objects.create(
+            user=request.user,
+            code=random_letters(1) + random_numbers(5),
+        )
+
+    absolute_base_url = (
+        '%s://%s' % (
+            request.is_secure() and 'https' or 'http',
+            RequestSite(request).domain
+        )
+    )
+    url = absolute_base_url + '/i-{}'.format(invitation.code)
+    msg = """
+Hi!
+
+To play a game of Battleshits against {first_name} you need this code:
+
+{code}
+
+Or if you're on your phone, just go to this linke:
+
+{url}
+
+--
+Battleshits
+https://btlsh.it
+    """.format(
+        first_name=request.user.first_name,
+        code=invitation.code,
+        url=url,
+    )
+    send_mail(
+        'Play Battlshits against {}'.format(request.user.first_name),
+        msg,
+        "Battlshits <{}>".format(settings.SERVER_EMAIL),
+        [email]
+    )
+
+    return http.JsonResponse({
+        'email': email,
     })

@@ -3,13 +3,14 @@ import json
 import logging
 from pprint import pprint
 
+from django.shortcuts import redirect, get_object_or_404
 from django import http
 from django.views.defaults import page_not_found
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
-from .models import Game
+from .models import Game, Invitation
 
 
 logger = logging.getLogger('battleshits.base')
@@ -46,3 +47,12 @@ def postmarkwebhook(request):
         if value:
             print key.ljust(20), repr(value)
     return http.HttpResponse('OK')
+
+
+def invitation(request, code):
+    invitation = get_object_or_404(Invitation, code__iexact=code)
+    try:
+        request.session['invitations'].append(invitation.user.id)
+    except KeyError:
+        request.session['invitations'] = [invitation.user.id]
+    return redirect('/')

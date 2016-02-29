@@ -40,6 +40,21 @@ urlpatterns = [
         name='mailme'
     ),
     url(
+        r'^invite$',
+        views.invite,
+        name='invite'
+    ),
+    url(
+        r'^invitation$',
+        views.invitation,
+        name='invitation'
+    ),
+    url(
+        r'^sendinvitation$',
+        views.sendinvitation,
+        name='sendinvitation'
+    ),
+    url(
         r'^start$',
         views.start,
         name='start'

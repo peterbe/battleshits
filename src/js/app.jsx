@@ -244,7 +244,7 @@ class App extends React.Component {
     super(props)
     this.state = {
       game: null,
-      // loadedGames: {},
+      invite: null,
       games: [],
       stats: {},
       synced: -1,
@@ -253,45 +253,29 @@ class App extends React.Component {
       serverError: false,
       newMessages: [],
       gridWidth: null,
+      startInvitation: false,
+      pendingInvitations: [],
       // loginCode: null,
     }
   }
 
 
   updateDimensions() {
-    // console.log('Running updateDimensions() in App component')
     if ($('.grid tr').length && $('.grid tr').width()) {
-      // console.log('NEW WIDTH', $('.grid tr').width())
       this.setState({gridWidth: $('.grid tr').width()})
     }
   }
 
   componentDidMount() {
-    // console.log('App component did mount');
     window.addEventListener("resize", this.updateDimensions.bind(this))
   }
 
-  // componentWillUnmount() {
-  //   console.log('App component will unmount');
-  //   window.removeEventListener("resize", this.updateDimensions.bind(this))
-  // }
-
-
-  // componentDidMount() {
-  //   setTimeout(() => {
-  //     // XXX replace this with service worker or manifest or something
-  //     Sounds.preLoadSounds()
-  //   }, 1000)
-  //
-  // }
-  onGameSelect(game) {
-    // let loadedGames = this.state.loadedGames
-    // if (game) {
-    //   loadedGames[game.id] = 1 + (loadedGames[game.id] || 0)
-    // }
-    // XXX perhaps set a sessionStorage so that it continues this game
-    // if you refresh the page
-    this.setState({game: game})
+  onGameSelect(game, invite = null) {
+    if (invite) {
+      this.setState({game: game, invite: invite})
+    } else {
+      this.setState({game: game})
+    }
 
     // Not sure if this is needed
     // if (game.id && game.id > 0) {
@@ -304,7 +288,7 @@ class App extends React.Component {
   }
 
   onGameExit() {
-    this.setState({game: null})
+    this.setState({game: null, invite: null})
     this.loadGames()
   }
 
@@ -351,31 +335,11 @@ class App extends React.Component {
     }
   }
 
-  // setupSocket(username) {
-  //   // console.log('SUBSCRIBED /'+username)
-  //   FANOUT_CLIENT.subscribe('/' + username, (data) => {
-  //     console.log('INCOMING ON', username, data)
-  //     if (data.game) {
-  //       if (this.state.game === null) {
-  //         this.setState({game: data.game})
-  //       } else if (data.game.id === this.state.game.id) {
-  //         this.setState({game: data.game})
-  //         // console.log('Turn?', data.game.yourturn)
-  //         if (data.game.yourturn) {
-  //           setTimeout(() => {
-  //             getOneElement('#opponents').scrollIntoView()
-  //           }, 1000)
-  //         }
-  //       } else {
-  //         console.warn('Socket updated a game which is not the one being played', data.game.id)
-  //       }
-  //     }
-  //   })
-  // }
   setupSocket(username) {
-    // console.log('SUBSCRIBED /'+username)
     FANOUT_CLIENT.subscribe('/' + username, (data) => {
-      console.log('GENERAL INCOMING ON', username, data)
+      if (__DEV__) {
+        console.log('GENERAL INCOMING ON', username, data)
+      }
       if (data.game) {
         if (this.state.game === null) {
           // were you waiting for this game?!
@@ -388,7 +352,6 @@ class App extends React.Component {
 
         } else if (data.game.id === this.state.game.id) {
           this.setState({game: data.game})
-          // console.log('Turn?', data.game.yourturn)
           if (data.game.yourturn) {
             setTimeout(() => {
               getOneElement('#opponents').scrollIntoView()
@@ -398,19 +361,13 @@ class App extends React.Component {
           console.warn('Socket updated a game which is not the one being played', data.game.id)
         }
       } else if (data.message) {
-        // console.log('REALLY should do something about there being a new message coming in', data.message);
         Sounds.play('alert')
         if (this.state.game && this.state.game.id && this.state.game.id === data.message.game_id) {
-          // console.log('Currently playing the game')
         } else {
-          // Sounds.play('alert')
           let newMessages = this.state.newMessages
           newMessages.push(data.message)
           this.setState({newMessages: newMessages})
         }
-        // let newMessages = this.state.newMessages
-        // newMessages.push(data.message)
-        // this.setState({newMessages: newMessages})
       }
     })
   }
@@ -428,6 +385,9 @@ class App extends React.Component {
           sessionStorage.setItem('yourname', result.first_name)
         } else if (sessionStorage.getItem('yourname')) {
           this.syncSavedNamed(sessionStorage.getItem('yourname'))
+        }
+        if (result.invitations) {
+          this.setState({pendingInvitations: result.invitations})
         }
         this.loadGames()
         try {
@@ -645,6 +605,7 @@ class App extends React.Component {
             this.state.game ?
             <Game
               game={this.state.game}
+              invite={this.state.invite}
               gridWidth={this.state.gridWidth}
               newGame={newGame}
               onGameExit={this.onGameExit.bind(this)}
@@ -657,6 +618,7 @@ class App extends React.Component {
               stats={this.state.stats}
               loginCode={loginCode}
               reload={this.reload.bind(this)}
+              pendingInvitations={this.state.pendingInvitations}
               onWaitingGame={this.onWaitingGame.bind(this)}
               onGamesChange={this.onGamesChange.bind(this)}
               onGameSelect={this.onGameSelect.bind(this)}/>
@@ -678,6 +640,8 @@ class Games extends React.Component {
       changeYourEmail: false,
       startLogin: false,
       loginError: null,
+      startInvite: null,  // XXX still used?
+      startInvitation: false,
     }
   }
 
@@ -689,7 +653,7 @@ class Games extends React.Component {
       // if you're not going to play against the computer we need your name
       let yourName = sessionStorage.getItem('yourname') || null
       if (!yourName) {
-        this.setState({askYourName: true})
+        this.setState({askYourName: true, startInvitation: false})
         return
       }
     }
@@ -763,26 +727,16 @@ class Games extends React.Component {
       this.props.onWaitingGame(null, true)  // clears the list
       // We can't inform the server to start the game until we have
       // designed it.
-      // let games = this.props.games
-      // games.push(game)
-      // this.props.onGamesChange(games)
-      this.props.onGameSelect(game)
+      this.props.onGameSelect(game, this.state.startInvite)
 
-      // apiSet('/api/start', {game: game})
-      // .then((result) => {
-      //   // This should return a game. Either it was the one you
-      //   // started or a similar one, with the same rules, that someone
-      //   // else started.
-      //   if (result.id) {
-      //     // A new game was created, with the rules you chose.
-      //     this.props.onWaitingGame(result.id)
-      //   } else if (result.game) {
-      //     console.log('MATCHED GAME', result.game)
-      //     this.props.onGameSelect(result.game)
-      //     // this.props.onGamesChange(games)
-      //   }
-      // })
     }
+  }
+
+  startInvitation() {
+    this.setState({startInvitation: true})
+  }
+  cancelStartInvitation() {
+    this.setState({startInvitation: false})
   }
 
   cancelAskYourName() {
@@ -797,7 +751,7 @@ class Games extends React.Component {
       .then((result) => {
         sessionStorage.setItem('yourname', result.first_name)
         this.setState({askYourName: false})
-        this.startRandomGame(false)
+        this.startRandomGame(false, this.state.startInvite)
       })
     }
   }
@@ -880,8 +834,25 @@ class Games extends React.Component {
     this.setState({startLogin: false})
   }
 
-  render() {
+  sendInvitation(email) {
+    return apiSet('/api/sendinvitation', {email: email})
+  }
 
+  startInvitationGame(invite) {
+    this.setState({startInvite: invite})
+    this.startRandomGame(false)  // not really true to its name
+  }
+
+  render() {
+    if (this.state.startInvitation) {
+      return <Invite
+        pendingInvitations={this.props.pendingInvitations}
+        cancelStartInvitation={this.cancelStartInvitation.bind(this)}
+        invitationCode={this.state.invitationCode}
+        startInvitationGame={this.startInvitationGame.bind(this)}
+        sendInvitation={this.sendInvitation.bind(this)}
+        />
+    }
     // let ongoingGames = null
     let ongoingGamesYourTurn = null
     let ongoingGamesTheirTurn = null
@@ -949,8 +920,22 @@ class Games extends React.Component {
       </form>
     )
 
+    let playAgainst = 'Play against a friend'
+    if (this.props.pendingInvitations.length) {
+      if (this.props.pendingInvitations.length === 1) {
+        playAgainst += ' (1 invitation!)'
+      } else {
+        playAgainst += ' (' + this.props.pendingInvitations.length + ' invitations!)'
+      }
+    }
     let startButtons = (
       <div>
+        <p className="one-button">
+          <button
+            className="button is-primary is-fullwidth"
+            onClick={this.startInvitation.bind(this, false)}
+            >{ playAgainst }</button>
+        </p>
         <p className="one-button">
           <button
             className="button is-primary is-fullwidth"
@@ -1136,6 +1121,228 @@ class Games extends React.Component {
   }
 }
 
+class Invite extends React.Component {
+
+  constructor(props) {
+    super(props)
+    this.state = {
+      sending: false,
+      sent: null,
+      invitationCode: null,
+      pendingInvitations: [],
+    }
+  }
+
+  componentDidMount() {
+    this.setState({pendingInvitations: this.props.pendingInvitations})
+
+    apiSet('/api/invite')
+    .then((result) => {
+      this.setState({invitationCode: result.code})
+    })
+    .catch((ex) => {
+      console.error(ex)
+      alert('Could not create an invitation code at the moment.\nTry again later.')
+    })
+  }
+
+  sendInvitation(e) {
+    e.preventDefault()
+    var email = this.refs.email.value.trim()
+    if (email.length) {
+      this.setState({sending: true})
+      this.props.sendInvitation(email)
+      .then((result) => {
+        if (result.error) {
+          alert(result.error)
+          this.setState({sending: false})
+        } else {
+          this.refs.email.value = ''
+          this.setState({sending: false, sent: result.email})
+        }
+      })
+      .catch((ex) => {
+        console.error(ex)
+        alert("Sorry couldn't send invitation(s).")
+        this.setState({sending: false})
+      })
+    }
+  }
+
+  findInvitation(e) {
+    e.preventDefault()
+    var code = this.refs.code.value.trim()
+    if (code.length) {
+      this.setState({sending: true})
+      apiSet('/api/invitation', {code: code})
+      .then((result) => {
+        if (result.error) {
+          alert(result.error)
+          this.setState({sending: false})
+        } else {
+          this.refs.code.value = ''
+          var codes = this.state.pendingInvitations
+          // to avoid that dupes, check for repeats
+          let found = codes.filter((inv) => {
+            return inv.id === result.invitation.id
+          });
+          if (!found.length) {
+            codes.unshift(result.invitation)
+            setTimeout(() => {
+              alert(`Invitation from ${result.invitation.first_name} found!`)
+            }, 200)
+          } else {
+            alert("You already had this invitation.")
+          }
+          this.setState({sending: false, pendingInvitations: codes})
+        }
+      })
+      .catch((ex) => {
+        console.error(ex)
+        alert("Sorry couldn't find invitation(s).")
+        this.setState({sending: false})
+      })
+    }
+  }
+
+  render() {
+
+    let invitations = null
+    if (this.state.pendingInvitations.length) {
+      invitations = (
+        <section className="section">
+          <h4 className="title is-4">Invitations from friends</h4>
+          {
+            this.state.pendingInvitations.map((invite) => {
+              let name
+              if (invite.email && invite.first_name) {
+                name = `${invite.first_name} (${invite.emails})`
+              } else if (invite.email) {
+                name = invite.email
+              } else {
+                name = invite.first_name
+              }
+              return (
+                <p className="one-button" key={'invitationstart' + invite.id}>
+                  <button
+                    type="button"
+                    className="button is-primary is-fullwidth"
+                    onClick={this.props.startInvitationGame.bind(this, invite)}
+                    >{ name }</button>
+                </p>
+              )
+            })
+          }
+
+          <p className="is-text-centered" style={{marginTop: 20}}>
+            <button
+              type="button"
+              className="button"
+              onClick={this.props.cancelStartInvitation.bind(this)}>Close</button>
+          </p>
+        </section>
+      )
+    }
+
+
+
+    let sent = null
+    if (this.state.sent) {
+      sent = (
+        <section className="section">
+          <h4 className="title is-4">Invitation sent</h4>
+          <p>
+            Invitation sent to <strong>{this.state.sent}</strong>.
+          </p>
+        </section>
+      )
+    }
+
+    let yourCode = null
+    let yourLink = null
+    let yourForm = null
+    if (this.state.invitationCode) {
+      let absoluteURL = document.location.protocol + '//' + document.location.host
+      absoluteURL += '/i-' + this.state.invitationCode
+
+      yourCode = (
+        <section className="section">
+          <h4 className="title is-4">Your invitation code</h4>
+          <p className="is-text-centered">
+            <code style={{fontSize: '2em'}}>{this.state.invitationCode}</code>
+          </p>
+        </section>
+      )
+
+      yourLink = (
+        <section className="section">
+          <h4 className="title is-4">Or give them this link</h4>
+          <p className="is-text-centered">
+            <code style={{fontSize: '1.2em'}}>
+              <a href={absoluteURL}>{absoluteURL}</a>
+            </code>
+          </p>
+          <p className="is-text-centered" style={{marginTop: 20}}>
+            <button
+              type="button"
+              className="button"
+              onClick={this.props.cancelStartInvitation.bind(this)}>Close</button>
+          </p>
+        </section>
+      )
+
+      yourForm = (
+        <section className="section">
+          <h4 className="title is-4">Email that to a friend</h4>
+          <form onSubmit={this.sendInvitation.bind(this)}>
+            <p className="control is-grouped">
+              <input
+                type="email"
+                className="input"
+                name="email"
+                ref="email"
+                placeholder="friend@email.com..."/>
+              <button className={this.state.sending ? 'button is-primary is-loading' : 'button is-primary'}>Send</button>
+            </p>
+          </form>
+        </section>
+      )
+
+    }
+
+    let findInvitation = (
+      <section className="section">
+        <h4 className="title is-4">Do you have an invitation code?</h4>
+        <form onSubmit={this.findInvitation.bind(this)}>
+          <p className="control is-grouped">
+            <input
+              type="text"
+              className="input"
+              name="code"
+              ref="code"
+              placeholder="Invitation code..."/>
+            <button className={this.state.sending ? 'button is-primary is-loading' : 'button is-primary'}>Find</button>
+          </p>
+        </form>
+      </section>
+    )
+
+    return (
+      <div>
+        { invitations }
+
+        { findInvitation }
+        { yourCode }
+        { yourLink }
+        { sent }
+        { yourForm }
+
+      </div>
+
+    )
+  }
+}
+
 class ListOngoingGames extends React.Component {
   render() {
     return (
@@ -1152,7 +1359,7 @@ class ListOngoingGames extends React.Component {
             <p className="one-button" key={game.id}>
               <button
                 className="button is-primary is-fullwidth"
-                onClick={this.props.onGameSelect.bind(this, game)}>
+                onClick={this.props.onGameSelect.bind(this, game, null)}>
                 {
                   game.yourturn ?
                   `Your turn against ${game.opponent.name}` :
@@ -1184,14 +1391,12 @@ class Game extends React.Component {
   }
 
   setupSocket(game, username) {
-    // console.log('SUBSCRIBED /'+username)
     let channel = '/game-' + game.id + '-' + username
-    console.log('Create subscription on:', channel)
+    if (__DEV__) {
+      console.log('Create subscription on:', channel)
+    }
     let subscription = FANOUT_CLIENT.subscribe(channel, (data) => {
-      // console.log('INCOMING GAME ON', channel, data)
-      // console.log('INDEX', data.index, 'YOURS', data.yours)
       if (data.message) {
-        // console.log('New incoming message!', data.message);
         let messages = this.state.messages
         messages.push(data.message)
         this.setState({messages: messages})
@@ -1200,28 +1405,15 @@ class Game extends React.Component {
       } else {
         this.bombSlot(data.index, data.yours, false, data.cell)
       }
-      // if (data.game) {
-      //   if (this.state.game === null) {
-      //     this.setState({game: data.game})
-      //   } else if (data.game.id === this.state.game.id) {
-      //     this.setState({game: data.game})
-      //     // console.log('Turn?', data.game.yourturn)
-      //     if (data.game.yourturn) {
-      //       setTimeout(() => {
-      //         getOneElement('#opponents').scrollIntoView()
-      //       }, 1000)
-      //     }
-      //   } else {
-      //     console.warn('Socket updated a game which is not the one being played', data.game.id)
-      //   }
-      // }
     })
     this.setState({subscription: subscription})
   }
 
   componentWillUnmount() {
     if (this.state.subscription) {
-      console.log('Cancel subscription on', this.state.subscription)
+      if (__DEV__) {
+        console.log('Cancel subscription on', this.state.subscription)
+      }
       this.state.subscription.cancel()
     }
   }
@@ -1358,7 +1550,7 @@ class Game extends React.Component {
         }, 1000)
       } else {
         this.props.changeGame(null, false)
-        apiSet('/api/start', {game: game})
+        apiSet('/api/start', {game: game, invite: this.props.invite})
         .then((result) => {
           if (result.id) {
             // no match, but a reference to your created game
@@ -1611,7 +1803,25 @@ class Game extends React.Component {
     let yourHeader = null
     let drops = game.rules.drops
     let _drops = game._drops
+    let inviteHeader = null
+
     if (game.you.designmode) {
+
+      if (this.props.invite) {
+        let name = this.props.invite.first_name
+        if (this.props.invite.email) {
+          name += ` (${this.props.invite.email})`
+        }
+        inviteHeader = (
+          <h4 className="title is-4">On invitation with <strong>{ name }</strong></h4>
+        )
+      }
+
+      if (game.opponent.name && !game.opponent.designmode) {
+        inviteHeader = (
+          <h4 className="title is-4">On invitation by <strong>{ game.opponent.name }</strong></h4>
+        )
+      }
       yourHeader = "Design where to put your shits"
     } else {
       yourHeader = "Your grid"
@@ -1705,6 +1915,7 @@ class Game extends React.Component {
     // { !game.you.designmode ? <h4>{yourHeader}</h4> : null}
     let yours = (
       <div id="yours">
+        { inviteHeader }
         <h5 className="title is-5 grid-header">{ yourHeader }</h5>
         <Grid
           grid={game.you.grid}
