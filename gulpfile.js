@@ -11,7 +11,6 @@ gulp.task('buildHtml', function() {
     jsSelector: 'pleasedontminifyscripts'
   }))
   .pipe(htmlreplace({
-        'trackjs': fs.readFileSync('src/snippets/trackjs.html', 'utf8'),
         'rollbar': fs.readFileSync('src/snippets/rollbar.html', 'utf8'),
     }))
   .pipe(gulp.dest('dist/'));
