@@ -1859,16 +1859,16 @@ class Game extends React.Component {
 
     let statusHead
     if (game.gameover) {
-      statusHead = <h3 className="title">Status: Game Over</h3>
+      statusHead = <h4 className="title is-4">Status: Game Over</h4>
     } else if (game.you.designmode) {
-      statusHead = null //<h3>Status: Place your shitty ships!</h3>
+      statusHead = null //<h4>Status: Place your shitty ships!</h4>
     } else if (game.opponent.designmode) {
-      statusHead = <h3 className="title">Status: {game.opponent.name + '\u0027'}s placing ships</h3>
+      statusHead = <h4 className="title is-4">Status: {game.opponent.name + '\u0027'}s placing ships</h4>
     } else {
       if (game.yourturn) {
-        statusHead = <h3 className="title">Status: Your turn</h3>
+        statusHead = <h4 className="title is-4">Status: Your turn</h4>
       } else {
-        statusHead = <h3 className="title">Status: {game.opponent.name + '\u0027'}s turn</h3>
+        statusHead = <h4 className="title is-4">Status: {game.opponent.name + '\u0027'}s turn</h4>
       }
     }
 
