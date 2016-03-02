@@ -511,11 +511,10 @@ class App extends React.Component {
       if (this.state.waitingGames.length) {
         waitingForGames = (
           <section className="section waiting-for-games">
-            <p className="is-text-centered">
-              <img src="/static/images/radar.gif"/>
-              <br/>
+            <Radar/>
+            <h5 className="title is-5 is-text-centered">
               Waiting for someone to play with
-            </p>
+            </h5>
             {
               this.state.waitingGames.length > 1 ?
               <p className="is-text-centered">{this.state.waitingGames} games started</p> :
@@ -625,6 +624,23 @@ class App extends React.Component {
         </div>
     )
   }
+}
+
+const Radar = () => {
+  return (
+    <div id="radar">
+      <div className="beacon beacon-100"></div>
+      <div className="beacon beacon-75"></div>
+      <div className="beacon beacon-50"></div>
+      <div className="beacon beacon-25"></div>
+      <div className="circle circle-big"></div>
+      <div className="circle circle-medium"></div>
+      <div className="circle circle-small"></div>
+      <div className="circle dot"></div>
+      <div className="vertical"></div>
+      <div className="horizontal"></div>
+    </div>
+  )
 }
 
 class Games extends React.Component {
