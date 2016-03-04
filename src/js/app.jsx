@@ -270,20 +270,22 @@ class App extends React.Component {
   }
 
   onGameSelect(game, invite = null) {
-    if (invite) {
-      this.setState({game: game, invite: invite})
+    if (game.id && game.id > 0) {
+      apiGet('/api/game?id=' + game.id)
+      .then((result) => {
+        if (invite) {
+          this.setState({game: result.game, invite: invite})
+        } else {
+          this.setState({game: result.game})
+        }
+      })
     } else {
-      this.setState({game: game})
+      if (invite) {
+        this.setState({game: game, invite: invite})
+      } else {
+        this.setState({game: game})
+      }
     }
-
-    // Not sure if this is needed
-    // if (game.id && game.id > 0) {
-    //   apiGet('/api/game?id=' + game.id)
-    //   .then((result) => {
-    //     console.log('COMPARE', result.game, game)
-    //   })
-    // }
-
   }
 
   onGameExit() {
@@ -1165,6 +1167,10 @@ class Invite extends React.Component {
       console.error(ex)
       alert('Could not create an invitation code at the moment.\nTry again later.')
     })
+    apiSet('/api/invitations')
+    .then((result) => {
+      console.log('INVITATIONS', result);
+    })
   }
 
   sendInvitation(e) {
@@ -1370,6 +1376,20 @@ class Invite extends React.Component {
 }
 
 class ListOngoingGames extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      loadingGames: {},
+    }
+  }
+
+  onClickGame(game) {
+    let loadingGames = this.state.loadingGames
+    loadingGames[game.id] = true
+    this.setState({loadingGames: loadingGames})
+    this.props.onGameSelect(game, null)
+  }
+
   render() {
     return (
       <div>
@@ -1381,11 +1401,15 @@ class ListOngoingGames extends React.Component {
           bombsDropped += game.opponent.grid.filter(cell => {
             return cell > 0
           }).length
+          let className = 'button is-primary is-fullwidth'
+          if (this.state.loadingGames[game.id]) {
+            className += ' is-loading is-disabled'
+          }
           return (
             <p className="one-button" key={game.id}>
               <button
-                className="button is-primary is-fullwidth"
-                onClick={this.props.onGameSelect.bind(this, game, null)}>
+                className={className}
+                onClick={this.onClickGame.bind(this, game)}>
                 {
                   game.yourturn ?
                   `Your turn against ${game.opponent.name}` :
