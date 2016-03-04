@@ -254,7 +254,6 @@ class App extends React.Component {
       newMessages: [],
       gridWidth: null,
       pendingInvitations: [],
-      // loginCode: null,
     }
   }
 
@@ -323,6 +322,7 @@ class App extends React.Component {
   }
 
   gotoGameOnMessage(message) {
+
     let newMessages = this.state.newMessages
     // the ones to keep
     newMessages = newMessages.filter((newMessage) => {
@@ -331,7 +331,7 @@ class App extends React.Component {
     this.setState({newMessages: newMessages})
     for (let game of this.state.games) {
       if (game.id === message.game_id) {
-        return this.changeGame(game, false)
+        return this.onGameSelect(game, null)
       }
     }
   }
@@ -364,6 +364,7 @@ class App extends React.Component {
       } else if (data.message) {
         Sounds.play('alert')
         if (this.state.game && this.state.game.id && this.state.game.id === data.message.game_id) {
+
         } else {
           let newMessages = this.state.newMessages
           newMessages.push(data.message)
@@ -438,7 +439,6 @@ class App extends React.Component {
   loadGames() {
     apiGet('/api/games?minimum=true')
     .then((result) => {
-      // if (!this) throw new Error('no this?!')
       this.setState({
         games: result.games,
       })
@@ -562,12 +562,13 @@ class App extends React.Component {
           </h4>
           {
             this.state.newMessages.map((message, i) => {
+              let buttonClassName = 'button is-primary'
               return (
                 <div key={'newmsg' + message.id} className="content">
                   <h5 className="title is-5">From: {message.name}</h5>
                   <blockquote>{message.message}</blockquote>
                   <button
-                    className="button is-primary"
+                    className={buttonClassName}
                     type="button"
                     onClick={this.gotoGameOnMessage.bind(this, message)}>Go to game</button>
                 </div>
@@ -1406,12 +1407,7 @@ class ListOngoingGames extends React.Component {
       <div>
       {
         this.props.games.map((game) => {
-          let bombsDropped = game.you.grid.filter(cell => {
-            return cell > 0
-          }).length
-          bombsDropped += game.opponent.grid.filter(cell => {
-            return cell > 0
-          }).length
+          let bombsDropped = game._bombs_dropped
           let className = 'button is-primary is-fullwidth'
           if (this.state.loadingGames[game.id]) {
             className += ' is-loading is-disabled'
@@ -1457,6 +1453,9 @@ class Game extends React.Component {
       console.log('Create subscription on:', channel)
     }
     let subscription = FANOUT_CLIENT.subscribe(channel, (data) => {
+      if (__DEV__) {
+        console.log('Game Socket Message:', data)
+      }
       if (data.message) {
         let messages = this.state.messages
         messages.push(data.message)
@@ -1477,9 +1476,14 @@ class Game extends React.Component {
       }
       this.state.subscription.cancel()
     }
+    if (this.closeMessage) {
+      clearTimeout(this.closeMessage)
+    }
   }
 
   componentDidMount() {
+    this.closeMessage = null
+
     // The game component has been mounted. Perhaps the game was between
     // a human and the computer and it's the computer's turn.
     let game = this.props.game
@@ -1704,7 +1708,7 @@ class Game extends React.Component {
       game.opponent.grid[index] = newCellstate
     }
 
-    let closeMessage = null
+    // let closeMessage = null
 
     if (newCellstate === 2) {
       let bombed
@@ -1715,7 +1719,7 @@ class Game extends React.Component {
           this.setState({message: `
             ${game.opponent.name} sunk your battleshit (${ship.length})!
           `})
-          closeMessage = setTimeout(() => {
+          this.closeMessage = setTimeout(() => {
             this.setState({message: null})
           }, 5000)
         }
@@ -1725,7 +1729,7 @@ class Game extends React.Component {
           this.setState({message: `
             I sunk your battleshit (${ship.length})!\nHa ha!`
           })
-          closeMessage = setTimeout(() => {
+          this.closeMessage = setTimeout(() => {
             this.setState({message: null})
           }, 5000)
           // setTimeout(() => {
@@ -1748,8 +1752,8 @@ class Game extends React.Component {
             game.opponent.winner = true
             Sounds.play('booing')
           } else {
-            if (closeMessage) {
-              clearTimeout(closeMessage)
+            if (this.closeMessage) {
+              clearTimeout(this.closeMessage)
             }
             this.setState({message: `Congratulations!\nYou are Lord of the Toilet!`})
             game.you.winner = true

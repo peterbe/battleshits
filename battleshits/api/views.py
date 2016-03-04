@@ -291,13 +291,30 @@ def list_games(request):
         games = games.filter(turn=request.user)
     states = []
     waiting = []
+
+    def simplify_state(st):
+        # Return a much simplified state that only has the bare minimum
+        # needed to list the games on the home page.
+        new_st = {
+            'id': st['id'],
+            'yourturn': st['yourturn'],
+            'opponent': {
+                'name': st['opponent']['name'],
+            }
+        }
+        new_st['_bombs_dropped'] = (
+            sum(1 for cell in st['opponent']['grid'] if cell > 0) +
+            sum(1 for cell in st['you']['grid'] if cell > 0)
+        )
+        return new_st
+
     for game in games:
         if not game.player2 and not game.ai:
             waiting.append(game.id)
         elif game.player2 == request.user:
-            states.append(invert_state(game.state))
+            states.append(simplify_state(invert_state(game.state)))
         else:
-            states.append(game.state)
+            states.append(simplify_state(game.state))
 
     if minimum:
         return http.JsonResponse({
