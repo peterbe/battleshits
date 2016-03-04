@@ -1732,9 +1732,6 @@ class Game extends React.Component {
           this.closeMessage = setTimeout(() => {
             this.setState({message: null})
           }, 5000)
-          // setTimeout(() => {
-          //   alert(`You sunk my battleshit you jerk!`)
-          // }, 400)
         }
       }
       ship.bombed = bombed
@@ -1771,9 +1768,9 @@ class Game extends React.Component {
           Toilet paper!\nYou get ${game.rules.drops} more drops`
         })
       }
-      setTimeout(() => {
+      this.closeMessage = setTimeout(() => {
         this.setState({message: null})
-      }, 3000)
+      }, 3500)
       game._drops -= game.rules.drops
     }
 
