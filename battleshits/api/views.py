@@ -741,6 +741,7 @@ def invitation(request):
         if invitation.user.id not in user_ids:
             user_ids.append(invitation.user.id)
             request.session['invitations'] = user_ids
+            invitation.users.add(request.user)
         return http.JsonResponse({
             'invitation': {
                 'email': invitation.user.email,
@@ -748,6 +749,23 @@ def invitation(request):
                 'id': invitation.user.id,
             }
         })
+
+@xhr_login_required
+def invitations(request):
+    people = []
+    qs = Invitation.objects.filter(user=request.user)
+    for invitation in qs:
+        for user in invitation.users.filter(first_name__isnull=False):
+            inv = {
+                'email': user.email,
+                'first_name': user.first_name,
+                'id': user.id,
+            }
+            if inv not in people:
+                people.append(inv)
+
+    return http.JsonResponse({'invitations': people})
+
 
 
 @require_POST

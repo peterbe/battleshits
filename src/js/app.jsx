@@ -1169,7 +1169,18 @@ class Invite extends React.Component {
     })
     apiSet('/api/invitations')
     .then((result) => {
-      console.log('INVITATIONS', result);
+      let pendingInvitations = this.state.pendingInvitations
+      let founds = 0
+      result.invitations.forEach((invite) => {
+        console.log('INVITE', invite, pendingInvitations.indexOf(invite));
+        if (pendingInvitations.indexOf(invite) === -1) {
+          pendingInvitations.unshift(invite)
+          founds++
+        }
+      })
+      if (founds) {
+        this.setState({pendingInvitations: pendingInvitations})
+      }
     })
   }
 

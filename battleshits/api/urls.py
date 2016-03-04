@@ -50,6 +50,11 @@ urlpatterns = [
         name='invitation'
     ),
     url(
+        r'^invitations$',
+        views.invitations,
+        name='invitations'
+    ),
+    url(
         r'^sendinvitation$',
         views.sendinvitation,
         name='sendinvitation'
