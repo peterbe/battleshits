@@ -1,8 +1,13 @@
-import React from 'react';
-import $ from 'jquery';
+import React from 'react'
+import $ from 'jquery'
+import shallowCompare from 'react-addons-shallow-compare'
 
 
 export default class Bomb extends React.Component {
+
+  shouldComponentUpdate(nextProps, nextState) {
+    return shallowCompare(this, nextProps, nextState)
+  }
 
   render() {
     let src = {
