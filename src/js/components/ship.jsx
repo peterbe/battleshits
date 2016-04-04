@@ -1,15 +1,59 @@
-import React from 'react';
-import $ from 'jquery';
+import React from 'react'
+import $ from 'jquery'
 import { getOneElement } from './utils.js'
+import shallowCompare from 'react-addons-shallow-compare'
 
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+/**
+ * Performs equality by iterating through keys on an object and returning false
+ * when any key has values which are not strictly equal between the arguments.
+ * Returns true when the values of all keys are strictly equal.
+ */
+function shallowEqual(objA, objB) {
+  if (objA === objB) {
+    return true;
+  }
+
+  if (typeof objA !== 'object' || objA === null || typeof objB !== 'object' || objB === null) {
+    console.log('A!')
+    return false;
+  }
+
+  var keysA = Object.keys(objA);
+  var keysB = Object.keys(objB);
+
+  if (keysA.length !== keysB.length) {
+    console.log('B!')
+    return false;
+  }
+
+  // Test for A's keys different from B.
+  var bHasOwnProperty = hasOwnProperty.bind(objB);
+  for (var i = 0; i < keysA.length; i++) {
+    if (!bHasOwnProperty(keysA[i]) || objA[keysA[i]] !== objB[keysA[i]]) {
+      console.log('C!', keysA[i])
+      return false;
+    }
+  }
+
+  return true;
+}
 
 export default class Ship extends React.Component {
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = {
       draggie: null,
       // width: null,
     }
+
+    // exception
+    // this.onMove = props.onMove.bind(this)
+    this.onRotate = props.onRotate.bind(this)
+
+    this.dragEnd = this.dragEnd.bind(this)
   }
 
   componentDidMount() {
@@ -19,8 +63,8 @@ export default class Ship extends React.Component {
     let draggie = new Draggabilly(element, {
       containment: '.grid',
     });
-    draggie.on('dragEnd', this.dragEnd.bind(this))
-    draggie.on('staticClick', this.staticClick.bind(this))
+    draggie.on('dragEnd', this.dragEnd)
+    draggie.on('staticClick', () => this.staticClick())
     this.setState({
       draggie: draggie,
     })
@@ -75,11 +119,10 @@ export default class Ship extends React.Component {
       ship.y += movement
       ship.x = Math.max(0, ship.x)
     }
-    this.props.onRotate(ship)
+    this.onRotate(ship)
   }
 
   dragEnd() {
-    console.log('dragEnd')
     let width = $('.grid tr').width()/10
     let height = $('.grid table').height()/10
 
@@ -105,10 +148,31 @@ export default class Ship extends React.Component {
         y1 = i;
       }
     }
+
+    // XXX this is bad! this.props.ship should be immutable and
+    // instead of changing this mutable prop, we should send the
+    // new X,Y coordinates all the way back. Only then can we start
+    // tackling the shouldComponentUpdate() with a custom comparison
+    // on the ship data.
     this.props.ship.x = x1
     this.props.ship.y = y1
-    this.props.onMove(this.props.ship)
+    this.props.onMove()
+    // this.props.onMove(this.props.ship)
   }
+
+  // shouldComponentUpdate(nextProps, nextState) {
+  //   // console.log('PROPS', this.props, nextProps, shallowEqual(this.props, nextProps))
+  //   // return true;
+  //   let equalShips = false;
+  //
+  //   equalShips = shallowEqual(this.props.ship, nextProps.ship);
+  //   if (this.props.ship.id==="2") {
+  //     console.log('EQUAL SHIPS?', this.props.ship, nextProps.ship, equalShips);
+  //   }
+  //   return true;
+  //   // console.log('shallowCompare(this, nextProps, nextState)?', shallowCompare(this, nextProps, nextState));
+  //   return shallowCompare(this, nextProps, nextState) || !equalShips
+  // }
 
   render() {
     let ship = this.props.ship
@@ -153,6 +217,7 @@ export default class Ship extends React.Component {
         this.state.draggie.enable();
       } else {
         this.state.draggie.disable();
+        // console.log('Disable draggie');
       }
     }
 

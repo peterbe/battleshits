@@ -7,8 +7,10 @@ import Sounds from './components/sounds.js'
 import { getOneElement } from './components/utils.js'
 import Message from './components/message.jsx';
 import Chat from './components/chat.jsx';
-import "babel-polyfill";
+import 'babel-polyfill';
+import Perf from 'react-addons-perf';
 
+window.Perf = Perf;
 
 
 const SHIPS = [
@@ -255,6 +257,7 @@ class App extends React.Component {
       gridWidth: null,
       pendingInvitations: [],
     }
+    this.updateDimensions = this.updateDimensions.bind(this)
   }
 
 
@@ -265,7 +268,7 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    window.addEventListener("resize", this.updateDimensions.bind(this))
+    window.addEventListener("resize", this.updateDimensions)
   }
 
   onGameSelect(game, invite = null) {
@@ -475,7 +478,7 @@ class App extends React.Component {
       games: this.state.games.filter(g => g.id !== this.state.game.id)
     })
     apiSet('/api/abandon', {game: this.state.game})
-    .then(this.loadGames.bind(this))
+    .then(() => this.loadGames())
     .catch((ex) => {
       alert('Sorry, it seems that game could not be abandoned')
     })
@@ -570,7 +573,7 @@ class App extends React.Component {
                   <button
                     className={buttonClassName}
                     type="button"
-                    onClick={this.gotoGameOnMessage.bind(this, message)}>Go to game</button>
+                    onClick={() => this.gotoGameOnMessage(message)}>Go to game</button>
                 </div>
               )
             })
@@ -1324,7 +1327,7 @@ class Invite extends React.Component {
       yourForm = (
         <section className="section">
           <h4 className="title is-4">Email that to a friend</h4>
-          <form onSubmit={this.sendInvitation.bind(this)}>
+          <form onSubmit={(event) => this.sendInvitation(event)}>
             <p className="control is-grouped">
               <input
                 type="email"
@@ -1340,10 +1343,10 @@ class Invite extends React.Component {
 
     }
 
-    let findInvitation = (
+    let findInvitationSection = (
       <section className="section">
         <h4 className="title is-4">Do you have an invitation code?</h4>
-        <form onSubmit={this.findInvitation.bind(this)}>
+        <form onSubmit={(event) => this.findInvitation(event)}>
           <p className="control is-grouped">
             <input
               type="text"
@@ -1363,7 +1366,7 @@ class Invite extends React.Component {
           <button
             type="button"
             className="button is-primary is-fullwidth"
-            onClick={this.props.cancelStartInvitation.bind(this)}>Close</button>
+            onClick={this.props.cancelStartInvitation}>Close</button>
         </p>
       </section>
     )
@@ -1373,7 +1376,7 @@ class Invite extends React.Component {
 
         { invitations }
 
-        { findInvitation }
+        { findInvitationSection }
         { yourCode }
         { yourLink }
         { sent }
@@ -1416,7 +1419,7 @@ class ListOngoingGames extends React.Component {
             <p className="one-button" key={game.id}>
               <button
                 className={className}
-                onClick={this.onClickGame.bind(this, game)}>
+                onClick={() => this.onClickGame(game)}>
                 {
                   game.yourturn ?
                   `Your turn against ${game.opponent.name}` :
@@ -1445,6 +1448,14 @@ class Game extends React.Component {
       confirmAbandon: false,
       messages: [],
     }
+    this.shipMoved = this.shipMoved.bind(this)
+    this.shipRotated = this.shipRotated.bind(this)
+    this.toggleAbandonGameConfirm = this.toggleAbandonGameConfirm.bind(this)
+    this.onDoneButtonClick = this.onDoneButtonClick.bind(this)
+    // this.onAbandonGame = this.props.onAdandonGame.bind(this)
+    this.toggleAbandonGameConfirm = this.toggleAbandonGameConfirm.bind(this)
+    this.onNewMessage = this.onNewMessage.bind(this)
+    this.toggleSound = this.toggleSound.bind(this)
   }
 
   setupSocket(game, username) {
@@ -1544,7 +1555,7 @@ class Game extends React.Component {
 
   }
 
-  shipMoved(ship) {
+  shipMoved() {
     let game = this.props.game
     // This'll render the ships with their new position.
     // Now we need to figure out if any of the ships are overlapping
@@ -1940,9 +1951,9 @@ class Game extends React.Component {
               canMove={false}
               hideShips={true}
               opponent={true}
-              cellClicked={this.cellClicked.bind(this, false)}
-              onMove={this.shipMoved.bind(this)}
-              onRotate={this.shipRotated.bind(this)}
+              cellClicked={(index) => this.cellClicked(false, index)}
+              onMove={this.shipMoved}
+              onRotate={this.shipRotated}
               />
           </div>
         )
@@ -1960,7 +1971,7 @@ class Game extends React.Component {
             When you're done...<br/>
             <button
                 className="button done-button is-medium is-fullwidth is-success"
-                onClick={this.onDoneButtonClick.bind(this)}
+                onClick={this.onDoneButtonClick}
                 disabled={disabledDoneButton}>
               I have placed my shitty ships
             </button>
@@ -1985,9 +1996,9 @@ class Game extends React.Component {
           canMove={game.you.designmode}
           hideShips={false}
           opponent={false}
-          cellClicked={this.cellClicked.bind(this, true)}
-          onMove={this.shipMoved.bind(this)}
-          onRotate={this.shipRotated.bind(this)}
+          cellClicked={(index) => this.cellClicked(true, index)}
+          onMove={this.shipMoved}
+          onRotate={this.shipRotated}
           />
         { doneButton }
       </div>
@@ -1999,7 +2010,7 @@ class Game extends React.Component {
         <p>
         <button
           className="button"
-          onClick={this.toggleAbandonGameConfirm.bind(this)}>Abandon Game</button>
+          onClick={this.toggleAbandonGameConfirm}>Abandon Game</button>
         </p>
       )
       if (this.state.confirmAbandon) {
@@ -2008,10 +2019,10 @@ class Game extends React.Component {
             <p>This will delete the game as if it never happened</p>
             <button
               className="button is-primary"
-              onClick={this.props.onAdandonGame.bind(this)}>Just do it already!</button>
+              onClick={this.props.onAdandonGame}>Just do it already!</button>
             <button
               className="button"
-              onClick={this.toggleAbandonGameConfirm.bind(this)}>Actually, cancel</button>
+              onClick={this.toggleAbandonGameConfirm}>Actually, cancel</button>
           </div>
         )
       }
@@ -2023,7 +2034,7 @@ class Game extends React.Component {
         <section className="section chat" style={{paddingTop: 10}}>
           <Chat
             messages={this.state.messages}
-            onNewMessage={this.onNewMessage.bind(this)}
+            onNewMessage={this.onNewMessage}
             />
         </section>
       )
@@ -2033,7 +2044,7 @@ class Game extends React.Component {
       <div>
         <button
           className="button is-primary is-fullwidth"
-          onClick={this.props.onGameExit.bind(this)}>Exit game</button>
+          onClick={this.props.onGameExit}>Exit game</button>
 
         { statusHead }
         <Message message={this.state.message}/>
@@ -2052,7 +2063,7 @@ class Game extends React.Component {
           <p>
             <button
               className="button"
-              onClick={this.toggleSound.bind(this)}>
+              onClick={() => this.toggleSound()}>
               { this.state.sound ? 'Turn sound off' : 'Turn sound on' }
             </button>
           </p>

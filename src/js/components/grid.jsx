@@ -58,8 +58,8 @@ export default class Grid extends React.Component {
               width={width}
               height={height}
               canMove={false}
-              onMove={this.props.onMove.bind(this)}
-              onRotate={this.props.onRotate.bind(this)}
+              onMove={this.props.onMove}
+              onRotate={this.props.onRotate}
               />
            )
          }
@@ -74,8 +74,8 @@ export default class Grid extends React.Component {
             width={width}
             height={height}
             canMove={this.props.canMove}
-            onMove={this.props.onMove.bind(this)}
-            onRotate={this.props.onRotate.bind(this)}
+            onMove={this.props.onMove}
+            onRotate={this.props.onRotate}
           />
         )
       }
@@ -111,7 +111,7 @@ export default class Grid extends React.Component {
                         state={cell}
                         width={width}
                         hideShips={this.props.hideShips}
-                        cellClicked={this.props.cellClicked.bind(this, i * 10 + j)}
+                        cellClicked={() => this.props.cellClicked(i * 10 + j)}
                         />
                     })
                   }
