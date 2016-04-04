@@ -1490,6 +1490,12 @@ class Game extends React.Component {
     if (this.closeMessage) {
       clearTimeout(this.closeMessage)
     }
+    if (this.makeAIMoveInterval) {
+      clearTimeout(this.makeAIMoveInterval)
+    }
+    if (this.slotBombedInterval) {
+      clearTimeout(this.slotBombedInterval)
+    }
   }
 
   componentDidMount() {
@@ -1500,7 +1506,7 @@ class Game extends React.Component {
     let game = this.props.game
     if (game.opponent.ai) {
       if (!game.yourturn && !game.you.designmode && !game.opponent.designmode && !game.gameover) {
-        setTimeout(() => {
+        this.makeAIMoveInterval = setTimeout(() => {
           getOneElement('#yours').scrollIntoView()
           this.makeAIMove()
         }, 400)
@@ -1620,7 +1626,7 @@ class Game extends React.Component {
         // make the next move.
         game.opponent.designmode = false
         this.props.changeGame(game)
-        setTimeout(() => {
+        this.makeAIMoveInterval = setTimeout(() => {
           getOneElement('#yours').scrollIntoView()
           this.makeAIMove()
         }, 1000)
@@ -1817,12 +1823,12 @@ class Game extends React.Component {
     setTimeout(() => {
       this.props.changeGame(game, save)
       if (!game.gameover) {
-        setTimeout(() => {
+        this.slotBombedInterval = setTimeout(() => {
           if (turnchange) {
             nextElement.scrollIntoView({block: "end", behavior: "smooth"})
           }
           if (!game.yourturn && game.opponent.ai && !game.gameover) {
-            setTimeout(() => {
+            this.makeAIMoveInterval = setTimeout(() => {
               this.makeAIMove()
             }, 800)
           }
