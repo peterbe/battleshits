@@ -1,5 +1,4 @@
 import React from 'react'
-import $ from 'jquery'
 import { getOneElement } from './utils.js'
 import shallowCompare from 'react-addons-shallow-compare'
 
@@ -52,7 +51,6 @@ export default class Ship extends React.Component {
     // exception
     // this.onMove = props.onMove.bind(this)
     this.onRotate = props.onRotate.bind(this)
-
     this.dragEnd = this.dragEnd.bind(this)
   }
 
@@ -122,9 +120,22 @@ export default class Ship extends React.Component {
     this.onRotate(ship)
   }
 
+  getWidthHeight() {
+    let trElement = document.querySelector('.grid tr')
+    let width = 1
+    if (trElement !== null) {
+      width = trElement.clientWidth / 10
+    }
+    let tableElement = document.querySelector('.grid table')
+    let height = 1
+    if (tableElement !== null) {
+      height = tableElement.clientHeight / 10
+    }
+    return {width: width, height: height}
+  }
+
   dragEnd() {
-    let width = $('.grid tr').width()/10
-    let height = $('.grid table').height()/10
+    let {width, height} = this.getWidthHeight()
 
     let x = this.state.draggie.position.x
     let y = this.state.draggie.position.y
@@ -160,25 +171,10 @@ export default class Ship extends React.Component {
     // this.props.onMove(this.props.ship)
   }
 
-  // shouldComponentUpdate(nextProps, nextState) {
-  //   // console.log('PROPS', this.props, nextProps, shallowEqual(this.props, nextProps))
-  //   // return true;
-  //   let equalShips = false;
-  //
-  //   equalShips = shallowEqual(this.props.ship, nextProps.ship);
-  //   if (this.props.ship.id==="2") {
-  //     console.log('EQUAL SHIPS?', this.props.ship, nextProps.ship, equalShips);
-  //   }
-  //   return true;
-  //   // console.log('shallowCompare(this, nextProps, nextState)?', shallowCompare(this, nextProps, nextState));
-  //   return shallowCompare(this, nextProps, nextState) || !equalShips
-  // }
-
   render() {
     let ship = this.props.ship
 
-    let width = $('.grid tr').width()/10
-    let height = $('.grid table').height()/10
+    let {width, height} = this.getWidthHeight()
 
     let borderWidth = 0 // for each <td> (collapsed table)
 

@@ -1,12 +1,26 @@
 import React from 'react'
-import $ from 'jquery'
 import shallowCompare from 'react-addons-shallow-compare'
 
 
+// XXX rewrite this as a presentationl functional component since there is no state
 export default class Bomb extends React.Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     return shallowCompare(this, nextProps, nextState)
+  }
+
+  getWidthHeight() {
+    let trElement = document.querySelector('.grid tr')
+    let width = 1
+    if (trElement !== null) {
+      width = trElement.clientWidth / 10
+    }
+    let tableElement = document.querySelector('.grid table')
+    let height = 1
+    if (tableElement !== null) {
+      height = tableElement.clientHeight / 10
+    }
+    return {width: width, height: height}
   }
 
   render() {
@@ -20,9 +34,7 @@ export default class Bomb extends React.Component {
     let x = index % 10
     let y = Math.floor(index / 10)
 
-    // XXX this can be optimized
-    let width = $('.grid tr').width()/10
-    let height = $('.grid table').height()/10
+    let {width, height} = this.getWidthHeight()
 
     let borderWidth = 0 // for each <td> (collapsed table)
     let style = {

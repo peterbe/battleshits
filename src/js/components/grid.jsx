@@ -1,24 +1,24 @@
 import React from 'react';
-import $ from 'jquery';
 import Cell from './cell.jsx';
 import Ship from './ship.jsx';
 import Bomb from './bomb.jsx';
 
 
 export default class Grid extends React.Component {
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = {
-      width: $(window).width()  // premliminary
-
+      width: 1 // premliminary
     }
   }
   //
   updateDimensions() {
-    if ($('.grid tr').length && $('.grid tr').width()) {
-      this.setState({width: $('.grid tr').width()})
+    let trElement = document.querySelector('.grid tr')
+    if (trElement !== null && trElement.clientWidth) {
+      this.setState({width: trElement.clientWidth})
     }
   }
+
 
   componentDidMount() {
     this.updateDimensions()
@@ -40,7 +40,7 @@ export default class Grid extends React.Component {
     if (!gridWidth) {
       throw new Error('width of grid not known')
     }
-    // the whole gridWidth is $(window).width() - 2px for the whole table
+    // the whole gridWidth is document.clientWidth - 2px for the whole table
     let width = (gridWidth - 2) / 10;
     let height = (gridWidth - 2) / 10;
     let ships = []

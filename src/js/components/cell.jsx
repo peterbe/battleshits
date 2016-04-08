@@ -1,5 +1,4 @@
 import React from 'react';
-import $ from 'jquery';
 
 
 export default class Cell extends React.Component {
@@ -16,23 +15,6 @@ export default class Cell extends React.Component {
     return x + ',' + y
   }
 
-  // onTouchStart() {
-  //   this.props.cellClicked()
-  //   this.setState({touched: true})
-  // }
-  //
-  // onClick() {
-  //   /* This is a hack so that onClick works in non-touch browsers.
-  //      The onTouchStart makes it instant clicks on mobiles.
-  //      On devices that support onTouchStart we don't want both
-  //      to fire. */
-  //   if (!this.state.touched) {
-  //     this.props.cellClicked()
-  //   } else {
-  //     console.log('Ignore click')
-  //   }
-  // }
-
   render() {
     let height = this.props.width
 
@@ -42,9 +24,6 @@ export default class Cell extends React.Component {
       _coord = this._indexToCoord(this.props.index)
     }
 
-    // onClick={this.props.cellClicked.bind(this)}
-    //onTouchStart={this.onTouchStart.bind(this)}
-    //onClick={this.onClick.bind(this)}
     return (
       <td
         onClick={this.props.cellClicked.bind(this)}

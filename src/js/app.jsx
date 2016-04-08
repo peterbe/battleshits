@@ -1,7 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import 'whatwg-fetch'
-import $ from 'jquery'
 import Grid from './components/grid.jsx'
 import Sounds from './components/sounds.js'
 import { getOneElement } from './components/utils.js'
@@ -262,8 +261,9 @@ class App extends React.Component {
 
 
   updateDimensions() {
-    if ($('.grid tr').length && $('.grid tr').width()) {
-      this.setState({gridWidth: $('.grid tr').width()})
+    let trElement = document.querySelector('.grid tr')
+    if (trElement !== null && trElement.clientWidth) {
+      this.setState({gridWidth: trElement.clientWidth})
     }
   }
 

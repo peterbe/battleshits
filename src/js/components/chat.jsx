@@ -1,5 +1,4 @@
 import React from 'react';
-import $ from 'jquery'
 
 
 export default class Chat extends React.Component {
@@ -33,9 +32,7 @@ export default class Chat extends React.Component {
       this.refs.message.value = ''
       this.props.onNewMessage(message)
       .then(() => {
-        // console.log('Message sent and saved!');
-        // console.log($('input[name="message"]'));
-        $('input[name="message"]').blur()
+        document.querySelector('input[name="message"]').blur()
       })
       .catch((ex) => {
         this.refs.message.value = message
