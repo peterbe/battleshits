@@ -4,7 +4,7 @@ Django==1.9.6
 
 # sha256: 8uJz7TSsu1YJYtXPEpF5NtjfAil98JvTCJuFRtRYQTg
 # sha256: ygF2j97N4TQwHzFwdDIm9g7f9cOTXxJDc3jr2RFQY1M
-dj-database-url==0.3.0
+dj-database-url==0.4.1
 # sha256: bRlhhNHosUC8WvHV7tqK7tJqJBMX2IYJkug-is76YXc
 # sha256: CctSIV20qMaKdl8toz-vvQSedhHLcHCP-MX3o8ic42Q
 # sha256: _oRGsvaAqZrBFK8skPi2nlYFL_TSNZxRCo3GHSUqwyU
