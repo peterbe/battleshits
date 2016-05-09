@@ -19,7 +19,7 @@ dj-database-url==0.4.1
 psycopg2==2.6.1
 
 # sha256: ufv3R_qOcR0zDy9Da5suz17tnrZ6Y3yoGrzRHCq-3sg
-python-decouple==2.3
+python-decouple==3.0
 
 # sha256: fn9zpnXFGHErrdeDJ54m0WQUDz_C7XoyECw9CKaipKc
 jsonfield==1.0.3
