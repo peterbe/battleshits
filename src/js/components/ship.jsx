@@ -1,57 +1,49 @@
 import React from 'react'
 import { getOneElement } from './utils.js'
-import shallowCompare from 'react-addons-shallow-compare'
+// import shallowCompare from 'react-addons-shallow-compare'
 
 
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-/**
- * Performs equality by iterating through keys on an object and returning false
- * when any key has values which are not strictly equal between the arguments.
- * Returns true when the values of all keys are strictly equal.
- */
-function shallowEqual(objA, objB) {
-  if (objA === objB) {
-    return true;
-  }
-
-  if (typeof objA !== 'object' || objA === null || typeof objB !== 'object' || objB === null) {
-    console.log('A!')
-    return false;
-  }
-
-  var keysA = Object.keys(objA);
-  var keysB = Object.keys(objB);
-
-  if (keysA.length !== keysB.length) {
-    console.log('B!')
-    return false;
-  }
-
-  // Test for A's keys different from B.
-  var bHasOwnProperty = hasOwnProperty.bind(objB);
-  for (var i = 0; i < keysA.length; i++) {
-    if (!bHasOwnProperty(keysA[i]) || objA[keysA[i]] !== objB[keysA[i]]) {
-      console.log('C!', keysA[i])
-      return false;
-    }
-  }
-
-  return true;
-}
+// var hasOwnProperty = Object.prototype.hasOwnProperty;
+//
+// /**
+//  * Performs equality by iterating through keys on an object and returning false
+//  * when any key has values which are not strictly equal between the arguments.
+//  * Returns true when the values of all keys are strictly equal.
+//  */
+// function shallowEqual(objA, objB) {
+//   if (objA === objB) {
+//     return true;
+//   }
+//
+//   if (typeof objA !== 'object' || objA === null || typeof objB !== 'object' || objB === null) {
+//     console.log('A!')
+//     return false;
+//   }
+//
+//   var keysA = Object.keys(objA);
+//   var keysB = Object.keys(objB);
+//
+//   if (keysA.length !== keysB.length) {
+//     console.log('B!')
+//     return false;
+//   }
+//
+//   // Test for A's keys different from B.
+//   var bHasOwnProperty = hasOwnProperty.bind(objB);
+//   for (var i = 0; i < keysA.length; i++) {
+//     if (!bHasOwnProperty(keysA[i]) || objA[keysA[i]] !== objB[keysA[i]]) {
+//       console.log('C!', keysA[i])
+//       return false;
+//     }
+//   }
+//
+//   return true;
+// }
 
 export default class Ship extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {
-      draggie: null,
-      // width: null,
-    }
-
-    // exception
-    // this.onMove = props.onMove.bind(this)
-    this.onRotate = props.onRotate.bind(this)
-    this.dragEnd = this.dragEnd.bind(this)
+    this.draggie = null
   }
 
   componentDidMount() {
@@ -61,11 +53,9 @@ export default class Ship extends React.Component {
     let draggie = new Draggabilly(element, {
       containment: '.grid',
     });
-    draggie.on('dragEnd', this.dragEnd)
-    draggie.on('staticClick', () => this.staticClick())
-    this.setState({
-      draggie: draggie,
-    })
+    draggie.on('dragEnd', () => this.dragEnd())
+    draggie.on('staticClick', this.staticClick.bind(this))
+    this.draggie = draggie
   }
 
   staticClick() {
@@ -117,7 +107,7 @@ export default class Ship extends React.Component {
       ship.y += movement
       ship.x = Math.max(0, ship.x)
     }
-    this.onRotate(ship)
+    this.props.onRotate(ship)
   }
 
   getWidthHeight() {
@@ -137,8 +127,10 @@ export default class Ship extends React.Component {
   dragEnd() {
     let {width, height} = this.getWidthHeight()
 
-    let x = this.state.draggie.position.x
-    let y = this.state.draggie.position.y
+    // let x = this.state.draggie.position.x
+    // let y = this.state.draggie.position.y
+    let x = this.draggie.position.x
+    let y = this.draggie.position.y
     // These coordinates represent the top-left hand corner.
     // But we're going to ignore that and seek with the middle of the
     // first corner of the left-most (or top-most) square
@@ -206,14 +198,13 @@ export default class Ship extends React.Component {
     // The draggabilly plugin will forcibly set the top and left
     // on the element and these might be different from what they
     // should be, so we make sure that gets set.
-    if (this.state.draggie) {
+    if (this.draggie) {
       if (this.props.canMove) {
-        this.state.draggie.element.style.left = style.left + 'px'
-        this.state.draggie.element.style.top = style.top + 'px'
-        this.state.draggie.enable();
+        this.draggie.element.style.left = style.left + 'px'
+        this.draggie.element.style.top = style.top + 'px'
+        this.draggie.enable();
       } else {
-        this.state.draggie.disable();
-        // console.log('Disable draggie');
+        this.draggie.disable();
       }
     }
 
