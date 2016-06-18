@@ -1,34 +1,22 @@
-import React from 'react';
+import React from 'react'
 
+const Cell = ({ width, index, cellClicked }) => {
 
-export default class Cell extends React.Component {
+  let height = width
 
-  constructor(props) {
-    super(props)
-    this.state = {
-      touched: false
-    }
-  }
-  _indexToCoord(index) {
+  let style = {width: width, height: height}
+  let _coord = ''
+  if (__DEV__) {
     let x = index % 10
     let y = Math.floor(index / 10)
-    return x + ',' + y
+    _coord = x + ',' + y
   }
 
-  render() {
-    let height = this.props.width
-
-    let style = {width: this.props.width, height: height}
-    let _coord = ''
-    if (__DEV__) {
-      _coord = this._indexToCoord(this.props.index)
-    }
-
-    return (
-      <td
-        onClick={this.props.cellClicked.bind(this)}
-        style={style}
-        >{_coord}</td>
-    )
-  }
+  return (
+    <td
+      onClick={(event) => cellClicked(event)}
+      style={style}
+      >{_coord}</td>
+  )
 }
+export default Cell
