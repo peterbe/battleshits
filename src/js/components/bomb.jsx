@@ -1,5 +1,4 @@
 import React from 'react'
-// import shallowCompare from 'react-addons-shallow-compare'
 
 let width = 1
 let height = 1
