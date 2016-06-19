@@ -15,15 +15,6 @@ const Grid = ({
   onMove,
   onRotate
 }) => {
-
-  console.log({
-    width,
-    grid,
-    ships,
-    canMove,
-    hideShips,
-    opponent,
-  });
   let prefix = opponent ? 'opponent' : 'yours'
   let rows = [];
   for (let i=0; i < 10; i++) {

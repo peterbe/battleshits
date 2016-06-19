@@ -7,9 +7,9 @@ import { getOneElement } from './components/utils.js'
 import Message from './components/message.jsx';
 import Chat from './components/chat.jsx';
 import 'babel-polyfill';
-import Perf from 'react-addons-perf';
+// import Perf from 'react-addons-perf';
 
-window.Perf = Perf;
+// window.Perf = Perf;
 
 
 const SHIPS = [
