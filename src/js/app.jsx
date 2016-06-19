@@ -340,6 +340,10 @@ class App extends React.Component {
   }
 
   setupSocket(username) {
+    if (FANOUT_CLIENT === null && __DEV__) {
+      console.warn('FANOUT_CLIENT not set up')
+      return
+    }
     FANOUT_CLIENT.subscribe('/' + username, (data) => {
       if (__DEV__) {
         console.log('GENERAL INCOMING ON', username, data)
@@ -1447,6 +1451,7 @@ class Game extends React.Component {
       subscription: null,
       confirmAbandon: false,
       messages: [],
+      width: 1,
     }
     this.shipMoved = this.shipMoved.bind(this)
     this.shipRotated = this.shipRotated.bind(this)
@@ -1462,6 +1467,10 @@ class Game extends React.Component {
     let channel = '/game-' + game.id + '-' + username
     if (__DEV__) {
       console.log('Create subscription on:', channel)
+    }
+    if (FANOUT_CLIENT === null && __DEV__) {
+      console.warn('FANOUT_CLIENT not set up')
+      return
     }
     let subscription = FANOUT_CLIENT.subscribe(channel, (data) => {
       if (__DEV__) {
@@ -1498,7 +1507,16 @@ class Game extends React.Component {
     }
   }
 
+  updateDimensions() {
+    let trElement = document.querySelector('.grid tr')
+    if (trElement !== null && trElement.clientWidth) {
+      this.setState({width: trElement.clientWidth})
+    }
+  }
+
   componentDidMount() {
+    this.updateDimensions()
+
     this.closeMessage = null
 
     // The game component has been mounted. Perhaps the game was between
@@ -1952,6 +1970,7 @@ class Game extends React.Component {
               {opponentHeader}
             </h5>
             <Grid
+              width={this.state.width}
               grid={game.opponent.grid}
               ships={game.opponent.ships}
               canMove={false}
@@ -1997,6 +2016,7 @@ class Game extends React.Component {
         { inviteHeader }
         <h5 className="title is-5 grid-header">{ yourHeader }</h5>
         <Grid
+          width={this.state.width}
           grid={game.you.grid}
           ships={game.you.ships}
           canMove={game.you.designmode}
