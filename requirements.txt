@@ -1,10 +1,10 @@
 # sha256: n3ygTG288It5Ty6lKDxgFWo36_K4MW0QJ_WU80_2EQE
 # sha256: opqsRqaGyt5tqHzn5yh9XVPN2rxB13fGIwpYPDYkShg
-Django==1.9.1
+Django==1.9.6
 
 # sha256: 8uJz7TSsu1YJYtXPEpF5NtjfAil98JvTCJuFRtRYQTg
 # sha256: ygF2j97N4TQwHzFwdDIm9g7f9cOTXxJDc3jr2RFQY1M
-dj-database-url==0.3.0
+dj-database-url==0.4.1
 # sha256: bRlhhNHosUC8WvHV7tqK7tJqJBMX2IYJkug-is76YXc
 # sha256: CctSIV20qMaKdl8toz-vvQSedhHLcHCP-MX3o8ic42Q
 # sha256: _oRGsvaAqZrBFK8skPi2nlYFL_TSNZxRCo3GHSUqwyU
@@ -19,7 +19,7 @@ dj-database-url==0.3.0
 psycopg2==2.6.1
 
 # sha256: ufv3R_qOcR0zDy9Da5suz17tnrZ6Y3yoGrzRHCq-3sg
-python-decouple==2.3
+python-decouple==3.0
 
 # sha256: fn9zpnXFGHErrdeDJ54m0WQUDz_C7XoyECw9CKaipKc
 jsonfield==1.0.3
@@ -32,6 +32,6 @@ pubcontrol==2.2.7
 PyJWT==1.4.0
 # sha256: ET-7pVManjSUW302szoIToul0GZLcDyBp8Vy2RkZpbg
 # sha256: xXeBXdAPE5QgP8ROuXlySwmPiCZKnviY7kW45enPWH8
-requests==2.9.1
+requests==2.10.0
 # sha256: _NluK-R8ju80xlDgB6bVRuGefuYQQbie27u-dhmqOYc
 django-cors-headers==1.1.0
