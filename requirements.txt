@@ -16,7 +16,7 @@ dj-database-url==0.3.0
 # sha256: JngUMXSDVx5jejLRXXHvbI47BaLsupeysNcfp-qesfU
 # sha256: LB08DkySnxQBh5y1zpoEOvzoUlX5Q5vXzrrwJRScWiA
 # sha256: as-au751fvddwuzZ2RunSVR5Qauv--af8ghqnjfUkEw
-psycopg2==2.6.1
+psycopg2==2.6.2
 
 # sha256: ufv3R_qOcR0zDy9Da5suz17tnrZ6Y3yoGrzRHCq-3sg
 python-decouple==2.3
