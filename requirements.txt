@@ -34,4 +34,4 @@ PyJWT==1.4.2
 # sha256: xXeBXdAPE5QgP8ROuXlySwmPiCZKnviY7kW45enPWH8
 requests==2.9.1
 # sha256: _NluK-R8ju80xlDgB6bVRuGefuYQQbie27u-dhmqOYc
-django-cors-headers==1.2.0
+django-cors-headers==1.2.1
