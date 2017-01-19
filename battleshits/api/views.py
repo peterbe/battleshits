@@ -44,7 +44,7 @@ class VerboseHttpResponseBadRequest(http.HttpResponseBadRequest):
     console error in the React code."""
     def __init__(self, msg):
         if settings.DEBUG:
-            print msg
+            print(msg)
         super(VerboseHttpResponseBadRequest, self).__init__(
             json.dumps({'error': msg}),
             content_type='application/json'
@@ -130,7 +130,7 @@ def random_username():
 @require_POST
 def login(request):
     assert request.method == 'POST', request.method
-    data = json.loads(request.body)
+    data = json.loads(request.body.decode('utf-8'))
     if data.get('code_or_email'):
         code_or_email = data['code_or_email'].strip()
         codes = LogInCode.objects.filter(
@@ -192,7 +192,7 @@ def csrfmiddlewaretoken(request):
 @require_POST
 @xhr_login_required
 def save(request):
-    data = json.loads(request.body)
+    data = json.loads(request.body.decode('utf-8'))
     try:
         game = data['game']
         try:
@@ -379,7 +379,7 @@ def valid_email(email):
 @require_POST
 @xhr_login_required
 def profile(request):
-    data = json.loads(request.body)
+    data = json.loads(request.body.decode('utf-8'))
     if data.get('name', '').strip():
         request.user.first_name = data['name']
         request.user.save()
@@ -469,7 +469,7 @@ def start(request):
     If no match, do nothing here. The user will be asked to go ahead
     and design their ships so that it's ready to be joined by someone else.
     """
-    data = json.loads(request.body)
+    data = json.loads(request.body.decode('utf-8'))
     if not data.get('game'):
         return VerboseHttpResponseBadRequest('no game')
     if not request.user.first_name:
@@ -485,18 +485,11 @@ def start(request):
     # be good to go.
     if game.get('id') and game['opponent']['name']:
         game_obj = Game.objects.get(id=game['id'])
-        # print game_obj.player1.first_name
-        # print game_obj.player2.first_name
 
-        # from pprint import pprint
         assert not game['you']['designmode']
         assert not game['opponent']['designmode']
-        # print game['you']['name']
-        # print game['opponent']['name']
-        # game = invert_state(game)
         game_obj.state = invert_state(game)
         game_obj.save()
-        # pprint(game)
         return http.JsonResponse({'game': invert_state(game_obj.state)})
 
     # find any started games that don't have a player2
@@ -563,7 +556,7 @@ def start(request):
 
     for game_obj in games:
         if game_obj.state['rules'] == game['rules']:
-            print "Found one with the same rules"
+            print("Found one with the same rules")
             return http.JsonResponse({'id': game_obj.id})
 
     # really still here, then you haven't created a game before
@@ -583,20 +576,10 @@ def start(request):
 @require_POST
 @xhr_login_required
 def bombed(request):
-    data = json.loads(request.body)
-    # print request.user.first_name
-    # print data
-    # print
+    data = json.loads(request.body.decode('utf-8'))
     game_id = data['id']
     index = data['index']
     cell = data['cell']
-    # yours = data['yours']
-    # yours =False
-    # game_obj = Game.objects.filter(
-    #     Q(player1=request.user) | Q(player2=request.user)
-    # ).get(
-    #     id=game_id
-    # )
     game_obj = Game.objects.get(id=game_id)
     if request.user == game_obj.player1:
         opponent = game_obj.player2
@@ -621,7 +604,7 @@ def bombed(request):
 @require_POST
 @xhr_login_required
 def abandon(request):
-    data = json.loads(request.body)
+    data = json.loads(request.body.decode('utf-8'))
     try:
         game = data['game']
         try:
@@ -649,7 +632,7 @@ def messages(request):
     you = request.user
 
     if request.method == 'POST':
-        data = json.loads(request.body)
+        data = json.loads(request.body.decode('utf-8'))
         if not data.get('id'):
             return VerboseHttpResponseBadRequest('No game id')
         game_id = data['id']
@@ -743,7 +726,7 @@ def invite(request):
 @require_POST
 @xhr_login_required
 def invitation(request):
-    data = json.loads(request.body)
+    data = json.loads(request.body.decode('utf-8'))
     code = data['code']
     invitations = Invitation.objects.filter(code__iexact=code)
     if not invitations.exists():
@@ -788,7 +771,7 @@ def invitations(request):
 @require_POST
 @xhr_login_required
 def sendinvitation(request):
-    data = json.loads(request.body)
+    data = json.loads(request.body.decode('utf-8'))
     email = data['email']
     if not valid_email(email):
         return http.JsonResponse({

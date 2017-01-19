@@ -11,7 +11,7 @@ class JsonBodyCsrfViewMiddleware(CsrfViewMiddleware):
         if getattr(view_func, 'csrf_exempt', False):
             return None
         try:
-            body = json.loads(request.body)
+            body = json.loads(request.body.decode('utf-8'))
             request.POST = request.POST.copy()
 
             csrfmiddlewaretoken = (

@@ -34,16 +34,16 @@ def handler404(request, *args, **kwargs):
 
 @csrf_exempt
 def postmarkwebhook(request):
-    print "REQUEST METHOD:", request.method
+    print("REQUEST METHOD:", request.method)
     payload = request.body
     try:
         body = json.loads(payload)
-        print "PAYLOAD"
+        print("PAYLOAD")
         pprint(body)
     except ValueError:
-        print "Payload was not JSON"
+        print("Payload was not JSON")
     data = request.method == 'POST' and request.POST or request.GET
     for key, value in data.items():
         if value:
-            print key.ljust(20), repr(value)
+            print(key.ljust(20), repr(value))
     return http.HttpResponse('OK')
