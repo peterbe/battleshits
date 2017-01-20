@@ -1931,7 +1931,7 @@ class Game extends React.Component {
       //   _drops = 1
       // }
       if (!game.yourturn && !game.gameover) {
-        yourHeader += `(${game.opponent.name}'s turn, ${_drops} of ${drops})`
+        yourHeader += ` (${game.opponent.name}'s turn, ${_drops} of ${drops})`
       }
     }
 
@@ -2010,7 +2010,6 @@ class Game extends React.Component {
         </section>
       )
     }
-    // { !game.you.designmode ? <h4>{yourHeader}</h4> : null}
     let yours = (
       <div id="yours">
         { inviteHeader }

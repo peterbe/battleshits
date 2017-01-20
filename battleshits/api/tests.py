@@ -14,10 +14,6 @@ import fanout
 fanout.realm = 'COMPLETE'
 fanout.key = 'GIBBERISH'
 
-# patched = mock.patch('battleshits.api.views.fanout')
-
-
-
 
 class Tests(TestCase):
 
@@ -46,7 +42,7 @@ class Tests(TestCase):
             user = get_user_model().objects.create(
                 username='player'
             )
-        elif isinstance(user, basestring):
+        elif isinstance(user, str):
             user = get_user_model().objects.create(
                 username=user
             )
