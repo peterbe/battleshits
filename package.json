@@ -15,7 +15,7 @@
     "babel-polyfill": "6.5.0",
     "bulma": "0.0.14",
     "jquery": "2.2.0",
-    "react": "15.1.0",
+    "react": "15.5.0",
     "react": "15.4.2",
     "whatwg-fetch": "0.11.0"
   },
