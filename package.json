@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "babel-polyfill": "6.5.0",
-    "bulma": "0.4.0",
+    "bulma": "0.4.1",
     "jquery": "2.2.0",
     "react": "0.14.7",
     "react-dom": "0.14.7",
