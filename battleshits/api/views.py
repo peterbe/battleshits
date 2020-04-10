@@ -10,8 +10,6 @@ from django import http
 from django.template.context_processors import csrf
 from django.utils.functional import wraps
 from django.views.decorators.http import require_POST
-from django.forms.models import model_to_dict
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib import auth
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
@@ -31,7 +29,7 @@ from battleshits.base.models import (
 )
 
 
-logger = logging.getLogger('battleshits.api')
+logger = logging.getLogger("battleshits.api")
 
 
 fanout.realm = settings.FANOUT_REALM_ID
@@ -42,12 +40,12 @@ class VerboseHttpResponseBadRequest(http.HttpResponseBadRequest):
     """Overriding this because when it happens, I can't get the
     message in either the django runserver terminal or the
     console error in the React code."""
+
     def __init__(self, msg):
         if settings.DEBUG:
             print(msg)
         super(VerboseHttpResponseBadRequest, self).__init__(
-            json.dumps({'error': msg}),
-            content_type='application/json'
+            json.dumps({"error": msg}), content_type="application/json"
         )
 
 
@@ -55,13 +53,14 @@ def xhr_login_required(view_func):
     """similar to django.contrib.auth.decorators.login_required
     except instead of redirecting it returns a 403 message if not
     authenticated."""
+
     @wraps(view_func)
     def inner(request, *args, **kwargs):
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return http.HttpResponse(
-                json.dumps({'error': "You must be logged in"}),
-                content_type='application/json',
-                status=403
+                json.dumps({"error": "You must be logged in"}),
+                content_type="application/json",
+                status=403,
             )
         return view_func(request, *args, **kwargs)
 
@@ -73,53 +72,47 @@ def _random(length, pool):
     while len(s) < length:
         random.shuffle(pool)
         s.append(pool[0])
-    return ''.join(s)
+    return "".join(s)
 
 
 def random_letters(length):
-    return _random(length, list('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
+    return _random(length, list("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
 
 
 def random_numbers(length):
-    return _random(length, list('0123456789'))
+    return _random(length, list("0123456789"))
 
 
 def signedin(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         data = {
-            'username': request.user.username,
-            'email': request.user.email,
-            'first_name': request.user.first_name,
-            'last_name': request.user.last_name,
+            "username": request.user.username,
+            "email": request.user.email,
+            "first_name": request.user.first_name,
+            "last_name": request.user.last_name,
         }
-        codes = LogInCode.objects.filter(
-            user=request.user,
-            used=False,
-        )
+        codes = LogInCode.objects.filter(user=request.user, used=False,)
         for logincode in codes:
             break
         else:
             logincode = LogInCode.objects.create(
-                user=request.user,
-                code=random_letters(1) + random_numbers(4)
+                user=request.user, code=random_letters(1) + random_numbers(4)
             )
-        data['logincode'] = logincode.code
+        data["logincode"] = logincode.code
     else:
         data = {
-            'username': None,
+            "username": None,
         }
     t = csrf(request)
-    data['csrf_token'] = str(t['csrf_token'])
-    if request.session.get('invitations'):
-        user_ids = request.session['invitations']
+    data["csrf_token"] = str(t["csrf_token"])
+    if request.session.get("invitations"):
+        user_ids = request.session["invitations"]
         invitations = []
         for user in get_user_model().objects.filter(id__in=user_ids):
-            invitations.append({
-                'id': user.id,
-                'first_name': user.first_name,
-                'email': user.email,
-            })
-        data['invitations'] = invitations
+            invitations.append(
+                {"id": user.id, "first_name": user.first_name, "email": user.email}
+            )
+        data["invitations"] = invitations
     return http.JsonResponse(data)
 
 
@@ -129,14 +122,11 @@ def random_username():
 
 @require_POST
 def login(request):
-    assert request.method == 'POST', request.method
-    data = json.loads(request.body.decode('utf-8'))
-    if data.get('code_or_email'):
-        code_or_email = data['code_or_email'].strip()
-        codes = LogInCode.objects.filter(
-            code__iexact=code_or_email,
-            used=False,
-        )
+    assert request.method == "POST", request.method
+    data = json.loads(request.body.decode("utf-8"))
+    if data.get("code_or_email"):
+        code_or_email = data["code_or_email"].strip()
+        codes = LogInCode.objects.filter(code__iexact=code_or_email, used=False,)
         for code in codes:
             user = code.user
             user.backend = settings.AUTHENTICATION_BACKENDS[0]
@@ -146,34 +136,24 @@ def login(request):
             code.save()
             return signedin(request)
 
-        if '@' in code_or_email:
+        if "@" in code_or_email:
             if not valid_email(code_or_email):
-                return http.JsonResponse({
-                    'error': 'Email not valid'
-                })
+                return http.JsonResponse({"error": "Email not valid"})
 
-        if '@' in code_or_email:
-            users = get_user_model().objects.filter(
-                email__iexact=code_or_email
-            )
-            for user in users.order_by('-last_login'):
+        if "@" in code_or_email:
+            users = get_user_model().objects.filter(email__iexact=code_or_email)
+            for user in users.order_by("-last_login"):
                 user.backend = settings.AUTHENTICATION_BACKENDS[0]
                 request.user = user
                 auth.login(request, user)
                 return signedin(request)
 
-            return http.JsonResponse({
-                'error': 'Code not recognized :('
-            })
+            return http.JsonResponse({"error": "Code not recognized :("})
 
-        return http.JsonResponse({
-            'error': 'Code not recognized :('
-        })
+        return http.JsonResponse({"error": "Code not recognized :("})
 
-    assert not request.user.is_authenticated()
-    user = get_user_model().objects.create(
-        username=random_username(),
-    )
+    assert not request.user.is_authenticated
+    user = get_user_model().objects.create(username=random_username(),)
     user.set_unusable_password()
     user.save()
     user.backend = settings.AUTHENTICATION_BACKENDS[0]
@@ -184,32 +164,30 @@ def login(request):
 
 def csrfmiddlewaretoken(request):
     t = csrf(request)
-    return http.JsonResponse({
-        'csrf_token': str(t['csrf_token'])
-    })
+    return http.JsonResponse({"csrf_token": str(t["csrf_token"])})
 
 
 @require_POST
 @xhr_login_required
 def save(request):
-    data = json.loads(request.body.decode('utf-8'))
+    data = json.loads(request.body.decode("utf-8"))
     try:
-        game = data['game']
+        game = data["game"]
         try:
-            game_id = game['id']
+            game_id = game["id"]
         except KeyError:
-            return VerboseHttpResponseBadRequest('No game id')
+            return VerboseHttpResponseBadRequest("No game id")
     except KeyError:
-        return VerboseHttpResponseBadRequest('No game')
-    if game['you']['designmode']:
-        return VerboseHttpResponseBadRequest('Your game is not designed')
-    if game['opponent']['designmode']:
-        return VerboseHttpResponseBadRequest('Opponent game is not designed')
+        return VerboseHttpResponseBadRequest("No game")
+    if game["you"]["designmode"]:
+        return VerboseHttpResponseBadRequest("Your game is not designed")
+    if game["opponent"]["designmode"]:
+        return VerboseHttpResponseBadRequest("Opponent game is not designed")
 
     opponent = None
     if game_id < 0:
         # it's never been saved before
-        opponent_id = game['opponent'].get('id')
+        opponent_id = game["opponent"].get("id")
         if opponent_id:
             opponent = get_user_model().objects.get(id=opponent_id)
         else:
@@ -218,36 +196,36 @@ def save(request):
             player1=request.user,
             player2=opponent,
             state=game,
-            ai=game['opponent']['ai'],
+            ai=game["opponent"]["ai"],
         )
-        game_obj.state['id'] = game_obj.id
+        game_obj.state["id"] = game_obj.id
         game_obj.save()
     else:
         game_obj = Game.objects.get(id=game_id)
         if game_obj.abandoned:
-            return VerboseHttpResponseBadRequest('Game is abandoned')
+            return VerboseHttpResponseBadRequest("Game is abandoned")
         if not game_obj.ai:
             if game_obj.turn != request.user:
-                return VerboseHttpResponseBadRequest('Not your turn')
+                return VerboseHttpResponseBadRequest("Not your turn")
         if game_obj.player2 == request.user:
             opponent = game_obj.player1
             # If you're player2, expect the 'yourturn' to be the opposite
             # If you're player2, we need to invert the state.
             # But had player1 finished designing?
             game = invert_state(game)
-            if game['yourturn']:
+            if game["yourturn"]:
                 game_obj.turn = game_obj.player1
         elif game_obj.player2:
             opponent = game_obj.player2
-            if not game['yourturn']:
+            if not game["yourturn"]:
                 game_obj.turn = game_obj.player2
 
         game_obj.state = game
-        if game['gameover']:
+        if game["gameover"]:
             game_obj.gameover = True
-            if game['you']['winner']:
+            if game["you"]["winner"]:
                 game_obj.winner = request.user
-            elif game['opponent']['winner']:
+            elif game["opponent"]["winner"]:
                 if opponent:
                     if game_obj.player2 == request.user:
                         # player2 said the opponent won,
@@ -257,36 +235,29 @@ def save(request):
                     else:
                         game_obj.winner = opponent
                 else:
-                    assert game['opponent']['ai']
+                    assert game["opponent"]["ai"]
         game_obj.save()
 
         # Only send a websocket, to the opponent, if the opponent is not
         # AI.
         if opponent:
             if opponent == game_obj.player2:
-                fanout.publish(opponent.username, {
-                    'game': invert_state(game_obj.state),
-                })
+                fanout.publish(
+                    opponent.username, {"game": invert_state(game_obj.state),}
+                )
             else:
-                fanout.publish(opponent.username, {
-                    'game': game_obj.state,
-                })
+                fanout.publish(opponent.username, {"game": game_obj.state,})
 
-    return http.JsonResponse({'id': game_obj.id})
+    return http.JsonResponse({"id": game_obj.id})
 
 
 @xhr_login_required
 def list_games(request):
-    minimum = request.GET.get('minimum')
+    minimum = request.GET.get("minimum")
     games_base_qs = Game.objects.filter(
         Q(player1=request.user) | Q(player2=request.user)
-    ).filter(
-        abandoned=False
-    )
-    games = games_base_qs.filter(
-        gameover=False,
-        abandoned=False,
-    ).order_by('-modified')
+    ).filter(abandoned=False)
+    games = games_base_qs.filter(gameover=False, abandoned=False,).order_by("-modified")
     if minimum:
         games = games.filter(turn=request.user)
     states = []
@@ -296,16 +267,13 @@ def list_games(request):
         # Return a much simplified state that only has the bare minimum
         # needed to list the games on the home page.
         new_st = {
-            'id': st['id'],
-            'yourturn': st['yourturn'],
-            'opponent': {
-                'name': st['opponent']['name'],
-            }
+            "id": st["id"],
+            "yourturn": st["yourturn"],
+            "opponent": {"name": st["opponent"]["name"],},
         }
-        new_st['_bombs_dropped'] = (
-            sum(1 for cell in st['opponent']['grid'] if cell > 0) +
-            sum(1 for cell in st['you']['grid'] if cell > 0)
-        )
+        new_st["_bombs_dropped"] = sum(
+            1 for cell in st["opponent"]["grid"] if cell > 0
+        ) + sum(1 for cell in st["you"]["grid"] if cell > 0)
         return new_st
 
     for game in games:
@@ -317,55 +285,51 @@ def list_games(request):
             states.append(simplify_state(game.state))
 
     if minimum:
-        return http.JsonResponse({
-            'games': states,
-        })
+        return http.JsonResponse({"games": states,})
 
     ongoing = games_base_qs.filter(gameover=False)
     wins = games_base_qs.filter(gameover=True).filter(winner=request.user)
     losses = games_base_qs.filter(gameover=True).exclude(winner=request.user)
     stats = {
-        'ongoing': ongoing.count(),
-        'wins': wins.count(),
-        'losses': losses.count(),
+        "ongoing": ongoing.count(),
+        "wins": wins.count(),
+        "losses": losses.count(),
     }
 
     # we also want a count of the number of people waiting to play
-    others_waiting = Game.objects.filter(
-        abandoned=False,
-        gameover=False,
-        ai=False
-    ).exclude(
-        Q(player1=request.user) | Q(player2=request.user)
-    ).extra(
-        where=[
-            '(player1_id IS NULL AND player2_id IS NOT NULL) OR '
-            '(player1_id IS NOT NULL AND player2_id IS NULL)'
-        ]
+    others_waiting = (
+        Game.objects.filter(abandoned=False, gameover=False, ai=False)
+        .exclude(Q(player1=request.user) | Q(player2=request.user))
+        .extra(
+            where=[
+                "(player1_id IS NULL AND player2_id IS NOT NULL) OR "
+                "(player1_id IS NOT NULL AND player2_id IS NULL)"
+            ]
+        )
     )
 
-    return http.JsonResponse({
-        'games': states,
-        'stats': stats,
-        'waiting': waiting,
-        'others_waiting': others_waiting.count(),
-    })
+    return http.JsonResponse(
+        {
+            "games": states,
+            "stats": stats,
+            "waiting": waiting,
+            "others_waiting": others_waiting.count(),
+        }
+    )
 
 
 @xhr_login_required
 def game(request):
-    if not request.GET.get('id'):
-        return VerboseHttpResponseBadRequest('No game id')
+    if not request.GET.get("id"):
+        return VerboseHttpResponseBadRequest("No game id")
     you = request.user
-    game_obj = get_object_or_404(Game, id=request.GET['id'])
+    game_obj = get_object_or_404(Game, id=request.GET["id"])
     if not (game_obj.player1 == you or game_obj.player2 == you):
-        return VerboseHttpResponseBadRequest('Not your game')
+        return VerboseHttpResponseBadRequest("Not your game")
     game = game_obj.state
     if you == game_obj.player2:
         game = invert_state(game)
-    return http.JsonResponse({
-        'game': game
-    })
+    return http.JsonResponse({"game": game})
 
 
 def valid_email(email):
@@ -379,44 +343,40 @@ def valid_email(email):
 @require_POST
 @xhr_login_required
 def profile(request):
-    data = json.loads(request.body.decode('utf-8'))
-    if data.get('name', '').strip():
-        request.user.first_name = data['name']
+    data = json.loads(request.body.decode("utf-8"))
+    if data.get("name", "").strip():
+        request.user.first_name = data["name"]
         request.user.save()
-    if data.get('email', '').strip():
-        email = data['email'].strip()
+    if data.get("email", "").strip():
+        email = data["email"].strip()
         if valid_email(email):
             request.user.email = email
             request.user.save()
         else:
-            return http.JsonResponse({
-                'error': 'Email not valid "{}"'.format(email)
-            })
+            return http.JsonResponse({"error": 'Email not valid "{}"'.format(email)})
 
-    return http.JsonResponse({
-        'first_name': request.user.first_name,
-        'email': request.user.email,
-        'username': request.user.username,
-    })
+    return http.JsonResponse(
+        {
+            "first_name": request.user.first_name,
+            "email": request.user.email,
+            "username": request.user.username,
+        }
+    )
 
 
 @require_POST
 @xhr_login_required
 def mailme(request):
     if not request.user.email:
-        return VerboseHttpResponseBadRequest('No email')
+        return VerboseHttpResponseBadRequest("No email")
 
     email = request.user.email
-    codes = LogInCode.objects.filter(
-        user=request.user,
-        used=False,
-    )
+    codes = LogInCode.objects.filter(user=request.user, used=False,)
     for logincode in codes:
         break
     else:
         logincode = LogInCode.objects.create(
-            user=request.user,
-            code=random_letters(1) + random_numbers(4)
+            user=request.user, code=random_letters(1) + random_numbers(4)
         )
     msg = """
 Hi {first_name},
@@ -428,22 +388,19 @@ your login; use this code: {code}
 Battleshits
 https://btlsh.it
     """.format(
-        first_name=request.user.first_name,
-        code=logincode.code,
+        first_name=request.user.first_name, code=logincode.code,
     )
     if not send_mail(
-        'Welcome to Battleshits',
+        "Welcome to Battleshits",
         msg.strip(),
         "Battlshits <{}>".format(settings.SERVER_EMAIL),
-        [email]
+        [email],
     ):
-        return http.JsonResponse({
-            'error': 'Could not send email to "{}"'.format(email)
-        })
+        return http.JsonResponse(
+            {"error": 'Could not send email to "{}"'.format(email)}
+        )
 
-    return http.JsonResponse({
-        'ok': True
-    })
+    return http.JsonResponse({"ok": True})
 
 
 def invert_state(state):
@@ -451,11 +408,11 @@ def invert_state(state):
     called "you", "your" and "opponent". Let's create a copy of this state
     where the "you" and "opponent" is inverted."""
     inverted = copy.deepcopy(state)
-    inverted['yourturn'] = not inverted['yourturn']
-    opponent = state['opponent']
-    you = state['you']
-    inverted['opponent'] = you
-    inverted['you'] = opponent
+    inverted["yourturn"] = not inverted["yourturn"]
+    opponent = state["opponent"]
+    you = state["you"]
+    inverted["opponent"] = you
+    inverted["you"] = opponent
     return inverted
 
 
@@ -469,45 +426,36 @@ def start(request):
     If no match, do nothing here. The user will be asked to go ahead
     and design their ships so that it's ready to be joined by someone else.
     """
-    data = json.loads(request.body.decode('utf-8'))
-    if not data.get('game'):
-        return VerboseHttpResponseBadRequest('no game')
+    data = json.loads(request.body.decode("utf-8"))
+    if not data.get("game"):
+        return VerboseHttpResponseBadRequest("no game")
     if not request.user.first_name:
         return VerboseHttpResponseBadRequest("you haven't set your name yet")
 
-    invite = data.get('invite')
+    invite = data.get("invite")
 
-    game = data['game']
-    if game['you']['designmode']:
+    game = data["game"]
+    if game["you"]["designmode"]:
         return VerboseHttpResponseBadRequest("you haven't designed it yet")
 
     # If the game already has an opponent, and an id, use that, we should
     # be good to go.
-    if game.get('id') and game['opponent']['name']:
-        game_obj = Game.objects.get(id=game['id'])
+    if game.get("id") and game["opponent"]["name"]:
+        game_obj = Game.objects.get(id=game["id"])
 
-        assert not game['you']['designmode']
-        assert not game['opponent']['designmode']
+        assert not game["you"]["designmode"]
+        assert not game["opponent"]["designmode"]
         game_obj.state = invert_state(game)
         game_obj.save()
-        return http.JsonResponse({'game': invert_state(game_obj.state)})
+        return http.JsonResponse({"game": invert_state(game_obj.state)})
 
     # find any started games that don't have a player2
     games = Game.objects.filter(
-        ai=False,
-        gameover=False,
-        abandoned=False,
-        player2__isnull=True,
-    ).exclude(
-        player1=request.user,
-    )
+        ai=False, gameover=False, abandoned=False, player2__isnull=True,
+    ).exclude(player1=request.user,)
     my_ongoing_games = Game.objects.filter(
         Q(player1=request.user) | Q(player2=request.user)
-    ).filter(
-        ai=False,
-        gameover=False,
-        abandoned=False,
-    )
+    ).filter(ai=False, gameover=False, abandoned=False,)
     my_ongoing_opponents = []
     for ongoing_game in my_ongoing_games:
         my_ongoing_opponents.append(ongoing_game.player1_id)
@@ -518,28 +466,26 @@ def start(request):
         games = games.exclude(player1_id__in=my_ongoing_opponents)
 
     if invite:
-        games = games.filter(player1__id=invite['id'])
+        games = games.filter(player1__id=invite["id"])
 
     for other in games:
         # all saved games should be designed
-        assert not other.state['you']['designmode'], 'not designed'
-        if other.state['rules'] == game['rules']:
+        assert not other.state["you"]["designmode"], "not designed"
+        if other.state["rules"] == game["rules"]:
             # we have a match!
             other.player2 = request.user
-            other.state['opponent']['name'] = request.user.first_name
-            other.state['opponent']['ships'] = game['you']['ships']
-            other.state['opponent']['designmode'] = game['you']['designmode']
-            if other.state['yourturn']:
+            other.state["opponent"]["name"] = request.user.first_name
+            other.state["opponent"]["ships"] = game["you"]["ships"]
+            other.state["opponent"]["designmode"] = game["you"]["designmode"]
+            if other.state["yourturn"]:
                 other.turn = other.player1
             else:
                 other.turn = request.user
             other.save()
             # should we send a notification to player1?
             channel = other.player1.username
-            fanout.publish(other.player1.username, {
-                'game': other.state,
-            })
-            return http.JsonResponse({'game': invert_state(other.state)})
+            fanout.publish(other.player1.username, {"game": other.state,})
+            return http.JsonResponse({"game": invert_state(other.state)})
 
     # still here :(
     # have you created one before?
@@ -552,34 +498,31 @@ def start(request):
     )
 
     if invite:
-        games = games.filter(player2__id=invite['id'])
+        games = games.filter(player2__id=invite["id"])
 
     for game_obj in games:
-        if game_obj.state['rules'] == game['rules']:
+        if game_obj.state["rules"] == game["rules"]:
             print("Found one with the same rules")
-            return http.JsonResponse({'id': game_obj.id})
+            return http.JsonResponse({"id": game_obj.id})
 
     # really still here, then you haven't created a game before
-    game_obj = Game.objects.create(
-        player1=request.user,
-        state=game,
-    )
+    game_obj = Game.objects.create(player1=request.user, state=game,)
     if invite:
-        game_obj.player2 = get_user_model().objects.get(id=invite['id'])
+        game_obj.player2 = get_user_model().objects.get(id=invite["id"])
         game_obj.turn = game_obj.player2
-        game_obj.state['opponent']['name'] = game_obj.player2.first_name
-    game_obj.state['id'] = game_obj.id
+        game_obj.state["opponent"]["name"] = game_obj.player2.first_name
+    game_obj.state["id"] = game_obj.id
     game_obj.save()
-    return http.JsonResponse({'id': game_obj.id})
+    return http.JsonResponse({"id": game_obj.id})
 
 
 @require_POST
 @xhr_login_required
 def bombed(request):
-    data = json.loads(request.body.decode('utf-8'))
-    game_id = data['id']
-    index = data['index']
-    cell = data['cell']
+    data = json.loads(request.body.decode("utf-8"))
+    game_id = data["id"]
+    index = data["index"]
+    cell = data["cell"]
     game_obj = Game.objects.get(id=game_id)
     if request.user == game_obj.player1:
         opponent = game_obj.player2
@@ -587,125 +530,102 @@ def bombed(request):
         assert request.user == game_obj.player2
         opponent = game_obj.player1
     Bomb.objects.create(
-        game=game_obj,
-        user=request.user,
-        index=index,
-        new_cell_state=cell,
+        game=game_obj, user=request.user, index=index, new_cell_state=cell,
     )
-    channel = 'game-{}-{}'.format(game_obj.id, opponent.username)
-    fanout.publish(channel, {
-        'index': index,
-        'yours': True,
-        'cell': cell,
-    })
-    return http.JsonResponse({'ok': True})
+    channel = "game-{}-{}".format(game_obj.id, opponent.username)
+    fanout.publish(channel, {"index": index, "yours": True, "cell": cell,})
+    return http.JsonResponse({"ok": True})
 
 
 @require_POST
 @xhr_login_required
 def abandon(request):
-    data = json.loads(request.body.decode('utf-8'))
+    data = json.loads(request.body.decode("utf-8"))
     try:
-        game = data['game']
+        game = data["game"]
         try:
-            game_id = game['id']
+            game_id = game["id"]
         except KeyError:
-            return VerboseHttpResponseBadRequest('No game id')
+            return VerboseHttpResponseBadRequest("No game id")
     except KeyError:
-        return VerboseHttpResponseBadRequest('No game')
+        return VerboseHttpResponseBadRequest("No game")
     game_obj = get_object_or_404(Game, id=game_id)
-    if (
-        not (
-            game_obj.player1 == request.user or
-            game_obj.player2 == request.user
-        )
-    ):
-        return http.HttpResponseForbidden('Not your game to abandon')
+    if not (game_obj.player1 == request.user or game_obj.player2 == request.user):
+        return http.HttpResponseForbidden("Not your game to abandon")
 
     game_obj.abandoned = True
     game_obj.save()
-    return http.JsonResponse({'ok': True})
+    return http.JsonResponse({"ok": True})
 
 
 @xhr_login_required
 def messages(request):
     you = request.user
 
-    if request.method == 'POST':
-        data = json.loads(request.body.decode('utf-8'))
-        if not data.get('id'):
-            return VerboseHttpResponseBadRequest('No game id')
-        game_id = data['id']
+    if request.method == "POST":
+        data = json.loads(request.body.decode("utf-8"))
+        if not data.get("id"):
+            return VerboseHttpResponseBadRequest("No game id")
+        game_id = data["id"]
         game_obj = get_object_or_404(Game, id=game_id)
         if not (game_obj.player1 == you or game_obj.player2 == you):
-            return VerboseHttpResponseBadRequest('Not your game')
+            return VerboseHttpResponseBadRequest("Not your game")
 
-        message = data.get('message', '').strip()
+        message = data.get("message", "").strip()
         if not message:
-            return VerboseHttpResponseBadRequest('Empty message')
+            return VerboseHttpResponseBadRequest("Empty message")
 
         # To avoid allowing repeats, do nothing if the last message
         # in this game was from this user was the same message
-        previous = Message.objects.filter(game=game_obj).order_by('-created')
+        previous = Message.objects.filter(game=game_obj).order_by("-created")
         repeat = False
         for message_obj in previous[:1]:
-            if (
-                message_obj.user == request.user and
-                message_obj.message == message
-            ):
+            if message_obj.user == request.user and message_obj.message == message:
                 repeat = True
 
         if not repeat:
             message_obj = Message.objects.create(
-                game=game_obj,
-                user=request.user,
-                message=message
+                game=game_obj, user=request.user, message=message
             )
             # we're going to want to inform the opponent
             if you == game_obj.player1:
                 opponent = game_obj.player2
             else:
                 opponent = game_obj.player1
-            channel = 'game-{}-{}'.format(game_obj.id, opponent.username)
+            channel = "game-{}-{}".format(game_obj.id, opponent.username)
             msg = {
-                'id': message_obj.id,
-                'message': message_obj.message,
-                'name': you.first_name,
-                'game_id': game_obj.id,
+                "id": message_obj.id,
+                "message": message_obj.message,
+                "name": you.first_name,
+                "game_id": game_obj.id,
             }
-            fanout.publish(channel, {
-                'message': msg,
-            })
+            fanout.publish(channel, {"message": msg,})
             # if that opponent is not watching the game right now,
             # update that too
-            fanout.publish(opponent.username, {
-                'message': msg,
-            })
+            fanout.publish(opponent.username, {"message": msg,})
     else:
-        if not request.GET.get('id'):
-            return VerboseHttpResponseBadRequest('No game id')
-        game_obj = get_object_or_404(Game, id=request.GET['id'])
+        if not request.GET.get("id"):
+            return VerboseHttpResponseBadRequest("No game id")
+        game_obj = get_object_or_404(Game, id=request.GET["id"])
         if not (game_obj.player1 == you or game_obj.player2 == you):
-            return VerboseHttpResponseBadRequest('Not your game')
+            return VerboseHttpResponseBadRequest("Not your game")
 
     items = []
-    messages_ = Message.objects.filter(game=game_obj).order_by('created')
+    messages_ = Message.objects.filter(game=game_obj).order_by("created")
     for msg in messages_:
         item = {
-            'id': msg.id,
-            'message': msg.message,
+            "id": msg.id,
+            "message": msg.message,
         }
         if msg.user == you:
-            item['you'] = True
+            item["you"] = True
         else:
             if not msg.read:
                 msg.read = True
                 msg.save()
-            item['name'] = msg.user.first_name
+            item["name"] = msg.user.first_name
         items.append(item)
-    return http.JsonResponse({
-        'messages': items,
-    })
+    return http.JsonResponse({"messages": items,})
 
 
 @require_POST
@@ -716,39 +636,38 @@ def invite(request):
         invitation = each
     if invitation is None:
         invitation = Invitation.objects.create(
-            user=request.user,
-            code=random_letters(1) + random_numbers(5),
+            user=request.user, code=random_letters(1) + random_numbers(5),
         )
-    return http.JsonResponse({
-        'code': invitation.code,
-    })
+    return http.JsonResponse({"code": invitation.code,})
+
 
 @require_POST
 @xhr_login_required
 def invitation(request):
-    data = json.loads(request.body.decode('utf-8'))
-    code = data['code']
+    data = json.loads(request.body.decode("utf-8"))
+    code = data["code"]
     invitations = Invitation.objects.filter(code__iexact=code)
     if not invitations.exists():
-        return http.JsonResponse({
-            'error': 'Code not find invitation "{}"'.format(
-                code
-            ),
-        })
+        return http.JsonResponse(
+            {"error": 'Code not find invitation "{}"'.format(code),}
+        )
 
     for invitation in invitations:
-        user_ids = request.session.get('invitations', [])
+        user_ids = request.session.get("invitations", [])
         if invitation.user.id not in user_ids:
             user_ids.append(invitation.user.id)
-            request.session['invitations'] = user_ids
+            request.session["invitations"] = user_ids
             invitation.users.add(request.user)
-        return http.JsonResponse({
-            'invitation': {
-                'email': invitation.user.email,
-                'first_name': invitation.user.first_name,
-                'id': invitation.user.id,
+        return http.JsonResponse(
+            {
+                "invitation": {
+                    "email": invitation.user.email,
+                    "first_name": invitation.user.first_name,
+                    "id": invitation.user.id,
+                }
             }
-        })
+        )
+
 
 @xhr_login_required
 def invitations(request):
@@ -757,45 +676,39 @@ def invitations(request):
     for invitation in qs:
         for user in invitation.users.filter(first_name__isnull=False):
             inv = {
-                'email': user.email,
-                'first_name': user.first_name,
-                'id': user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "id": user.id,
             }
             if inv not in people:
                 people.append(inv)
 
-    return http.JsonResponse({'invitations': people})
-
+    return http.JsonResponse({"invitations": people})
 
 
 @require_POST
 @xhr_login_required
 def sendinvitation(request):
-    data = json.loads(request.body.decode('utf-8'))
-    email = data['email']
+    data = json.loads(request.body.decode("utf-8"))
+    email = data["email"]
     if not valid_email(email):
-        return http.JsonResponse({
-            'error': 'Not a valid email addresses."{}"'.format(
-                email
-            ),
-        })
+        return http.JsonResponse(
+            {"error": 'Not a valid email addresses."{}"'.format(email),}
+        )
 
     invitation = None
     for each in Invitation.objects.filter(user=request.user):
         invitation = each
     if invitation is None:
         invitation = Invitation.objects.create(
-            user=request.user,
-            code=random_letters(1) + random_numbers(5),
+            user=request.user, code=random_letters(1) + random_numbers(5),
         )
 
-    absolute_base_url = (
-        '%s://%s' % (
-            request.is_secure() and 'https' or 'http',
-            RequestSite(request).domain
-        )
+    absolute_base_url = "%s://%s" % (
+        request.is_secure() and "https" or "http",
+        RequestSite(request).domain,
     )
-    url = absolute_base_url + '/#i={}'.format(invitation.code)
+    url = absolute_base_url + "/#i={}".format(invitation.code)
     msg = """
 Hi!
 
@@ -811,17 +724,13 @@ Or if you're on your phone, just go to this linke:
 Battleshits
 https://btlsh.it
     """.format(
-        first_name=request.user.first_name,
-        code=invitation.code,
-        url=url,
+        first_name=request.user.first_name, code=invitation.code, url=url,
     )
     send_mail(
-        'Play Battlshits against {}'.format(request.user.first_name),
+        "Play Battlshits against {}".format(request.user.first_name),
         msg,
         "Battlshits <{}>".format(settings.SERVER_EMAIL),
-        [email]
+        [email],
     )
 
-    return http.JsonResponse({
-        'email': email,
-    })
+    return http.JsonResponse({"email": email,})

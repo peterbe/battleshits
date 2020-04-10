@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "battleshits.base",
     "battleshits.api",
     # Django apps
-    "django.contrib.admin",
+    # "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -51,18 +51,43 @@ for app in config("EXTRA_APPS", default="", cast=Csv()):
     INSTALLED_APPS.append(app)
 
 
-MIDDLEWARE_CLASSES = (
+# MIDDLEWARE_CLASSES = (
+#     "django.contrib.sessions.middleware.SessionMiddleware",
+#     "corsheaders.middleware.CorsMiddleware",
+#     "django.middleware.common.CommonMiddleware",
+#     "battleshits.api.middleware.JsonBodyCsrfViewMiddleware",
+#     # 'django.middleware.csrf.CsrfViewMiddleware',
+#     "django.contrib.auth.middleware.AuthenticationMiddleware",
+#     "django.contrib.auth.middleware.SessionAuthenticationMiddleware",
+#     "django.contrib.messages.middleware.MessageMiddleware",
+#     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#     # 'csp.middleware.CSPMiddleware',
+# )
+
+# MIDDLEWARE_CLASSES = (
+#     "django.contrib.sessions.middleware.SessionMiddleware",
+#     "corsheaders.middleware.CorsMiddleware",
+#     "django.middleware.common.CommonMiddleware",
+#     # 'django.middleware.csrf.CsrfViewMiddleware',
+#     "django.contrib.auth.middleware.AuthenticationMiddleware",
+#     "django.contrib.auth.middleware.SessionAuthenticationMiddleware",
+#     # "django.contrib.messages.middleware.MessageMiddleware",
+#     "battleshits.api.middleware.JsonBodyCsrfViewMiddleware",
+#     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#     # 'csp.middleware.CSPMiddleware',
+# )
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "battleshits.api.middleware.JsonBodyCsrfViewMiddleware",
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.auth.middleware.SessionAuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'csp.middleware.CSPMiddleware',
-)
+    # "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "battleshits.api.middleware.JsonBodyCsrfViewMiddleware",
+]
+
 
 ROOT_URLCONF = "battleshits.urls"
 
@@ -93,33 +118,49 @@ SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=not DEBUG, cast=
 
 # TEMPLATES = [
 #     {
-#         'BACKEND': 'django_jinja.backend.Jinja2',
-#         'APP_DIRS': True,
-#         'OPTIONS': {
-#             'match_extension': '.jinja',
-#             'newstyle_gettext': True,
-#             'context_processors': [
+#         "BACKEND": "django_jinja.backend.Jinja2",
+#         "APP_DIRS": True,
+#         "OPTIONS": {
+#             "match_extension": ".jinja",
+#             "newstyle_gettext": True,
+#             "context_processors": [
 #                 # 'battleshits.base.context_processors.settings',
 #                 # 'django.template.context_processors.request',
 #             ],
-#         }
+#         },
 #     },
 #     {
-#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-#         'APP_DIRS': True,
-#         'OPTIONS': {
-#             'context_processors': [
-#                 'django.contrib.auth.context_processors.auth',
-#                 'django.template.context_processors.request',
-#                 'django.template.context_processors.debug',
-#                 'django.template.context_processors.i18n',
-#                 'django.template.context_processors.media',
-#                 'django.template.context_processors.static',
-#                 'django.template.context_processors.tz',
+#         "BACKEND": "django.template.backends.django.DjangoTemplates",
+#         "APP_DIRS": True,
+#         "OPTIONS": {
+#             "context_processors": [
+#                 "django.contrib.auth.context_processors.auth",
+#                 "django.template.context_processors.request",
+#                 "django.template.context_processors.debug",
+#                 "django.template.context_processors.i18n",
+#                 "django.template.context_processors.media",
+#                 "django.template.context_processors.static",
+#                 "django.template.context_processors.tz",
 #             ],
-#         }
+#         },
 #     },
 # ]
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                # "django.contrib.messages.context_processors.messages",
+            ]
+        },
+    }
+]
 
 # Django-CSP
 CSP_DEFAULT_SRC = (
